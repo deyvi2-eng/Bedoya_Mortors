@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Caja Diaria | Bedoya Motors{% endblock %}
+{% block header_title %}Control de Caja y Arqueo{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+    {% if not active_session %}
+    <div class="bg-white p-6 md:p-12 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center text-center mt-4 md:mt-10">
+        <div class="w-16 h-16 md:w-20 md:h-20 bg-brand-50 rounded-full flex items-center justify-center text-brand-600 mb-4 md:mb-6">
+            <i class="ph-bold ph-lock-key text-3xl md:text-4xl"></i>
+        </div>
+        <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-2">Caja Registradora Cerrada</h2>
+        <p class="text-sm md:text-base text-gray-500 mb-6 md:mb-8 max-w-md">Debe declarar su fondo de cambio (dinero base) para habilitar el Punto de Venta en su turno.</p>
+
+        <div class="w-full max-w-sm space-y-4 text-left bg-gray-50 p-6 rounded-2xl border border-gray-100">
+            <label class="block text-sm font-semibold text-gray-700">Saldo Inicial en Efectivo ($)</label>
+            <input type="number" id="opening_balance" step="0.01" min="0" placeholder="Ej: 50.00" class="w-full h-12 md:h-14 bg-white border border-gray-200 text-brand-600 rounded-xl px-4 focus:ring-2 focus:ring-brand-500 outline-none text-xl md:text-2xl text-center font-bold transition-all shadow-sm">
+            
+            <button id="btn-open-cash" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] mt-2 text-sm md:text-base">
+                Iniciar Turno y Abrir Caja
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        
+        <div class="bg-gray-900 p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-lg text-white relative overflow-hidden flex flex-col justify-between min-h-[300px]">
+            <div class="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 rounded-full bg-white opacity-5"></div>
+            
+            <div>
+                <div class="flex items-center gap-2 mb-4 md:mb-6">
+                    <div class="w-2.5 h-2.5 md:w-3 md:h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.6)]"></div>
+                    <span class="text-xs md:text-sm font-semibold tracking-widest uppercase text-gray-300">Turno Activo</span>
+                </div>
+                <p class="text-gray-400 text-xs md:text-sm mb-1">Apertura: <span class="text-white">{{ active_session.opening_time|date:"H:i A" }}</span></p>
+                <p class="text-gray-400 text-xs md:text-sm mb-6">Operador: <span class="text-white">{{ request.user.get_full_name }}</span></p>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-gray-300 border-b border-gray-800 pb-2 text-sm md:text-base">
+                        <span>Fondo Base</span>
+                        <span class="font-medium text-white">${{ active_session.opening_balance }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-300 border-b border-gray-800 pb-2 text-sm md:text-base">
+                        <span>Ingresos Sistema</span>
+                        <span class="font-medium text-green-400">+ ${{ active_session.system_balance }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 md:mt-8">
+                <p class="text-xs md:text-sm text-gray-400 mb-1 tracking-wide uppercase">Total Esperado en Gaveta</p>
+                <h3 class="text-4xl md:text-5xl font-bold text-white tracking-tight">${{ active_session.opening_balance|add:active_session.system_balance|floatformat:2 }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-center">
+            <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2">
+                <i class="ph-fill ph-calculator text-brand-600 text-2xl"></i> Cierre y Arqueo
+            </h3>
+            
+            <div class="space-y-4 md:space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Dinero Físico Contado ($)</label>
+                    <input type="number" id="declared_balance" step="0.01" min="0" placeholder="Ingrese el total real..." class="w-full h-12 md:h-14 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 focus:ring-2 focus:ring-brand-500 outline-none text-base md:text-lg transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Observaciones (Opcional)</label>
+                    <textarea id="observations" rows="2" placeholder="Justifique diferencias si existen..." class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl p-3 md:p-4 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm"></textarea>
+                </div>
+                
+                <button id="btn-close-cash" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] mt-2 text-sm md:text-base">
+                    Cerrar Caja
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+        <div class="p-4 md:p-6 border-b border-gray-100 bg-gray-50">
+            <h3 class="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
+                <i class="ph-bold ph-clock-counter-clockwise"></i> Historial de Turnos
+            </h3>
+        </div>
+        
+        <div class="hidden md:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead class="bg-white text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4 text-left">Apertura</th>
+                        <th class="px-6 py-4 text-left">Cierre</th>
+                        <th class="px-6 py-4 text-right">Base</th>
+                        <th class="px-6 py-4 text-right">Ventas</th>
+                        <th class="px-6 py-4 text-right">Declarado</th>
+                        <th class="px-6 py-4 text-right">Diferencia</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for hist in history %}
+                    <tr class="hover:bg-gray-50 transition-colors text-sm text-gray-700">
+                        <td class="px-6 py-4">{{ hist.opening_time|date:"d M, H:i" }}</td>
+                        <td class="px-6 py-4">
+                            {% if hist.status == 'OPEN' %}
+                                <span class="text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded-md border border-green-200">EN CURSO</span>
+                            {% else %}
+                                {{ hist.closing_time|date:"d M, H:i" }}
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right">${{ hist.opening_balance }}</td>
+                        <td class="px-6 py-4 text-right">${{ hist.system_balance }}</td>
+                        <td class="px-6 py-4 text-right font-medium">{% if hist.declared_balance %}${{ hist.declared_balance }}{% else %}-{% endif %}</td>
+                        <td class="px-6 py-4 text-right font-bold {% if hist.discrepancy < 0 %}text-red-500{% elif hist.discrepancy > 0 %}text-green-500{% else %}text-gray-400{% endif %}">
+                            {% if hist.discrepancy %}${{ hist.discrepancy }}{% else %}$0.00{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-400 text-sm">No hay registros anteriores.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="md:hidden divide-y divide-gray-100">
+            {% for hist in history %}
+            <div class="p-4 bg-white">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold text-gray-500 uppercase">{{ hist.opening_time|date:"d M, H:i" }}</span>
+                    {% if hist.status == 'OPEN' %}
+                        <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200">EN CURSO</span>
+                    {% else %}
+                        <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded border border-gray-200">CERRADA</span>
+                    {% endif %}
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <div class="text-xs text-gray-500">
+                        <p>Base: <span class="text-gray-900 font-medium">${{ hist.opening_balance }}</span></p>
+                        <p>Ventas: <span class="text-gray-900 font-medium">${{ hist.system_balance }}</span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500">Diferencia:</p>
+                        <p class="text-sm font-bold {% if hist.discrepancy < 0 %}text-red-500{% elif hist.discrepancy > 0 %}text-green-500{% else %}text-gray-400{% endif %}">
+                            {% if hist.discrepancy %}${{ hist.discrepancy }}{% else %}$0.00{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-6 text-center text-gray-400 text-xs">No hay registros anteriores.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const getCSRFToken = () => document.cookie.split('; ').find(row => row.startsWith('csrftoken=')).split('=')[1];
+
+    // APERTURA
+    const btnOpen = document.getElementById('btn-open-cash');
+    if (btnOpen) {
+        btnOpen.addEventListener('click', function() {
+            const balance = document.getElementById('opening_balance').value;
+            if (!balance || balance < 0) return Swal.fire({icon: 'warning', title: 'Atención', text: 'Ingrese un monto base válido.', confirmButtonColor: '#0d9488'});
+
+            this.disabled = true;
+            this.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Abriendo...';
+            
+            fetch('/cash/api/open/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+                body: JSON.stringify({ opening_balance: balance })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
+            .then(result => {
+                if (result.status === 201) window.location.reload();
+                else {
+                    Swal.fire({icon: 'error', title: 'Error', text: result.body.error, confirmButtonColor: '#0d9488'});
+                    this.disabled = false;
+                    this.innerHTML = 'Iniciar Turno y Abrir Caja';
+                }
+            });
+        });
+    }
+
+    // CIERRE
+    const btnClose = document.getElementById('btn-close-cash');
+    if (btnClose) {
+        btnClose.addEventListener('click', function() {
+            const declared = document.getElementById('declared_balance').value;
+            const obs = document.getElementById('observations').value;
+
+            if (!declared || declared < 0) return Swal.fire({icon: 'warning', title: 'Atención', text: 'Ingrese el dinero físico exacto contado.', confirmButtonColor: '#0d9488'});
+
+            Swal.fire({
+                title: '¿Confirmar Arqueo?',
+                text: "No podrá registrar más ventas en este turno.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e53e3e',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Sí, Cerrar Caja',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.disabled = true;
+                    this.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Cerrando...';
+                    
+                    fetch('/cash/api/close/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+                        body: JSON.stringify({ declared_balance: declared, observations: obs })
+                    })
+                    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+                    .then(res => {
+                        if (res.status === 200) {
+                            let msg = res.body.discrepancy == 0 ? 'Arqueo perfecto. Sin diferencias.' : 
+                                      (res.body.discrepancy < 0 ? `Faltante: $${Math.abs(res.body.discrepancy).toFixed(2)}` : `Sobrante: $${res.body.discrepancy.toFixed(2)}`);
+                            
+                            Swal.fire({
+                                title: 'Caja Cerrada', 
+                                text: msg, 
+                                icon: res.body.discrepancy == 0 ? 'success' : 'info',
+                                confirmButtonColor: '#0d9488'
+                            }).then(() => window.location.reload());
+                        } else {
+                            Swal.fire({icon: 'error', title: 'Error', text: res.body.error, confirmButtonColor: '#0d9488'});
+                            this.disabled = false;
+                            this.innerHTML = 'Cerrar Caja';
+                        }
+                    });
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}

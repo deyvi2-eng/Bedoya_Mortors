@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}ERP | Bedoya Motors{% endblock %}</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 900: '#134e4a' },
+                        surface: '#fcfcfd',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <aside class="hidden md:flex w-64 bg-white border-r border-gray-100 flex-col justify-between flex-shrink-0 z-20 shadow-sm">
+        <div>
+            <div class="h-20 flex items-center px-8 border-b border-gray-50">
+                <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center mr-3 shadow-sm">
+                    <i class="ph-bold ph-motorcycle text-white text-xl"></i>
+                </div>
+                <span class="text-lg font-bold tracking-tight text-gray-900">Bedoya Motors</span>
+            </div>
+            
+            <nav class="p-4 space-y-1 mt-4">
+                <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Principal</p>
+                <a href="/" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-colors">
+                    <i class="ph ph-squares-four text-xl"></i> Dashboard
+                </a>
+                <a href="/sales/pos/" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-colors">
+                    <i class="ph ph-shopping-cart text-xl"></i> Punto de Venta
+                </a>
+                <a href="/cash/dashboard/" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-colors">
+                    <i class="ph ph-wallet text-xl"></i> Control de Caja
+                </a>
+                <a href="/admin/inventory/product/" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-colors">
+                    <i class="ph ph-package text-xl"></i> Inventario
+                </a>
+                <a href="/admin/customers/customer/" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-colors">
+                    <i class="ph ph-users text-xl"></i> Clientes
+                </a>
+            </nav>
+        </div>
+        
+        <div class="p-4 border-t border-gray-100 bg-gray-50">
+            <div class="flex items-center gap-3 px-4 py-2">
+                <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold border border-brand-200">
+                    {{ request.user.first_name|first|default:"U" }}
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-900 line-clamp-1">{{ request.user.get_full_name|default:"Administrador" }}</p>
+                    <p class="text-xs text-gray-500">{{ request.user.get_role_display|default:"Gerencia" }}</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden w-full relative">
+        
+        <header class="h-16 md:h-20 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 md:px-8 z-10 shadow-sm shrink-0">
+            <div class="flex items-center gap-2 md:hidden">
+                <div class="w-7 h-7 bg-brand-600 rounded-md flex items-center justify-center">
+                    <i class="ph-bold ph-motorcycle text-white text-sm"></i>
+                </div>
+                <h2 class="text-lg font-bold text-gray-900 tracking-tight">Bedoya</h2>
+            </div>
+            <h2 class="hidden md:block text-xl font-semibold text-gray-800">{% block header_title %}ERP System{% endblock %}</h2>
+            
+            <div class="flex items-center gap-3">
+                <button class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:text-brand-600 hover:bg-brand-50 transition-colors">
+                    <i class="ph ph-bell text-lg md:text-xl"></i>
+                </button>
+                <a href="/admin/logout/" class="hidden md:block px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">Cerrar Sesión</a>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 bg-surface pb-24 md:pb-8">
+            {% block content %}{% endblock %}
+        </main>
+        
+        <nav class="md:hidden absolute bottom-0 w-full bg-white border-t border-gray-100 flex justify-around p-2 z-50 pb-safe shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)]">
+            <a href="/" class="flex flex-col items-center p-2 text-gray-400 hover:text-brand-600 transition-colors">
+                <i class="ph-fill ph-squares-four text-2xl"></i>
+                <span class="text-[10px] font-medium mt-1">Inicio</span>
+            </a>
+            <a href="/sales/pos/" class="flex flex-col items-center p-2 text-gray-400 hover:text-brand-600 transition-colors">
+                <i class="ph-fill ph-shopping-cart text-2xl"></i>
+                <span class="text-[10px] font-medium mt-1">POS</span>
+            </a>
+            <a href="/cash/dashboard/" class="flex flex-col items-center p-2 text-gray-400 hover:text-brand-600 transition-colors">
+                <i class="ph-fill ph-wallet text-2xl"></i>
+                <span class="text-[10px] font-medium mt-1">Caja</span>
+            </a>
+            <a href="/inventory/manage/" class="flex flex-col items-center p-2 text-gray-400 hover:text-brand-600 transition-colors">
+                <i class="ph-fill ph-package text-2xl"></i>
+                <span class="text-[10px] font-medium mt-1">Stock</span>
+            </a>
+            <a href="/admin/customers/customer/" class="flex flex-col items-center p-2 text-gray-400 hover:text-brand-600 transition-colors">
+                <i class="ph-fill ph-users text-2xl"></i>
+                <span class="text-[10px] font-medium mt-1">Clientes</span>
+            </a>
+        </nav>
+    </div>
+
+</body>
+</html>

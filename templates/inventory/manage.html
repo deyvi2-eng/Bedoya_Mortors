@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventario General | Bedoya Motors{% endblock %}
+{% block header_title %}Control e Ingreso de Mercadería{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div>
+            <h2 class="text-base font-bold text-gray-900 leading-none">Catálogo de Almacén</h2>
+            <p class="text-xs text-gray-400 mt-1">Alta y visualización de repuestos de motocicletas en tiempo real.</p>
+        </div>
+        <button onclick="toggleModal('modal-product')" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 px-5 rounded-xl text-xs shadow-md shadow-brand-600/10 transition-all active:scale-95 flex items-center justify-center gap-2">
+            <i class="ph-bold ph-plus"></i> Añadir Nuevo Repuesto
+        </button>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto no-scrollbar">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4 text-left">Ficha Técnica</th>
+                        <th class="px-6 py-4 text-left">Categoría</th>
+                        <th class="px-6 py-4 text-right">Costo</th>
+                        <th class="px-6 py-4 text-right">P. Público</th>
+                        <th class="px-6 py-4 text-center">Unidades</th>
+                        <th class="px-6 py-4 text-center">Estado</th>
+                        <th class="px-6 py-4 text-right">Acciones</th> </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 text-sm text-gray-700">
+                    {% for p in products %}
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="px-6 py-3.5 flex items-center gap-3.5">
+                            <div class="w-11 h-11 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+                                {% if p.image %}
+                                    <img src="{{ p.image.url }}" alt="Repuesto" class="w-full h-full object-cover">
+                                {% else %}
+                                    <i class="ph ph-image text-gray-300 text-xl"></i>
+                                {% endif %}
+                            </div>
+                            <div class="min-w-0">
+                                <span class="text-xs font-bold text-gray-900 block leading-none mb-1">{{ p.code }}</span>
+                                <span class="text-xs text-gray-400 font-medium block truncate w-48">{{ p.name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide border border-gray-200/40">{{ p.category.name }}</span>
+                        </td>
+                        <td class="px-6 py-3.5 text-right font-medium text-gray-400">${{ p.purchase_price }}</td>
+                        <td class="px-6 py-3.5 text-right font-bold text-brand-600">${{ p.sale_price }}</td>
+                        <td class="px-6 py-3.5 text-center">
+                            {% if p.stock_actual <= p.stock_critico %}
+                                <span class="bg-red-50 text-red-600 font-black px-2.5 py-1 rounded-lg text-xs border border-red-100">¡{{ p.stock_actual }} CRÍTICO!</span>
+                            {% elif p.stock_actual <= p.stock_minimo %}
+                                <span class="bg-amber-50 text-amber-600 font-bold px-2.5 py-1 rounded-lg text-xs border border-amber-100">{{ p.stock_actual }} (Bajo)</span>
+                            {% else %}
+                                <span class="bg-gray-50 text-gray-800 font-bold px-2.5 py-1 rounded-lg text-xs border border-gray-200/60">{{ p.stock_actual }} u.</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3.5 text-center">
+                            {% if p.is_active %}
+                                <span class="w-2 h-2 bg-green-500 rounded-full inline-block shadow-[0_0_6px_rgba(34,197,94,0.4)]"></span>
+                            {% else %}
+                                <span class="w-2 h-2 bg-gray-300 rounded-full inline-block"></span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3.5 text-right">
+                            <button onclick="openStockModal('{{ p.id }}', '{{ p.code }}', '{{ p.name }}')" class="text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                + Ingresar
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-400 text-xs">
+                            <i class="ph ph-package text-4xl text-gray-200 mb-2 block"></i> Almacén vacío. Agregue productos para comenzar.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-product" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-xl w-full border border-gray-100">
+            
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Alta de Nuevo Producto</h3>
+                <button onclick="toggleModal('modal-product')" class="text-gray-400 hover:text-gray-600">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <form id="form-product" class="space-y-4">
+                    <div>
+                        <div class="mt-1 flex justify-center px-6 pt-4 pb-5 border-2 border-gray-200 border-dashed rounded-xl hover:border-brand-500 transition-colors relative h-36 items-center" id="image-drop-area">
+                            <div class="space-y-1 text-center z-10" id="image-placeholder">
+                                <i class="ph ph-camera text-3xl text-gray-400 mx-auto"></i>
+                                <div class="flex text-xs text-gray-500 justify-center mt-1">
+                                    <label for="image_upload" class="relative cursor-pointer font-bold text-brand-600 hover:text-brand-500">
+                                        <span>Seleccionar foto</span>
+                                        <input id="image_upload" name="image" type="file" accept="image/*" class="sr-only">
+                                    </label>
+                                </div>
+                            </div>
+                            <img id="image-preview" src="" alt="Preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-xl">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Comercial</label>
+                        <input type="text" name="name" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-500 outline-none text-xs font-medium">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría</label>
+                            <select name="category" required class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-500 outline-none text-xs font-medium">
+                                <option value="">Seleccione...</option>
+                                {% for c in categories %}
+                                    <option value="{{ c.id }}">{{ c.name }} ({{ c.prefix }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Proveedor</label>
+                            <select name="supplier" class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-500 outline-none text-xs font-medium">
+                                <option value="">Ninguno...</option>
+                                {% for s in suppliers %}
+                                    <option value="{{ s.id }}">{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Costo ($)</label>
+                            <input type="number" step="0.01" name="purchase_price" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs font-bold text-center">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">P. Venta ($)</label>
+                            <input type="number" step="0.01" name="sale_price" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs font-bold text-center text-brand-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Mínimo Stock</label>
+                            <input type="number" name="stock_minimo" value="5" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs font-bold text-center">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-3 flex justify-end gap-2 border-t border-gray-100">
+                <button type="button" onclick="toggleModal('modal-product')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancelar</button>
+                <button type="button" id="btn-save-product" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 rounded-lg hover:bg-brand-500 shadow-md">Guardar Registro</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-stock" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-sm w-full border border-gray-100">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Ingreso de Mercadería</h3>
+                <button onclick="toggleModal('modal-stock')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" id="lbl-stock-code"></p>
+                    <p class="text-sm font-bold text-gray-900 leading-tight" id="lbl-stock-name"></p>
+                </div>
+                <form id="form-stock" class="space-y-4">
+                    <input type="hidden" id="stock_product_id">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad Recibida</label>
+                        <input type="number" id="stock_quantity" min="1" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-lg font-bold text-center focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ref. Factura Proveedor (Opcional)</label>
+                        <input type="text" id="stock_invoice" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </form>
+            </div>
+            <div class="bg-gray-50 px-6 py-3 flex justify-end gap-2 border-t border-gray-100">
+                <button type="button" onclick="toggleModal('modal-stock')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancelar</button>
+                <button type="button" id="btn-save-stock" class="px-4 py-2 text-xs font-bold text-white bg-green-600 rounded-lg hover:bg-green-500 shadow-md">Confirmar Ingreso</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Obtener Token de Seguridad de Django
+    const getCSRFToken = () => document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
+
+    // Función global para abrir/cerrar cualquier modal
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        modal.classList.contains('hidden') ? modal.classList.remove('hidden') : modal.classList.add('hidden');
+    }
+
+    // ==========================================
+    // LÓGICA MODAL 1: CREAR NUEVO PRODUCTO
+    // ==========================================
+    const uploader = document.getElementById('image_upload');
+    uploader.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('image-preview').src = e.target.result;
+                document.getElementById('image-preview').classList.remove('hidden');
+                document.getElementById('image-placeholder').classList.add('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('btn-save-product').addEventListener('click', function() {
+        const form = document.getElementById('form-product');
+        if(!form.checkValidity()) return form.reportValidity();
+
+        const formData = new FormData(form);
+        this.disabled = true;
+        this.innerText = 'Guardando...';
+
+        fetch('/inventory/api/product/create/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken() },
+            body: formData
+        })
+        .then(res => res.json().then(data => ({ status: res.status, body: data })))
+        .then(result => {
+            if (result.status === 201) {
+                Swal.fire({ title: 'Éxito', text: `Repuesto guardado con código: ${result.body.code}`, icon: 'success', confirmButtonColor: '#0d9488' })
+                .then(() => window.location.reload());
+            } else {
+                Swal.fire('Error', result.body.error, 'error');
+                this.disabled = false;
+                this.innerText = 'Guardar Registro';
+            }
+        });
+    });
+
+    // ==========================================
+    // LÓGICA MODAL 2: INGRESAR STOCK
+    // ==========================================
+    function openStockModal(id, code, name) {
+        document.getElementById('stock_product_id').value = id;
+        document.getElementById('lbl-stock-code').innerText = code;
+        document.getElementById('lbl-stock-name').innerText = name;
+        document.getElementById('stock_quantity').value = '';
+        document.getElementById('stock_invoice').value = '';
+        toggleModal('modal-stock');
+    }
+
+    document.getElementById('btn-save-stock').addEventListener('click', function() {
+        const prodId = document.getElementById('stock_product_id').value;
+        const qty = document.getElementById('stock_quantity').value;
+        const invoice = document.getElementById('stock_invoice').value;
+
+        if(!qty || qty <= 0) return Swal.fire('Atención', 'Ingrese una cantidad válida mayor a cero.', 'warning');
+
+        this.disabled = true;
+        this.innerText = 'Procesando...';
+
+        fetch('/inventory/api/product/add-stock/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ product_id: prodId, quantity: qty, invoice_ref: invoice })
+        })
+        .then(res => res.json().then(data => ({ status: res.status, body: data })))
+        .then(result => {
+            if (result.status === 200) {
+                Swal.fire({ title: 'Ingreso Exitoso', text: 'Stock actualizado correctamente.', icon: 'success', confirmButtonColor: '#0d9488' })
+                .then(() => window.location.reload());
+            } else {
+                Swal.fire('Error', result.body.error, 'error');
+                this.disabled = false;
+                this.innerText = 'Confirmar Ingreso';
+            }
+        });
+    });
+</script>
+{% endblock %}

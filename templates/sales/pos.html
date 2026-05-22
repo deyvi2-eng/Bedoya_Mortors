@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}POS | Bedoya Motors{% endblock %}
+
+{% block extra_head %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    /* Estilización del Select2 para móviles y web moderna */
+    .select2-container--default .select2-selection--single {
+        height: 52px;
+        border-radius: 1rem;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        padding-left: 0.5rem;
+        background-color: #ffffff;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 50px; right: 12px; }
+    .select2-dropdown { border-radius: 1rem; border: 1px solid #e5e7eb; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); overflow: hidden; }
+</style>
+{% endblock %}
+
+{% block header_title %}Punto de Venta (POS){% endblock %}
+
+{% block content %}
+<div class="h-full flex flex-col lg:flex-row gap-4 md:gap-6">
+    
+    <div class="flex-1 flex flex-col bg-white rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px]">
+        
+        <div class="p-4 md:p-6 border-b border-gray-100 bg-white z-10">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Escanear o Buscar Producto</label>
+            <select id="product-search" class="w-full text-sm md:text-base">
+                <option value="">Buscar repuesto o código...</option>
+                {% for p in products %}
+                    <option value="{{ p.id }}" data-name="{{ p.name }}" data-code="{{ p.code }}" data-price="{{ p.sale_price }}" data-stock="{{ p.stock_actual }}">
+                        {{ p.code }} - {{ p.name }} (Stock: {{ p.stock_actual }}) - ${{ p.sale_price }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="flex-1 overflow-y-auto bg-gray-50/50 p-3 md:p-6">
+            <div class="bg-white border border-gray-100 rounded-xl md:rounded-2xl overflow-hidden shadow-sm">
+                
+                <div class="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <div class="col-span-5">Producto</div>
+                    <div class="col-span-2 text-right">Precio</div>
+                    <div class="col-span-3 text-center">Cantidad</div>
+                    <div class="col-span-2 text-right">Subtotal</div>
+                </div>
+
+                <div id="cart-items" class="divide-y divide-gray-100">
+                    <div id="empty-cart-msg" class="p-8 md:p-12 text-center text-gray-400">
+                        <i class="ph ph-shopping-cart text-5xl mb-3 md:mb-4 block opacity-50"></i>
+                        <p class="text-sm md:text-base">El carrito está vacío.<br>Busque un producto para comenzar.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full lg:w-[400px] flex flex-col gap-4 md:gap-6 shrink-0">
+        
+        <div class="bg-white p-5 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100">
+            <h3 class="text-sm md:text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="ph-fill ph-user-circle text-brand-600 text-xl"></i> Facturación a
+            </h3>
+            
+            <div class="mb-4">
+                <select id="customer-select" class="w-full text-sm">
+                    <option value="">Seleccione un cliente...</option>
+                    {% for c in customers %}
+                        <option value="{{ c.id }}">{{ c.cedula }} - {{ c.first_name }} {{ c.last_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <select id="payment-method" class="w-full h-12 md:h-14 bg-gray-50 border border-gray-200 text-gray-700 text-sm md:text-base font-medium rounded-xl px-4 focus:ring-2 focus:ring-brand-500 outline-none transition-all">
+                    <option value="CASH">💵 Pago en Efectivo</option>
+                    <option value="TRANSFER">🏦 Transferencia Bancaria</option>
+                    <option value="CARD">💳 Tarjeta de Crédito/Débito</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="bg-gray-900 rounded-2xl md:rounded-3xl shadow-lg p-5 md:p-6 flex flex-col text-white relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 rounded-full bg-white opacity-5"></div>
+            
+            <h3 class="text-gray-400 text-xs md:text-sm font-semibold uppercase tracking-widest mb-4 md:mb-6">Resumen</h3>
+            
+            <div class="space-y-2 md:space-y-3 mb-4 md:mb-6 text-sm md:text-base">
+                <div class="flex justify-between items-center text-gray-300">
+                    <span>Subtotal</span>
+                    <span id="lbl-subtotal" class="font-medium">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center text-gray-300">
+                    <span>Descuento</span>
+                    <span class="font-medium">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center text-gray-300 pb-4 border-b border-gray-700">
+                    <span>IVA (0%)</span>
+                    <span id="lbl-iva" class="font-medium">$0.00</span>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end mb-6 md:mb-8">
+                <span class="text-gray-300 text-base md:text-lg">Total a Pagar</span>
+                <span id="lbl-total" class="text-4xl md:text-5xl font-bold text-brand-400 tracking-tight">$0.00</span>
+            </div>
+            
+            <button id="btn-process" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-4 md:py-5 rounded-xl shadow-lg shadow-brand-600/30 transition-all active:scale-[0.98] flex justify-center items-center gap-2 text-sm md:text-base">
+                <i class="ph-bold ph-receipt text-xl"></i> Emitir Factura
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let cart = [];
+
+    $(document).ready(function() {
+        $('#product-search').select2({ width: '100%' });
+        $('#customer-select').select2({ width: '100%' });
+
+        $('#product-search').on('select2:select', function (e) {
+            const option = $(e.params.data.element);
+            addToCart(option.val(), option.data('code'), option.data('name'), parseFloat(option.data('price')), parseInt(option.data('stock')));
+            $(this).val('').trigger('change');
+        });
+    });
+
+    function addToCart(id, code, name, price, stock) {
+        const existingItem = cart.find(item => item.id === id);
+        if (existingItem) {
+            if (existingItem.quantity < stock) {
+                existingItem.quantity++;
+                existingItem.subtotal = existingItem.quantity * price;
+            } else {
+                Swal.fire({ icon: 'warning', title: 'Sin Stock', text: 'Stock máximo alcanzado.', confirmButtonColor: '#0d9488' });
+            }
+        } else {
+            cart.push({ id, code, name, price, stock, quantity: 1, subtotal: price });
+        }
+        renderCart();
+    }
+
+    function updateQuantity(id, change) {
+        const item = cart.find(item => item.id === id);
+        if (item) {
+            const newQty = item.quantity + change;
+            if (newQty > 0 && newQty <= item.stock) {
+                item.quantity = newQty;
+                item.subtotal = item.quantity * item.price;
+            }
+        }
+        renderCart();
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(item => item.id !== id);
+        renderCart();
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cart-items');
+        let total = 0;
+
+        if (cart.length === 0) {
+            container.innerHTML = `
+                <div id="empty-cart-msg" class="p-8 md:p-12 text-center text-gray-400">
+                    <i class="ph ph-shopping-cart text-5xl mb-3 block opacity-50"></i>
+                    <p class="text-sm md:text-base">El carrito está vacío.</p>
+                </div>`;
+        } else {
+            container.innerHTML = '';
+            cart.forEach(item => {
+                total += item.subtotal;
+                /* El diseño de la tarjeta es adaptable. En celular apila info, en PC se estira como tabla */
+                container.innerHTML += `
+                    <div class="flex flex-col lg:grid lg:grid-cols-12 gap-3 lg:gap-4 p-4 lg:px-6 lg:py-4 hover:bg-gray-50 transition-colors items-start lg:items-center">
+                        
+                        <div class="w-full lg:col-span-5 flex justify-between items-start lg:block">
+                            <div class="pr-2">
+                                <div class="text-sm md:text-base font-bold text-gray-900">${item.code}</div>
+                                <div class="text-xs md:text-sm text-gray-500 line-clamp-2">${item.name}</div>
+                            </div>
+                            <button onclick="removeFromCart('${item.id}')" class="lg:hidden text-gray-300 hover:text-red-500 p-2 -mt-2 -mr-2">
+                                <i class="ph-fill ph-x-circle text-2xl"></i>
+                            </button>
+                        </div>
+
+                        <div class="w-full flex justify-between items-center lg:contents mt-2 lg:mt-0">
+                            <div class="lg:col-span-2 text-left lg:text-right text-sm md:text-base font-medium text-gray-600">
+                                <span class="lg:hidden text-xs text-gray-400 mr-1">P.U:</span>$${item.price.toFixed(2)}
+                            </div>
+                            
+                            <div class="lg:col-span-3 flex justify-center">
+                                <div class="inline-flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
+                                    <button onclick="updateQuantity('${item.id}', -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-gray-600 hover:text-brand-600 font-bold active:scale-95 transition-transform">-</button>
+                                    <span class="w-10 text-center text-sm md:text-base font-bold text-gray-900">${item.quantity}</span>
+                                    <button onclick="updateQuantity('${item.id}', 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-gray-600 hover:text-brand-600 font-bold active:scale-95 transition-transform">+</button>
+                                </div>
+                            </div>
+
+                            <div class="lg:col-span-2 text-right flex justify-end items-center gap-4">
+                                <div class="text-base md:text-lg font-bold text-gray-900">
+                                    <span class="lg:hidden text-xs text-gray-400 mr-1">Sub:</span>$${item.subtotal.toFixed(2)}
+                                </div>
+                                <button onclick="removeFromCart('${item.id}')" class="hidden lg:block text-gray-300 hover:text-red-500 transition-colors">
+                                    <i class="ph-fill ph-trash text-2xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('lbl-subtotal').innerText = '$' + total.toFixed(2);
+        document.getElementById('lbl-total').innerText = '$' + total.toFixed(2);
+    }
+
+    // El resto de la lógica de envío fetch se mantiene intacta...
+    document.getElementById('btn-process').addEventListener('click', function() {
+        const customerId = document.getElementById('customer-select').value;
+        const paymentMethod = document.getElementById('payment-method').value;
+
+        if (!customerId) return Swal.fire({ icon: 'warning', title: 'Falta Cliente', text: 'Seleccione un cliente para facturar.', confirmButtonColor: '#0d9488' });
+        if (cart.length === 0) return Swal.fire({ icon: 'warning', title: 'Carrito Vacío', text: 'Agregue productos primero.', confirmButtonColor: '#0d9488' });
+
+        const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken=')).split('=')[1];
+        const payload = { customer_id: customerId, payment_method: paymentMethod, items: cart.map(item => ({ product_id: item.id, quantity: item.quantity })) };
+
+        this.disabled = true;
+        this.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-xl"></i> Procesando...';
+
+        fetch('/sales/api/checkout/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(result => {
+            if (result.status === 201) {
+                Swal.fire({
+                    title: '¡Venta Exitosa!',
+                    text: 'Factura generada: ' + result.body.invoice_number,
+                    icon: 'success',
+                    confirmButtonColor: '#0d9488',
+                    confirmButtonText: 'Imprimir PDF'
+                }).then(() => {
+                    window.open(`/sales/invoice/${result.body.invoice_number}/pdf/`, '_blank');
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: result.body.error, confirmButtonColor: '#0d9488' });
+                resetButton();
+            }
+        })
+        .catch(() => {
+            Swal.fire({ icon: 'error', title: 'Error de Red', text: 'Verifique su conexión.', confirmButtonColor: '#0d9488' });
+            resetButton();
+        });
+    });
+
+    function resetButton() {
+        const btn = document.getElementById('btn-process');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph-bold ph-receipt text-xl"></i> Emitir Factura';
+    }
+</script>
+{% endblock %}

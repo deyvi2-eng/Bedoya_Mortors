@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Factura {{ sale.invoice_number }}</title>
+    <style>
+        /* Configuraciones específicas para xhtml2pdf */
+        @page {
+            size: a4 portrait;
+            margin: 1.5cm 1.5cm 2cm 1.5cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 11px;
+            color: #374151;
+            line-height: 1.4;
+        }
+        /* Encabezado */
+        .header-table {
+            width: 100%;
+            border-bottom: 2px solid #0d9488;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            font-size: 26px;
+            color: #0d9488;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .invoice-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #111827;
+            text-align: right;
+            margin-bottom: 5px;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        
+        /* Información de Facturación */
+        .info-table {
+            width: 100%;
+            margin-bottom: 25px;
+        }
+        .info-table td {
+            vertical-align: top;
+            width: 50%;
+        }
+        .section-title {
+            font-size: 10px;
+            font-weight: bold;
+            color: #9ca3af;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .box {
+            background-color: #f9fafb;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+        }
+
+        /* Tabla de Productos */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+        .items-table th {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            font-weight: bold;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #d1d5db;
+        }
+        .items-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        
+        /* Totales */
+        .totals-wrapper {
+            width: 100%;
+        }
+        .totals-table {
+            width: 40%;
+            float: right;
+            border-collapse: collapse;
+        }
+        .totals-table td {
+            padding: 8px;
+        }
+        .total-row td {
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #0d9488;
+            color: #ffffff;
+        }
+
+        /* Pie de página */
+        .footer {
+            text-align: center;
+            font-size: 9px;
+            color: #9ca3af;
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+
+    <table class="header-table">
+        <tr>
+            <td style="width: 60%;">
+                <div class="company-name">{{ company.name }}</div>
+                <div><strong>RUC:</strong> {{ company.ruc }}</div>
+                <div>{{ company.address }} - {{ company.city }}</div>
+                <div>{{ company.phone }} | {{ company.email }}</div>
+            </td>
+            <td style="width: 40%;" class="text-right">
+                <div class="invoice-title">FACTURA COMERCIAL</div>
+                <div style="font-size: 14px; color: #ef4444; font-weight: bold;">Nº {{ sale.invoice_number }}</div>
+                <div style="margin-top: 5px;"><strong>Fecha de Emisión:</strong> <br> {{ sale.created_at|date:"d M Y - H:i" }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="info-table">
+        <tr>
+            <td style="padding-right: 10px;">
+                <div class="section-title">Facturar a:</div>
+                <div class="box">
+                    <div style="font-size: 13px; font-weight: bold; color: #111827; margin-bottom: 4px;">{{ customer.first_name }} {{ customer.last_name }}</div>
+                    <div><strong>CI/RUC:</strong> {{ customer.cedula }}</div>
+                    <div><strong>Teléfono:</strong> {{ customer.phone }}</div>
+                    <div><strong>Dirección:</strong> {{ customer.address }}, {{ customer.city }}</div>
+                </div>
+            </td>
+            <td style="padding-left: 10px;">
+                <div class="section-title">Detalles de la Operación:</div>
+                <div class="box">
+                    <div><strong>Atendido por:</strong> {{ sale.seller.get_full_name }}</div>
+                    <div><strong>Método de Pago:</strong> {{ sale.get_payment_method_display }}</div>
+                    <div><strong>Estado de Transacción:</strong> {% if sale.is_voided %}<span style="color: red;">ANULADA</span>{% else %}PROCESADA{% endif %}</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 15%;">CÓDIGO</th>
+                <th style="width: 40%;">DESCRIPCIÓN DEL REPUESTO</th>
+                <th style="width: 15%;" class="text-center">CANTIDAD</th>
+                <th style="width: 15%;" class="text-right">P. UNITARIO</th>
+                <th style="width: 15%;" class="text-right">SUBTOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in details %}
+            <tr>
+                <td style="font-weight: bold; color: #111827;">{{ item.product.code }}</td>
+                <td>{{ item.product.name }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-right">${{ item.unit_price }}</td>
+                <td class="text-right font-bold">${{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals-wrapper">
+        <table class="totals-table">
+            <tr>
+                <td>Subtotal Venta:</td>
+                <td class="text-right">${{ sale.subtotal }}</td>
+            </tr>
+            <tr>
+                <td>Descuento Aplicado:</td>
+                <td class="text-right">${{ sale.discount }}</td>
+            </tr>
+            <tr>
+                <td style="border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">Impuesto IVA (15%):</td>
+                <td class="text-right" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">${{ sale.iva }}</td>
+            </tr>
+            <tr class="total-row">
+                <td style="padding: 10px;">TOTAL A PAGAR:</td>
+                <td class="text-right" style="padding: 10px;">${{ sale.total }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="clear: both;"></div>
+    <div class="footer">
+        <strong>Bedoya Motors</strong> agradece su preferencia. Los productos eléctricos no tienen devolución.<br>
+        Documento generado automáticamente por el ERP de Facturación.
+    </div>
+
+</body>
+</html>
