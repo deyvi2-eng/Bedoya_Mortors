@@ -14,7 +14,8 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .services import generate_invoice_pdf
 from django.views.generic import TemplateView
-
+from sales.services import generate_invoice_pdf
+from notifications.services import send_invoice_email_async
 
 class ProcessCheckoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -83,11 +84,29 @@ class ProcessCheckoutAPIView(APIView):
                 cash_session.system_balance += sale.total
                 cash_session.save()
 
+
+
+
+                    # -- NUEVO: Generar PDF y Enviar Correo en Segundo Plano --
+                try:
+                    pdf_bytes = generate_invoice_pdf(sale)
+                    send_invoice_email_async(
+                        customer_email=customer.email,
+                        customer_name=f"{customer.first_name} {customer.last_name}",
+                        invoice_number=sale.invoice_number,
+                        pdf_bytes=pdf_bytes
+                    )
+                except Exception as e:
+                        # Si falla el envío de correo, la venta igual se completa
+                    print(f"Alerta: Venta guardada pero correo no enviado. {e}")
+
+                    # Retorno exitoso al Frontend
                 return Response({
                     "message": "Venta procesada exitosamente.",
                     "invoice_number": sale.invoice_number,
                     "total": str(sale.total)
                 }, status=status.HTTP_201_CREATED)
+
 
         except Customer.DoesNotExist:
             return Response({"error": "Cliente no encontrado."}, status=status.HTTP_404_NOT_FOUND)

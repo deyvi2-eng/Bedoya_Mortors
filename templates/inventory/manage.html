@@ -30,12 +30,13 @@
                 <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
                     <tr>
                         <th class="px-6 py-4 text-left">Ficha Técnica</th>
-                        <th class="px-6 py-4 text-left">Categoría</th>
+                        <th class="px-6 py-4 text-left">Categoría / Marca</th>
                         <th class="px-6 py-4 text-right">Costo</th>
                         <th class="px-6 py-4 text-right">P. Público</th>
                         <th class="px-6 py-4 text-center">Unidades</th>
                         <th class="px-6 py-4 text-center">Estado</th>
-                        <th class="px-6 py-4 text-right">Acciones</th> </tr>
+                        <th class="px-6 py-4 text-right">Acciones</th>
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 text-sm text-gray-700">
                     {% for p in products %}
@@ -54,7 +55,8 @@
                             </div>
                         </td>
                         <td class="px-6 py-3.5">
-                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide border border-gray-200/40">{{ p.category.name }}</span>
+                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide border border-gray-200/40 block mb-1 w-max">{{ p.category.name }}</span>
+                            <span class="text-[10px] text-gray-400">{{ p.brand|default:"Sin Marca" }}</span>
                         </td>
                         <td class="px-6 py-3.5 text-right font-medium text-gray-400">${{ p.purchase_price }}</td>
                         <td class="px-6 py-3.5 text-right font-bold text-brand-600">${{ p.sale_price }}</td>
@@ -95,19 +97,19 @@
 
 <div id="modal-product" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-xl w-full border border-gray-100">
+        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-2xl w-full border border-gray-100 mt-10 mb-10">
             
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
                 <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Alta de Nuevo Producto</h3>
                 <button onclick="toggleModal('modal-product')" class="text-gray-400 hover:text-gray-600">
                     <i class="ph-bold ph-x text-lg"></i>
                 </button>
             </div>
 
-            <div class="p-6">
+            <div class="p-6 overflow-y-auto max-h-[70vh]">
                 <form id="form-product" class="space-y-4">
                     <div>
-                        <div class="mt-1 flex justify-center px-6 pt-4 pb-5 border-2 border-gray-200 border-dashed rounded-xl hover:border-brand-500 transition-colors relative h-36 items-center" id="image-drop-area">
+                        <div class="mt-1 flex justify-center px-6 pt-4 pb-5 border-2 border-gray-200 border-dashed rounded-xl hover:border-brand-500 transition-colors relative h-32 items-center" id="image-drop-area">
                             <div class="space-y-1 text-center z-10" id="image-placeholder">
                                 <i class="ph ph-camera text-3xl text-gray-400 mx-auto"></i>
                                 <div class="flex text-xs text-gray-500 justify-center mt-1">
@@ -120,14 +122,16 @@
                             <img id="image-preview" src="" alt="Preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-xl">
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Comercial</label>
-                        <input type="text" name="name" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-500 outline-none text-xs font-medium">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Comercial *</label>
+                            <input type="text" name="name" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                        </div>
+
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría</label>
-                            <select name="category" required class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-500 outline-none text-xs font-medium">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría *</label>
+                            <select name="category" required class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                                 <option value="">Seleccione...</option>
                                 {% for c in categories %}
                                     <option value="{{ c.id }}">{{ c.name }} ({{ c.prefix }})</option>
@@ -135,16 +139,34 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Proveedor</label>
-                            <select name="supplier" class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-500 outline-none text-xs font-medium">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Proveedor Predeterminado</label>
+                            <select name="supplier" class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                                 <option value="">Ninguno...</option>
                                 {% for s in suppliers %}
                                     <option value="{{ s.id }}">{{ s.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Código de Barras (Opcional)</label>
+                            <input type="text" name="barcode" placeholder="Ej: 786123456789" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Marca</label>
+                            <input type="text" name="brand" placeholder="Ej: Yamaha, Honda, Genérico" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Compatibilidad (Modelos de Moto)</label>
+                            <input type="text" name="model_compatibility" placeholder="Ej: Universal, FZ16, CBR250" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ubicación Físca en Bodega</label>
+                            <input type="text" name="location" placeholder="Ej: Pasillo 3, Estante B" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                        </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-4">
+
+                    <div class="grid grid-cols-3 gap-4 border-t border-gray-100 pt-4 mt-2">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Costo ($)</label>
                             <input type="number" step="0.01" name="purchase_price" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs font-bold text-center">
@@ -161,9 +183,9 @@
                 </form>
             </div>
             
-            <div class="bg-gray-50 px-6 py-3 flex justify-end gap-2 border-t border-gray-100">
-                <button type="button" onclick="toggleModal('modal-product')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancelar</button>
-                <button type="button" id="btn-save-product" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 rounded-lg hover:bg-brand-500 shadow-md">Guardar Registro</button>
+            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100 sticky bottom-0 z-10">
+                <button type="button" onclick="toggleModal('modal-product')" class="px-5 py-2.5 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">Cancelar</button>
+                <button type="button" id="btn-save-product" class="px-5 py-2.5 text-xs font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-500 shadow-md transition-all">Guardar Registro</button>
             </div>
         </div>
     </div>
@@ -202,18 +224,13 @@
 </div>
 
 <script>
-    // Obtener Token de Seguridad de Django
     const getCSRFToken = () => document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
 
-    // Función global para abrir/cerrar cualquier modal
     function toggleModal(id) {
         const modal = document.getElementById(id);
         modal.classList.contains('hidden') ? modal.classList.remove('hidden') : modal.classList.add('hidden');
     }
 
-    // ==========================================
-    // LÓGICA MODAL 1: CREAR NUEVO PRODUCTO
-    // ==========================================
     const uploader = document.getElementById('image_upload');
     uploader.addEventListener('change', function() {
         const file = this.files[0];
@@ -254,9 +271,6 @@
         });
     });
 
-    // ==========================================
-    // LÓGICA MODAL 2: INGRESAR STOCK
-    // ==========================================
     function openStockModal(id, code, name) {
         document.getElementById('stock_product_id').value = id;
         document.getElementById('lbl-stock-code').innerText = code;

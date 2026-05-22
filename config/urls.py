@@ -12,6 +12,7 @@ urlpatterns = [
     path('reports/', include('reports.urls')),
     # Añadiremos la ruta del inventario en el siguiente paso
     path('inventory/', include('inventory.urls')), 
+    
 ]
 
 # Habilitar archivos multimedia (imágenes) en modo local

@@ -1,6 +1,7 @@
 import threading
 from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import EmailMessage
 
 def send_critical_stock_email(product_name, product_code, current_stock, minimum_stock):
     """
@@ -39,4 +40,38 @@ def trigger_stock_alert_async(product):
         target=send_critical_stock_email,
         args=(product.name, product.code, product.stock_actual, product.stock_minimo)
     )
+    thread.start()
+
+def send_invoice_email_async(customer_email, customer_name, invoice_number, pdf_bytes):
+    """
+    Envía la factura en PDF al correo del cliente en segundo plano.
+    """
+    if not customer_email:
+        return # Si el cliente no tiene correo, abortamos silenciosamente.
+
+    def _send_email():
+        subject = f"Bedoya Motors - Factura Electrónica #{invoice_number}"
+        message = (
+            f"Estimado/a {customer_name},\n\n"
+            f"Bedoya Motors agradece su preferencia. Adjuntamos a este correo "
+            f"su comprobante de venta correspondiente a la factura {invoice_number}.\n\n"
+            f"Cualquier novedad, no dude en contactarnos.\n"
+            f"Atentamente,\nEquipo de Bedoya Motors"
+        )
+        
+        try:
+            email = EmailMessage(
+                subject=subject,
+                body=message,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[customer_email]
+            )
+            # Adjuntamos el PDF directamente desde los bytes en memoria
+            email.attach(f'Factura_{invoice_number}.pdf', pdf_bytes, 'application/pdf')
+            email.send(fail_silently=False)
+        except Exception as e:
+            print(f"Error enviando factura al correo: {e}")
+
+    # Ejecutar en hilo secundario para no retrasar la carga del Punto de Venta
+    thread = threading.Thread(target=_send_email)
     thread.start()

@@ -93,3 +93,7 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='clave')
 
 # Correo que recibirá las alertas de inventario
 ADMIN_ALERTS_EMAIL = env('ADMIN_ALERTS_EMAIL', default=EMAIL_HOST_USER)
+# Al final de config/settings.py agregue o modifique:
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'

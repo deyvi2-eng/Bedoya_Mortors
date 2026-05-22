@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Product, Category, Supplier
 from django.db import transaction
@@ -20,32 +21,40 @@ class InventoryDashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 class ProductCreateAPI(APIView):
-    # MultiPartParser es vital para poder recibir archivos de imagen
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, *args, **kwargs):
         try:
-            # Extraer datos del formulario
+            # Campos obligatorios
             category_id = request.data.get('category')
-            supplier_id = request.data.get('supplier')
             name = request.data.get('name')
             purchase_price = request.data.get('purchase_price')
             sale_price = request.data.get('sale_price')
-            stock_minimo = request.data.get('stock_minimo')
-            image = request.FILES.get('image') # Capturar la imagen
+            
+            # Campos opcionales (Los que faltaban)
+            supplier_id = request.data.get('supplier')
+            barcode = request.data.get('barcode', '')
+            brand = request.data.get('brand', '')
+            model_compatibility = request.data.get('model_compatibility', '')
+            location = request.data.get('location', '')
+            stock_minimo = request.data.get('stock_minimo', 5)
+            image = request.FILES.get('image')
 
-            # Validaciones básicas
             if not all([category_id, name, purchase_price, sale_price]):
                 return Response({"error": "Faltan campos obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
 
             category = Category.objects.get(id=category_id)
             supplier = Supplier.objects.get(id=supplier_id) if supplier_id else None
 
-            # Crear el producto (el código BED-XXX se genera automáticamente por el modelo)
+            # Crear producto con TODOS los campos de la arquitectura
             product = Product.objects.create(
                 category=category,
                 supplier=supplier,
                 name=name,
+                barcode=barcode,
+                brand=brand,
+                model_compatibility=model_compatibility,
+                location=location,
                 purchase_price=purchase_price,
                 sale_price=sale_price,
                 stock_minimo=stock_minimo,
@@ -58,7 +67,7 @@ class ProductCreateAPI(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except Category.DoesNotExist:
-            return Response({"error": "La categoría seleccionada no existe."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "La categoría no existe."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
