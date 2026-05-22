@@ -1,52 +1,146 @@
 from django.contrib.auth.views import LoginView
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from django.views import View
 from django.views.generic import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    UserPassesTestMixin
+)
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-class CustomLoginView(LoginView):
-    template_name = 'accounts/login.html'
-    redirect_authenticated_user = True # Si ya está logueado, lo manda al Dashboard
 
-class UserManagementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+# =========================
+# LOGIN
+# =========================
+class CustomLoginView(LoginView):
+
+    template_name = 'accounts/login.html'
+
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        return '/'
+
+
+# =========================
+# LOGOUT
+# =========================
+class LogoutView(View):
+
+    def get(self, request):
+
+        logout(request)
+
+        return redirect('/accounts/login/')
+
+
+# =========================
+# GESTION DE PERSONAL
+# =========================
+class UserManagementView(
+    LoginRequiredMixin,
+    UserPassesTestMixin,
+    TemplateView
+):
+
     template_name = 'accounts/manage.html'
 
     def test_func(self):
-        # SOLO el Administrador puede ver esta pantalla
+
+        # SOLO ADMIN
         return self.request.user.role == 'ADMIN'
 
     def get_context_data(self, **kwargs):
+
         context = super().get_context_data(**kwargs)
-        # Traer todos los usuarios del sistema
-        context['users_list'] = User.objects.all().order_by('-date_joined')
+
+        context['users_list'] = (
+            User.objects.all()
+            .order_by('-date_joined')
+        )
+
         return context
 
+
+# =========================
+# API CREAR USUARIOS
+# =========================
 class UserCreateAPI(APIView):
+
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
-        # Doble validación de seguridad: Solo admins pueden crear usuarios
+
+        # SOLO ADMIN
         if request.user.role != 'ADMIN':
-            return Response({"error": "Acceso denegado. Solo administradores."}, status=status.HTTP_403_FORBIDDEN)
-        
+
+            return Response(
+                {
+                    "error": "Acceso denegado. Solo administradores."
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         data = request.data
+
         try:
-            # Validar si el usuario ya existe
-            if User.objects.filter(username=data.get('username')).exists():
-                return Response({"error": "El nombre de usuario ya está en uso."}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Crear el usuario encriptando la contraseña automáticamente
+
+            username = data.get('username')
+            password = data.get('password')
+
+            # VALIDACIONES
+            if not username or not password:
+
+                return Response(
+                    {
+                        "error": "Usuario y contraseña son obligatorios."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # VALIDAR USUARIO EXISTENTE
+            if User.objects.filter(username=username).exists():
+
+                return Response(
+                    {
+                        "error": "El nombre de usuario ya está en uso."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # CREAR USUARIO
             user = User.objects.create_user(
-                username=data.get('username'),
-                password=data.get('password'),
+                username=username,
+                password=password,
                 first_name=data.get('first_name', ''),
                 last_name=data.get('last_name', ''),
                 email=data.get('email', ''),
                 role=data.get('role', 'SELLER')
             )
-            return Response({"message": "Empleado registrado exitosamente."}, status=status.HTTP_201_CREATED)
+
+            return Response(
+                {
+                    "message": "Empleado registrado exitosamente.",
+                    "user": user.username
+                },
+                status=status.HTTP_201_CREATED
+            )
 
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            return Response(
+                {
+                    "error": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

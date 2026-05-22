@@ -1,10 +1,28 @@
 from django.urls import path
-from .views import InventoryDashboardView, ProductCreateAPI, AddStockAPI
 
-app_name = 'inventory'
+from .views import (
+    InventoryDashboardView,
+    ProductCreateAPI,
+    AddStockAPI
+)
 
 urlpatterns = [
-    path('manage/', InventoryDashboardView.as_view(), name='manage'),
-    path('api/product/create/', ProductCreateAPI.as_view(), name='api-product-create'),
-    path('api/product/add-stock/', AddStockAPI.as_view(), name='api-product-add-stock'),
+
+    path(
+        'manage/',
+        InventoryDashboardView.as_view(),
+        name='manage'
+    ),
+
+    path(
+        'api/create/',
+        ProductCreateAPI.as_view(),
+        name='api-create'
+    ),
+
+    path(
+        'api/add-stock/',
+        AddStockAPI.as_view(),
+        name='api-add-stock'
+    ),
 ]

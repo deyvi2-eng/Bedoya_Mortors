@@ -80,8 +80,20 @@ class AddStockAPI(APIView):
         quantity = request.data.get('quantity')
         invoice_ref = request.data.get('invoice_ref', 'Sin referencia')
 
-        if not product_id or not quantity or int(quantity) <= 0:
-            return Response({"error": "Datos inválidos o cantidad en cero."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            quantity = int(quantity)
+
+            if quantity <= 0:
+                return Response(
+                    {"error": "Cantidad inválida."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except:
+            return Response(
+                {"error": "La cantidad debe ser numérica."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             with transaction.atomic():
