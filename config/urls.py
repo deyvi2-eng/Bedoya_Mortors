@@ -12,7 +12,7 @@ def secret_reset_db(request):
         # 1. Borra absolutamente toda la base de datos sin preguntar
         call_command('flush', interactive=False)
         
-        # 2. Crea automáticamente tu nuevo superusuario administrador
+        # 2. Crea automaticamente el nuevo superusuario administrador
         User = get_user_model()
         User.objects.create_superuser(
             username='admin', 
@@ -29,7 +29,7 @@ def secret_reset_db(request):
                     <li><b>Usuario:</b> admin</li>
                     <li><b>Contraseña:</b> admin123</li>
                 </ul>
-                <h2 style="color: red; margin-top: 30px;">⚠️ IMPORTANTE: Borra este código de tu archivo config/urls.py inmediatamente y vuelve a subir a GitHub por seguridad.</h2>
+                <h2 style="color: red; margin-top: 30px;">⚠️ IMPORTANTE: Borrar este código del archivo config/urls.py inmediatamente y volver a subir a GitHub por seguridad.</h2>
                 <a href="/accounts/login/">Ir a Iniciar Sesión</a>
             </div>
         """)
@@ -37,13 +37,11 @@ def secret_reset_db(request):
         return HttpResponse(f"Hubo un error: {str(e)}")
 
 # ==========================================
-# TUS RUTAS ORIGINALES
+# RUTAS ORIGINALES
 # ==========================================
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('resetear-mi-sistema-secreto/', secret_reset_db), # <--- NUEVA RUTA TEMPORAL
-    
-    # ... Tus otras rutas (accounts, inventory, sales, etc.) ...
+    path('resetear-mi-sistema-secreto/', secret_reset_db),
     path('', include('core.urls')),
     path('accounts/', include('accounts.urls')),
     path('inventory/', include('inventory.urls')),
