@@ -41,8 +41,7 @@ def secret_reset_db(request):
 # ==========================================
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('resetear-mi-sistema-secreto/', secret_reset_db),
-   #path('', include('core.urls')),
+    path('', include('core.urls')),
     path('accounts/', include('accounts.urls')),
     path('inventory/', include('inventory.urls')),
     path('sales/', include('sales.urls')),
