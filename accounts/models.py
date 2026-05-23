@@ -14,7 +14,12 @@ class User(AbstractUser, BaseModel):
         verbose_name="Rol del Usuario"
     )
     phone = models.CharField(max_length=15, blank=True, null=True, verbose_name="Teléfono")
-    
+    def save(self, *args, **kwargs):
+        # Si es superusuario o staff de Django, forzamos que sea ADMIN
+        if self.is_superuser or self.is_staff:
+            self.role = self.Role.ADMIN
+        super().save(*args, **kwargs)
+        
     def is_admin(self):
         return self.role == self.Role.ADMIN
         
