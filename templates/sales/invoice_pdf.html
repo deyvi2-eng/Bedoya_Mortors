@@ -122,7 +122,7 @@
                 <div>{{ company.phone }} | {{ company.email }}</div>
             </td>
             <td style="width: 40%;" class="text-right">
-                <div class="invoice-title">FACTURA COMERCIAL</div>
+                <div class="invoice-title">DETALLE DE COMPRA</div>
                 <div style="font-size: 14px; color: #ef4444; font-weight: bold;">Nº {{ sale.invoice_number }}</div>
                 <div style="margin-top: 5px;"><strong>Fecha de Emisión:</strong> <br> {{ sale.created_at|date:"d M Y - H:i" }}</div>
             </td>
@@ -132,7 +132,7 @@
     <table class="info-table">
         <tr>
             <td style="padding-right: 10px;">
-                <div class="section-title">Facturar a:</div>
+                <div class="section-title">Datos:</div>
                 <div class="box">
                     <div style="font-size: 13px; font-weight: bold; color: #111827; margin-bottom: 4px;">{{ customer.first_name }} {{ customer.last_name }}</div>
                     <div><strong>CI/RUC:</strong> {{ customer.cedula }}</div>
@@ -198,7 +198,7 @@
     <div style="clear: both;"></div>
     <div class="footer">
         <strong>Bedoya Motors</strong> agradece su preferencia. Los productos eléctricos no tienen devolución.<br>
-        Documento generado automáticamente por el ERP de Facturación.
+        Documento generado automáticamente por el ERP Bedoya Motors.
     </div>
 
 </body>

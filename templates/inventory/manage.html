@@ -19,9 +19,11 @@
             <h2 class="text-base font-bold text-gray-900 leading-none">Catálogo de Almacén</h2>
             <p class="text-xs text-gray-400 mt-1">Alta y visualización de repuestos de motocicletas en tiempo real.</p>
         </div>
+        {% if request.user.role == 'ADMIN' %}
         <button onclick="toggleModal('modal-product')" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 px-5 rounded-xl text-xs shadow-md shadow-brand-600/10 transition-all active:scale-95 flex items-center justify-center gap-2">
             <i class="ph-bold ph-plus"></i> Añadir Nuevo Repuesto
         </button>
+        {% endif %}
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -76,10 +78,20 @@
                                 <span class="w-2 h-2 bg-gray-300 rounded-full inline-block"></span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-3.5 text-right">
-                            <button onclick="openStockModal('{{ p.id }}', '{{ p.code }}', '{{ p.name }}')" class="text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
-                                + Ingresar
-                            </button>
+                        <td class="px-6 py-3.5 text-right flex justify-end gap-2">
+                            {% if request.user.role == 'ADMIN' %}
+                                <button onclick="openStockModal('{{ p.id }}', '{{ p.code }}', '{{ p.name }}')" class="text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors" title="Ingresar Stock">
+                                    + Ingresar
+                                </button>
+                                <button onclick="toggleProductStatus({{ p.id }})" class="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 px-2 py-1.5 rounded-lg text-xs font-bold transition-colors" title="Desactivar/Activar">
+                                    <i class="ph-bold ph-power"></i>
+                                </button>
+                                <button onclick="openKardexModal({{ p.id }})" class="text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 px-2 py-1.5 rounded-lg text-xs font-bold transition-colors" title="Ver Hoja de Vida (Kardex)">
+                                    <i class="ph-bold ph-file-text"></i>
+                                </button>
+                            {% else %}
+                                <span class="text-xs text-gray-400 italic">Solo lectura</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}
@@ -223,6 +235,94 @@
     </div>
 </div>
 
+<div id="modal-kardex" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-gray-900 uppercase">Hoja de Vida del Repuesto</h3>
+                <button onclick="toggleModal('modal-kardex')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
+            </div>
+            
+            <div class="p-6 flex-1 overflow-y-auto">
+                <div class="flex items-start gap-4 p-4 bg-brand-50 rounded-xl border border-brand-100 mb-6">
+                    <div class="w-24 h-24 rounded-lg bg-white overflow-hidden border border-brand-200 shrink-0">
+                        <img id="kardex_img" src="" class="w-full h-full object-cover hidden">
+                        <div id="kardex_no_img" class="w-full h-full flex items-center justify-center text-gray-300"><i class="ph ph-image text-3xl"></i></div>
+                    </div>
+                    <div class="flex-1">
+                        <span id="kardex_code" class="text-xs font-mono font-bold text-brand-600 block"></span>
+                        <h4 id="kardex_name" class="text-lg font-black text-gray-900 leading-tight"></h4>
+                        <div class="text-xs text-gray-500 mt-2 grid grid-cols-2 gap-2">
+                            <p><b>Categoría:</b> <span id="kardex_cat"></span></p>
+                            <p><b>Proveedor:</b> <span id="kardex_sup"></span></p>
+                        </div>
+                    </div>
+                    <div class="text-center bg-white p-3 rounded-lg border border-brand-200 shadow-sm min-w-24">
+                        <span class="block text-[10px] uppercase font-bold text-gray-400">Stock Actual</span>
+                        <span id="kardex_stock" class="block text-2xl font-black text-gray-900"></span>
+                    </div>
+                </div>
+
+                <h5 class="text-xs font-bold text-gray-500 uppercase mb-3">Historial de Movimientos</h5>
+                <div class="border border-gray-100 rounded-xl overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            <tr><th>Fecha</th><th>Tipo</th><th>Cant</th><th>Responsable</th><th>Detalle</th></tr>
+                        </thead>
+                        <tbody id="kardex_table_body" class="divide-y divide-gray-50 text-xs text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Pega esto dentro de tu etiqueta <script>
+async function openKardexModal(id) {
+    const res = await fetch(`/inventory/api/product/kardex/${id}/`);
+    const data = await res.json();
+    
+    document.getElementById('kardex_code').innerText = data.product.code;
+    document.getElementById('kardex_name').innerText = data.product.name;
+    document.getElementById('kardex_cat').innerText = data.product.category;
+    document.getElementById('kardex_sup').innerText = data.product.supplier;
+    document.getElementById('kardex_stock').innerText = data.product.stock;
+    
+    if(data.product.image) {
+        document.getElementById('kardex_img').src = data.product.image;
+        document.getElementById('kardex_img').classList.remove('hidden');
+        document.getElementById('kardex_no_img').classList.add('hidden');
+    } else {
+        document.getElementById('kardex_img').classList.add('hidden');
+        document.getElementById('kardex_no_img').classList.remove('hidden');
+    }
+
+    const tbody = document.getElementById('kardex_table_body');
+    tbody.innerHTML = '';
+    
+    if(data.movements.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin movimientos</td></tr>`;
+    } else {
+        data.movements.forEach(m => {
+            const isEntry = m.type === 'Entrada';
+            const color = isEntry ? 'text-green-600' : 'text-red-600';
+            tbody.innerHTML += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 font-medium">${m.date}</td>
+                    <td class="px-4 py-2 font-bold ${color}">${m.type}</td>
+                    <td class="px-4 py-2 font-black ${color}">${isEntry ? '+' : '-'}${m.qty}</td>
+                    <td class="px-4 py-2">${m.user}</td>
+                    <td class="px-4 py-2 italic text-gray-500">${m.desc}</td>
+                </tr>
+            `;
+        });
+    }
+    toggleModal('modal-kardex');
+}
+</script>
+
+
 <script>
     const getCSRFToken = () => document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
 
@@ -307,5 +407,27 @@
             }
         });
     });
+    function toggleProductStatus(productId) {
+        Swal.fire({
+            title: '¿Cambiar estado del producto?',
+            text: "Los productos inactivos no aparecerán en el punto de venta.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0d9488',
+            confirmButtonText: 'Sí, cambiar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/inventory/api/product/toggle/${productId}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCSRFToken() }
+                }).then(res => res.json().then(data => {
+                    if(res.ok) window.location.reload();
+                    else Swal.fire('Error', data.error, 'error');
+                }));
+            }
+        });
+    }   
+    
 </script>
 {% endblock %}

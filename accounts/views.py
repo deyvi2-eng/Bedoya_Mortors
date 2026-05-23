@@ -15,6 +15,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 
 User = get_user_model()
 
@@ -144,3 +145,43 @@ class UserCreateAPI(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+# =========================
+# API ESTADO / ELIMINAR USUARIOS
+# =========================
+class UserToggleActiveAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+        
+        target_user = get_object_or_404(User, id=user_id)
+        
+        # Evitar que el admin se desactive a sí mismo
+        if target_user == request.user:
+            return Response({"error": "No puede desactivar su propia cuenta."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        target_user.is_active = not target_user.is_active
+        target_user.save()
+        
+        estado = "activado" if target_user.is_active else "desactivado"
+        return Response({"message": f"Usuario {estado} exitosamente."})
+
+class UserDeleteAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, user_id, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+            
+        target_user = get_object_or_404(User, id=user_id)
+        
+        if target_user == request.user:
+            return Response({"error": "No puede eliminar su propia cuenta."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            target_user.delete()
+            return Response({"message": "Usuario eliminado permanentemente."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": "El usuario tiene registros asociados y no puede ser eliminado. Sugerencia: Desactívelo."}, status=status.HTTP_400_BAD_REQUEST)

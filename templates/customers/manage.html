@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Gestión de Clientes | Bedoya Motors{% endblock %}
-{% block header_title %}Cartera de Clientes{% endblock %}
+{% block title %}Cartera de Clientes | Bedoya Motors{% endblock %}
+{% block header_title %}Directorio de Clientes{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -12,106 +12,117 @@
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
-            <h2 class="text-base font-bold text-gray-900 leading-none">Directorio de Clientes</h2>
-            <p class="text-xs text-gray-400 mt-1">Registre compradores para emitir comprobantes autorizados.</p>
+            <h2 class="text-base font-bold text-gray-900 leading-none">Gestión de Clientes</h2>
+            <p class="text-xs text-gray-400 mt-1">Registre los datos para facturación. Las cédulas son verificadas con el algoritmo oficial.</p>
         </div>
-        <button onclick="toggleModal('modal-customer')" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 px-5 rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-            <i class="ph-bold ph-user-plus text-lg"></i> Registrar Cliente
+        <button onclick="toggleModal('modal-customer')" class="w-full sm:w-auto bg-gray-900 hover:bg-black text-white font-bold py-3 px-5 rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+            <i class="ph-bold ph-user-plus"></i> Registrar Cliente
         </button>
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
-                <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    <tr>
-                        <th class="px-6 py-4 text-left">Identificación</th>
-                        <th class="px-6 py-4 text-left">Cliente</th>
-                        <th class="px-6 py-4 text-left">Contacto</th>
-                        <th class="px-6 py-4 text-left">Ubicación</th>
-                        <th class="px-6 py-4 text-center">Registro</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50 text-sm text-gray-700">
-                    {% for c in customers %}
-                    <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="px-6 py-4 font-bold text-gray-900">{{ c.cedula }}</td>
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-gray-900">{{ c.first_name }} {{ c.last_name }}</div>
-                            <div class="text-xs text-gray-400">{{ c.email|default:"Sin correo" }}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-1.5"><i class="ph-fill ph-phone text-gray-400"></i> {{ c.phone }}</div>
-                            {% if c.whatsapp %}
-                                <div class="flex items-center gap-1.5 text-green-600 text-xs mt-1"><i class="ph-fill ph-whatsapp-logo"></i> {{ c.whatsapp }}</div>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-xs">{{ c.city }}<br><span class="text-gray-400">{{ c.address }}</span></td>
-                        <td class="px-6 py-4 text-center text-xs text-gray-400">{{ c.created_at|date:"d M Y" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-xs">
-                            <i class="ph ph-users text-4xl text-gray-200 mb-2 block"></i> No hay clientes registrados.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <table class="min-w-full divide-y divide-gray-100">
+            <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <tr>
+                    <th class="px-6 py-4 text-left">Cliente</th>
+                    <th class="px-6 py-4 text-left">Contacto</th>
+                    <th class="px-6 py-4 text-left">Ubicación</th>
+                    <th class="px-6 py-4 text-center">Estado</th>
+                    {% if request.user.role == 'ADMIN' %}
+                    <th class="px-6 py-4 text-right">Acciones</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 text-sm text-gray-700">
+                {% for c in customers %}
+                <tr class="hover:bg-gray-50/50">
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-gray-900">{{ c.first_name }} {{ c.last_name }}</div>
+                        <div class="text-xs text-brand-600 font-mono mt-0.5">C.I: {{ c.cedula }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2 text-xs text-gray-600"><i class="ph-fill ph-phone text-gray-400"></i> {{ c.phone }}</div>
+                        {% if c.email %}<div class="text-xs text-gray-400 mt-0.5">{{ c.email }}</div>{% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-xs">
+                        <span class="font-bold text-gray-700 block">{{ c.city }}</span>
+                        <span class="text-gray-400 truncate w-48 block">{{ c.address }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% if c.is_active %}
+                            <span class="bg-green-50 text-green-600 border border-green-200 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Activo</span>
+                        {% else %}
+                            <span class="bg-red-50 text-red-600 border border-red-200 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    {% if request.user.role == 'ADMIN' %}
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="toggleCustomerStatus({{ c.id }})" class="text-gray-400 hover:text-red-600 transition-colors" title="Desactivar">
+                            <i class="ph-bold ph-power text-lg"></i>
+                        </button>
+                    </td>
+                    {% endif %}
+                    <td class="px-6 py-4 text-right flex justify-end gap-2">
+                        <button onclick="openCustomerHistory({{ c.id }})" class="text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                            <i class="ph-bold ph-receipt"></i> Compras
+                        </button>
+                        
+                        {% if request.user.role == 'ADMIN' %}
+                        <button onclick="toggleCustomerStatus({{ c.id }})" class="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 px-2 py-1.5 rounded-lg text-xs font-bold transition-colors" title="Desactivar">
+                            <i class="ph-bold ph-power text-lg"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-8 text-gray-400 text-sm">No hay clientes registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
 <div id="modal-customer" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-2xl w-full border border-gray-100">
+        <div class="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-2xl border border-gray-100">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Alta de Cliente</h3>
+                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Ficha de Nuevo Cliente</h3>
                 <button onclick="toggleModal('modal-customer')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
             </div>
-            
             <div class="p-6">
                 <form id="form-customer" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cédula de Identidad *</label>
-                            <input type="text" id="c_cedula" maxlength="10" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-brand-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ciudad *</label>
-                            <input type="text" id="c_city" value="Sangolquí" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-brand-500">
+                            <input type="text" id="c_cedula" maxlength="10" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 font-mono tracking-widest text-center">
+                            <p class="text-[10px] text-gray-400 mt-1 text-center">El sistema verificará matemáticamente la cédula.</p>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombres *</label>
-                            <input type="text" id="c_first_name" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-brand-500">
+                            <input type="text" id="c_first" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Apellidos *</label>
-                            <input type="text" id="c_last_name" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-brand-500">
+                            <input type="text" id="c_last" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono Fijo / Celular *</label>
-                            <input type="text" id="c_phone" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-brand-500">
+                            <input type="text" id="c_phone" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">WhatsApp</label>
-                            <input type="text" id="c_whatsapp" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-brand-500">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ciudad *</label>
+                            <input type="text" id="c_city" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
-                        <input type="email" id="c_email" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-brand-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Dirección Exacta *</label>
-                        <input type="text" id="c_address" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-brand-500">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Dirección Completa *</label>
+                            <input type="text" id="c_address" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
                     </div>
                 </form>
             </div>
-            
             <div class="bg-gray-50 px-6 py-3 flex justify-end gap-2 border-t border-gray-100">
                 <button type="button" onclick="toggleModal('modal-customer')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-lg">Cancelar</button>
-                <button type="button" id="btn-save-customer" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 rounded-lg hover:bg-brand-500 shadow-md">Guardar Cliente</button>
+                <button type="button" id="btn-save-customer" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 rounded-lg hover:bg-brand-700 shadow-md">Registrar Cliente</button>
             </div>
         </div>
     </div>
@@ -127,17 +138,15 @@
 
         const payload = {
             cedula: document.getElementById('c_cedula').value,
-            first_name: document.getElementById('c_first_name').value,
-            last_name: document.getElementById('c_last_name').value,
-            city: document.getElementById('c_city').value,
-            address: document.getElementById('c_address').value,
+            first_name: document.getElementById('c_first').value,
+            last_name: document.getElementById('c_last').value,
             phone: document.getElementById('c_phone').value,
-            whatsapp: document.getElementById('c_whatsapp').value,
-            email: document.getElementById('c_email').value
+            city: document.getElementById('c_city').value,
+            address: document.getElementById('c_address').value
         };
 
         this.disabled = true;
-        this.innerText = 'Validando SRI...';
+        this.innerText = 'Validando...';
 
         fetch('/customers/api/create/', {
             method: 'POST',
@@ -145,17 +154,140 @@
             body: JSON.stringify(payload)
         })
         .then(res => res.json().then(data => ({ status: res.status, body: data })))
-        .then(result => {
-            if (result.status === 201) {
-                Swal.fire({ title: 'Éxito', text: 'Cliente registrado correctamente.', icon: 'success', confirmButtonColor: '#0d9488' })
-                .then(() => window.location.reload());
-            } else {
-                // Muestra si la cédula es falsa o inválida
-                Swal.fire('Error de Validación', result.body.error, 'error');
+        .then(res => {
+            if (res.status === 201) window.location.reload();
+            else {
+                Swal.fire('Atención', res.body.error, 'warning'); // Muestra error si la cédula es falsa
                 this.disabled = false;
-                this.innerText = 'Guardar Cliente';
+                this.innerText = 'Registrar Cliente';
             }
         });
     });
+
+    function toggleCustomerStatus(id) {
+        Swal.fire({
+            title: '¿Desactivar cliente?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, continuar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/customers/api/toggle/${id}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCSRFToken() }
+                }).then(res => res.json().then(data => {
+                    if(res.ok) window.location.reload();
+                    else Swal.fire('Error', data.error, 'error');
+                }));
+            }
+        });
+    }
+</script>
+<div id="modal-customer-history" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="px-6 py-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center text-white">
+                <h3 class="text-sm font-bold uppercase tracking-wider">Perfil Financiero del Cliente</h3>
+                <button onclick="toggleModal('modal-customer-history')" class="text-gray-400 hover:text-white transition-colors"><i class="ph-bold ph-x text-lg"></i></button>
+            </div>
+            
+            <div class="p-6 bg-gray-50 flex-1 overflow-y-auto">
+                <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex justify-between items-center mb-6">
+                    <div>
+                        <span id="hist_ci" class="text-xs font-mono font-bold text-brand-600 block"></span>
+                        <h4 id="hist_name" class="text-xl font-black text-gray-900 leading-tight"></h4>
+                    </div>
+                    <div class="flex gap-4 text-right">
+                        <div>
+                            <span class="block text-[10px] text-gray-400 uppercase font-bold">Total Órdenes</span>
+                            <span id="hist_orders" class="text-lg font-black text-gray-900"></span>
+                        </div>
+                        <div class="pl-4 border-l border-gray-200">
+                            <span class="block text-[10px] text-gray-400 uppercase font-bold">Total Gastado</span>
+                            <span id="hist_spent" class="text-lg font-black text-green-600"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="text-xs font-bold text-gray-500 uppercase mb-3">Historial de Facturas (Agrupado)</h5>
+                
+                <div id="orders_container" class="space-y-4"></div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function openCustomerHistory(id) {
+    const res = await fetch(`/customers/api/history/${id}/`);
+    const data = await res.json();
+    
+    document.getElementById('hist_ci').innerText = `C.I: ${data.ci}`;
+    document.getElementById('hist_name').innerText = data.customer;
+    document.getElementById('hist_orders').innerText = data.total_orders;
+    document.getElementById('hist_spent').innerText = `$${data.total_spent.toFixed(2)}`;
+    
+    const container = document.getElementById('orders_container');
+    container.innerHTML = '';
+    
+    if(data.history.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300">
+                <i class="ph-bold ph-receipt text-4xl text-gray-300 mb-2 block"></i>
+                <p class="text-sm text-gray-500">Este cliente aún no ha realizado compras.</p>
+            </div>`;
+    } else {
+        data.history.forEach(order => {
+            // Generar las filas de los productos de esta orden específica
+            let itemsHtml = order.items.map(item => `
+                <tr class="border-b border-gray-50 last:border-0">
+                    <td class="py-2 text-xs font-mono text-gray-400">${item.code}</td>
+                    <td class="py-2 text-xs font-bold text-gray-800">${item.product}</td>
+                    <td class="py-2 text-xs text-center">${item.qty}</td>
+                    <td class="py-2 text-xs text-right font-bold">$${item.subtotal.toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            // Etiqueta de estado
+            let statusBadge = order.status === 'PROCESADA' 
+                ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold">COMPLETADA</span>`
+                : `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold">ANULADA</span>`;
+
+            // Construir la "Tarjeta de la Orden" (Factura)
+            let orderHtml = `
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="bg-gray-100/50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                        <div>
+                            <span class="text-xs text-gray-500 block mb-0.5"><i class="ph-bold ph-calendar-blank"></i> ${order.date}</span>
+                            <span class="font-mono font-bold text-brand-700">Factura: ${order.invoice}</span>
+                            ${statusBadge}
+                        </div>
+                        <div class="text-right flex flex-col items-end gap-2">
+                            <span class="text-lg font-black text-gray-900">$${order.total.toFixed(2)}</span>
+                            <a href="/sales/invoice/${order.invoice}/" target="_blank" class="text-[10px] uppercase font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 bg-white border border-brand-200 px-2 py-1 rounded shadow-sm hover:shadow transition-all">
+                                <i class="ph-bold ph-printer"></i> Reimprimir PDF
+                            </a>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <table class="w-full text-left">
+                            <thead class="text-[10px] uppercase text-gray-400 font-bold border-b border-gray-100">
+                                <tr><th class="pb-2">Código</th><th class="pb-2">Repuesto</th><th class="pb-2 text-center">Cant</th><th class="pb-2 text-right">Subtotal</th></tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', orderHtml);
+        });
+    }
+    
+    toggleModal('modal-customer-history');
+}
 </script>
 {% endblock %}

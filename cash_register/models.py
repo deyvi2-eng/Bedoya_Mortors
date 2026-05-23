@@ -3,21 +3,23 @@ from core.models import BaseModel
 from accounts.models import User
 
 class CashSession(BaseModel):
-    class Status(models.TextChoices):
-        OPEN = 'OPEN', 'Abierta'
-        CLOSED = 'CLOSED', 'Cerrada'
-
-    user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Cajero / Vendedor")
-    opening_time = models.DateTimeField(auto_now_add=True, verbose_name="Fecha y Hora de Apertura")
-    closing_time = models.DateTimeField(blank=True, null=True, verbose_name="Fecha y Hora de Cierre")
+    user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Cajero/Vendedor")
+    opening_time = models.DateTimeField(auto_now_add=True, verbose_name="Apertura")
+    closing_time = models.DateTimeField(null=True, blank=True, verbose_name="Cierre")
     
-    opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Saldo Inicial")
-    system_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Total en Sistema")
-    declared_balance = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="Total Declarado (Físico)")
-    discrepancy = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Diferencia (Sobrante/Faltante)")
+    opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Fondo Inicial")
     
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN, verbose_name="Estado de Caja")
-    observations = models.TextField(blank=True, null=True, verbose_name="Observaciones de Cierre")
+    # Totales calculados al momento del cierre
+    total_cash = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Total Efectivo Vendido")
+    total_transfer = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Total Transferencias")
+    total_card = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Total Tarjeta")
+    
+    expected_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Efectivo Esperado")
+    actual_balance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Efectivo Físico Real")
+    difference = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Diferencia (Sobrante/Faltante)")
+    
+    is_open = models.BooleanField(default=True, verbose_name="Estado de Caja")
+    observations = models.TextField(blank=True, null=True, verbose_name="Observaciones")
 
     class Meta:
         verbose_name = "Sesión de Caja"
@@ -25,4 +27,5 @@ class CashSession(BaseModel):
         ordering = ['-opening_time']
 
     def __str__(self):
-        return f"Caja {self.id} - {self.user.get_full_name()} ({self.get_status_display()})"
+        estado = "ABIERTA" if self.is_open else "CERRADA"
+        return f"Caja {self.id} - {self.user.username} ({estado})"
