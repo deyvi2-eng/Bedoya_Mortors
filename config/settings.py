@@ -97,3 +97,33 @@ ADMIN_ALERTS_EMAIL = env('ADMIN_ALERTS_EMAIL', default=EMAIL_HOST_USER)
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# ==========================================
+# CONFIGURACIONES DE SEGURIDAD EXTREMA (PRODUCCIÓN)
+# ==========================================
+# Nota: Si pruebas en local (127.0.0.1), asegúrate de que DEBUG=True en tu .env para que el sistema no te bloquee por no tener HTTPS.
+if not DEBUG:
+    # 1. Fuerza que todo el tráfico pase por HTTPS (Candado verde)
+    SECURE_SSL_REDIRECT = True
+    
+    # 2. Protege las cookies para que no puedan ser robadas (Session Hijacking)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+    
+    # 3. Previene ataques de Clickjacking (que metan tu web en un iframe oculto)
+    X_FRAME_OPTIONS = 'DENY'
+    
+    # 4. Protección contra Cross-Site Scripting (XSS) y MIME-Sniffing
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    
+    # 5. HSTS (Fuerza conexiones seguras por 1 año)
+    SECURE_HSTS_SECONDS = 31536000  # 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# La sesión caduca automáticamente si cierran el navegador (Seguridad en Puntos de Venta físicos)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 43200  # Sesión expira a las 12 horas de inactividad

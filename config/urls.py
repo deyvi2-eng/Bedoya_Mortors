@@ -18,6 +18,9 @@ urlpatterns = [
     path('reports/', include('reports.urls')),
     path('inventory/', include('inventory.urls')),
     path('customers/', include('customers.urls')),
+    
+    # NUEVO: Módulo de Auditorías (Logs)
+    path('audits/', include('audits.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,135 +1,297 @@
+{% load static %}
+
 <!DOCTYPE html>
-<html lang="es" class="antialiased">
+<html lang="es" class="antialiased scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>{% block title %}ERP | Bedoya Motors{% endblock %}</title>
-    
+
+    <!-- FAVICON -->
+    <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
+
+    <!-- GOOGLE FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- TAILWIND -->
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    },
+
                     colors: {
-                        brand: { 
-                            50: '#f0fdfa', 
-                            100: '#ccfbf1', 
-                            500: '#14b8a6', 
-                            600: '#0d9488', 
-                            900: '#134e4a' 
+
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a'
                         },
-                        surface: '#fcfcfd',
+
+                        surface: '#f8fafc'
+                    },
+
+                    boxShadow: {
+                        soft: '0 10px 40px rgba(15, 23, 42, 0.05)',
+                        card: '0 15px 35px rgba(15, 23, 42, 0.06)',
                     }
+
                 }
             }
         }
     </script>
-    
+
+    <!-- ICONS -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
+
+    <style>
+
+        body{
+            background:
+                radial-gradient(circle at top left, rgba(20,184,166,0.06), transparent 25%),
+                radial-gradient(circle at bottom right, rgba(20,184,166,0.07), transparent 25%),
+                #f8fafc;
+        }
+
+        .glass{
+            backdrop-filter: blur(14px);
+            background: rgba(255,255,255,0.85);
+        }
+
+        .menu-item{
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before{
+            content: "";
+            position: absolute;
+            left: -100%;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(20,184,166,0.08), transparent);
+            transition: .5s;
+        }
+
+        .menu-item:hover::before{
+            left: 100%;
+        }
+
+        .menu-item:hover{
+            transform: translateX(4px);
+        }
+
+        .card-hover{
+            transition: .3s ease;
+        }
+
+        .card-hover:hover{
+            transform: translateY(-3px);
+            box-shadow: 0 18px 40px rgba(15,23,42,0.08);
+        }
+
+    </style>
+
     {% block extra_head %}{% endblock %}
 </head>
 
-<body class="bg-gray-50 text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
+<body class="h-screen flex overflow-hidden text-gray-800 font-sans">
 
     <!-- SIDEBAR -->
-    <aside class="hidden md:flex w-64 bg-white border-r border-gray-100 flex-col justify-between flex-shrink-0 z-20 shadow-sm">
-        
+    <aside class="hidden md:flex w-[290px] bg-white/80 glass border-r border-white flex-col justify-between shadow-soft z-20">
+
         <div>
+
             <!-- LOGO -->
-            <div class="h-20 flex items-center px-8 border-b border-gray-50">
-                <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center mr-3 shadow-sm">
-                    <i class="ph-bold ph-motorcycle text-white text-xl"></i>
+            <div class="h-24 flex items-center gap-4 px-7 border-b border-gray-100">
+
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/20">
+
+                    <img
+                        src="{% static 'img/logo.png' %}"
+                        alt="Logo"
+                        class="h-9 w-auto object-contain"
+                    >
+
                 </div>
 
-                <span class="text-lg font-bold tracking-tight text-gray-900">
-                    Bedoya Motors
-                </span>
+                <div>
+
+                    <h1 class="text-xl font-black tracking-tight text-gray-900 leading-none">
+                        Bedoya Motors
+                    </h1>
+
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600 mt-1">
+                        ERP Empresarial
+                    </p>
+
+                </div>
+
             </div>
 
-            <!-- MENU -->
-            <nav class="p-4 space-y-1 mt-4">
+            <!-- NAV -->
+            <nav class="px-4 py-6 space-y-1">
 
-                <p class="px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
-                    Módulos Centrales
-                </p>
+                <div class="px-4 mb-4">
+                    <p class="text-[11px] font-black uppercase tracking-[0.25em] text-gray-400">
+                        Panel Principal
+                    </p>
+                </div>
 
                 {% if request.user.role == 'ADMIN' %}
-                <a href="/" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-all group duration-200">
-                    <i class="ph ph-squares-four text-xl text-gray-400 group-hover:text-brand-600"></i>
-                    <span class="text-sm">Dashboard Global</span>
+                <a href="/"
+                   class="menu-item flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-all duration-300 group">
+
+                    <div class="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-white shadow-sm transition-all">
+                        <i class="ph ph-squares-four text-xl"></i>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-bold">Dashboard</p>
+                        <span class="text-xs text-gray-400">Resumen general</span>
+                    </div>
+
                 </a>
                 {% endif %}
 
-                <a href="/sales/pos/" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-all group duration-200">
-                    <i class="ph ph-shopping-cart text-xl text-gray-400 group-hover:text-brand-600"></i>
-                    <span class="text-sm">Punto de Venta</span>
+                <a href="/sales/pos/"
+                   class="menu-item flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-all duration-300 group">
+
+                    <div class="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-white shadow-sm">
+                        <i class="ph ph-shopping-cart text-xl"></i>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-bold">Punto de Venta</p>
+                        <span class="text-xs text-gray-400">Facturación rápida</span>
+                    </div>
+
                 </a>
 
-                <a href="/cash/dashboard/" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-all group duration-200">
-                    <i class="ph ph-wallet text-xl text-gray-400 group-hover:text-brand-600"></i>
-                    <span class="text-sm">Control de Caja</span>
+                <a href="/cash/dashboard/"
+                   class="menu-item flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-all duration-300 group">
+
+                    <div class="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-white shadow-sm">
+                        <i class="ph ph-wallet text-xl"></i>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-bold">Caja</p>
+                        <span class="text-xs text-gray-400">Movimientos diarios</span>
+                    </div>
+
                 </a>
 
                 {% if request.user.role == 'ADMIN' %}
-                <a href="/inventory/manage/" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-all group duration-200">
-                    <i class="ph ph-package text-xl text-gray-400 group-hover:text-brand-600"></i>
-                    <span class="text-sm">Gestión Stock</span>
+                <a href="/inventory/manage/"
+                   class="menu-item flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-all duration-300 group">
+
+                    <div class="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-white shadow-sm">
+                        <i class="ph ph-package text-xl"></i>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-bold">Inventario</p>
+                        <span class="text-xs text-gray-400">Gestión de stock</span>
+                    </div>
+
                 </a>
                 {% endif %}
 
-                <a href="/customers/manage/" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-all group duration-200">
-                    <i class="ph ph-users text-xl text-gray-400 group-hover:text-brand-600"></i>
-                    <span class="text-sm">Clientes Frecuentes</span>
+                <a href="/customers/manage/"
+                   class="menu-item flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-all duration-300 group">
+
+                    <div class="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-white shadow-sm">
+                        <i class="ph ph-users text-xl"></i>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-bold">Clientes</p>
+                        <span class="text-xs text-gray-400">Usuarios frecuentes</span>
+                    </div>
+
                 </a>
 
                 {% if request.user.role == 'ADMIN' %}
 
-                <div class="pt-4 mt-2 border-t border-gray-100"></div>
+                <div class="my-6 border-t border-gray-100"></div>
 
-                <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
-                    Seguridad
-                </p>
+                <div class="px-4 mb-4">
+                    <p class="text-[11px] font-black uppercase tracking-[0.25em] text-gray-400">
+                        Administración
+                    </p>
+                </div>
 
-                <!-- AUDITORIA -->
-                <a href="/audits/logs/" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-red-600 rounded-xl font-medium transition-all group duration-200">
-                    <i class="ph ph-shield-warning text-xl text-gray-400 group-hover:text-red-600 transition-colors"></i>
-                    <span class="text-sm">Auditoría y Logs</span>
+                <a href="/audits/logs/"
+                   class="menu-item flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-300 group">
+
+                    <div class="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-white shadow-sm">
+                        <i class="ph ph-shield-warning text-xl"></i>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-bold">Auditoría</p>
+                        <span class="text-xs text-gray-400">Control y seguridad</span>
+                    </div>
+
                 </a>
 
-                <!-- NUEVO MODULO PERSONAL -->
-                <a href="/accounts/manage/" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-600 rounded-xl font-medium transition-all group duration-200">
-                    <i class="ph ph-user-gear text-xl text-gray-400 group-hover:text-brand-600 transition-colors"></i>
-                    <span class="text-sm">Personal y Cuentas</span>
+                <a href="/accounts/manage/"
+                   class="menu-item flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-all duration-300 group">
+
+                    <div class="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-white shadow-sm">
+                        <i class="ph ph-user-gear text-xl"></i>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-bold">Personal</p>
+                        <span class="text-xs text-gray-400">Usuarios y permisos</span>
+                    </div>
+
                 </a>
 
                 {% endif %}
 
             </nav>
+
         </div>
 
-        <!-- USER INFO -->
-        <div class="p-4 border-t border-gray-100 bg-gray-50">
+        <!-- USER -->
+        <div class="p-5 border-t border-gray-100 bg-gradient-to-r from-white to-brand-50/40">
 
-            <div class="flex items-center gap-3 px-4 py-2">
+            <div class="card-hover flex items-center gap-4 bg-white rounded-2xl p-4 shadow-card border border-gray-100">
 
-                <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold border border-brand-200">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center font-black shadow-lg shadow-brand-500/20">
                     {{ request.user.first_name|first|default:"U" }}
                 </div>
 
-                <div>
-                    <p class="text-sm font-semibold text-gray-900 line-clamp-1">
+                <div class="flex-1 overflow-hidden">
+
+                    <p class="text-sm font-bold text-gray-900 truncate">
                         {{ request.user.get_full_name|default:"Administrador" }}
                     </p>
 
-                    <p class="text-xs text-gray-500">
+                    <p class="text-xs text-gray-500 mt-0.5">
                         {{ request.user.get_role_display|default:"Gerencia" }}
                     </p>
+
                 </div>
 
             </div>
@@ -138,35 +300,65 @@
 
     </aside>
 
-    <!-- CONTENIDO -->
-    <div class="flex-1 flex flex-col overflow-hidden w-full relative">
+    <!-- CONTENT -->
+    <div class="flex-1 flex flex-col overflow-hidden">
 
         <!-- HEADER -->
-        <header class="h-16 md:h-20 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 md:px-8 z-10 shadow-sm shrink-0">
+        <header class="h-20 bg-white/70 glass border-b border-white flex items-center justify-between px-6 md:px-10 shadow-soft z-10">
 
-            <div class="flex items-center gap-2 md:hidden">
-                <div class="w-7 h-7 bg-brand-600 rounded-md flex items-center justify-center">
-                    <i class="ph-bold ph-motorcycle text-white text-sm"></i>
+            <!-- MOBILE -->
+            <div class="flex items-center gap-3 md:hidden">
+
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg">
+
+                    <img
+                        src="{% static 'img/logo.png' %}"
+                        alt="Logo"
+                        class="h-7 object-contain"
+                    >
+
                 </div>
 
-                <h2 class="text-lg font-bold text-gray-900 tracking-tight">
-                    Bedoya
-                </h2>
+                <div>
+                    <h2 class="text-lg font-black text-gray-900 leading-none">
+                        Bedoya Motors
+                    </h2>
+
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-brand-600 font-bold mt-1">
+                        ERP
+                    </p>
+                </div>
+
             </div>
 
-            <h2 class="hidden md:block text-xl font-semibold text-gray-800">
-                {% block header_title %}ERP System{% endblock %}
-            </h2>
+            <!-- TITLE -->
+            <div class="hidden md:block">
 
+                <h2 class="text-2xl font-black text-gray-900 tracking-tight">
+                    {% block header_title %}Panel Administrativo{% endblock %}
+                </h2>
+
+                <p class="text-sm text-gray-400 mt-1">
+                    Bienvenido al sistema empresarial
+                </p>
+
+            </div>
+
+            <!-- ACTIONS -->
             <div class="flex items-center gap-3">
 
-                <button class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:text-brand-600 hover:bg-brand-50 transition-colors">
-                    <i class="ph ph-bell text-lg md:text-xl"></i>
+                <button class="w-11 h-11 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-all shadow-sm">
+
+                    <i class="ph ph-bell text-xl"></i>
+
                 </button>
 
-                <!-- NUEVO BOTON LOGOUT -->
-                <a href="/accounts/logout/" class="hidden md:flex px-4 py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200/50 transition-all">
+                <a href="/accounts/logout/"
+                   class="hidden md:flex items-center gap-2 px-5 py-3 rounded-2xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-all font-bold text-sm shadow-sm">
+
+                    <i class="ph ph-sign-out"></i>
                     Cerrar Sesión
+
                 </a>
 
             </div>
@@ -174,39 +366,38 @@
         </header>
 
         <!-- MAIN -->
-        <main class="flex-1 overflow-y-auto p-4 md:p-8 bg-surface pb-24 md:pb-8">
-            {% block content %}{% endblock %}
+        <main class="flex-1 overflow-y-auto bg-surface p-5 md:p-8">
+
+            <div class="max-w-7xl mx-auto">
+                {% block content %}{% endblock %}
+            </div>
+
         </main>
 
         <!-- MOBILE NAV -->
-        <nav class="md:hidden absolute bottom-0 w-full bg-white border-t border-gray-100 flex justify-around p-2 z-30 pb-safe shadow-[0_-8px_24px_rgba(0,0,0,0.04)]">
+        <nav class="md:hidden bg-white/90 glass border-t border-gray-100 flex justify-around py-3 px-2 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
 
             {% if request.user.role == 'ADMIN' %}
-            <a href="/" class="flex flex-col items-center p-1.5 text-gray-400 hover:text-brand-600 transition-all">
+            <a href="/" class="flex flex-col items-center text-gray-400 hover:text-brand-600 transition-all">
                 <i class="ph ph-squares-four text-2xl"></i>
-                <span class="text-[9px] font-semibold mt-1">Inicio</span>
+                <span class="text-[10px] font-bold mt-1">Inicio</span>
             </a>
             {% endif %}
 
-            <a href="/sales/pos/" class="flex flex-col items-center p-1.5 text-gray-400 hover:text-brand-600 transition-all">
+            <a href="/sales/pos/" class="flex flex-col items-center text-gray-400 hover:text-brand-600 transition-all">
                 <i class="ph ph-shopping-cart text-2xl"></i>
-                <span class="text-[9px] font-semibold mt-1">Venta</span>
+                <span class="text-[10px] font-bold mt-1">Ventas</span>
             </a>
 
-            <a href="/cash/dashboard/" class="flex flex-col items-center p-1.5 text-gray-400 hover:text-brand-600 transition-all">
+            <a href="/cash/dashboard/" class="flex flex-col items-center text-gray-400 hover:text-brand-600 transition-all">
                 <i class="ph ph-wallet text-2xl"></i>
-                <span class="text-[9px] font-semibold mt-1">Caja</span>
+                <span class="text-[10px] font-bold mt-1">Caja</span>
             </a>
 
             {% if request.user.role == 'ADMIN' %}
-            <a href="/inventory/manage/" class="flex flex-col items-center p-1.5 text-gray-400 hover:text-brand-600 transition-all">
+            <a href="/inventory/manage/" class="flex flex-col items-center text-gray-400 hover:text-brand-600 transition-all">
                 <i class="ph ph-package text-2xl"></i>
-                <span class="text-[9px] font-semibold mt-1">Stock</span>
-            </a>
-            {% else %}
-            <a href="/customers/manage/" class="flex flex-col items-center p-1.5 text-gray-400 hover:text-brand-600 transition-all">
-                <i class="ph ph-users text-2xl"></i>
-                <span class="text-[9px] font-semibold mt-1">Clientes</span>
+                <span class="text-[10px] font-bold mt-1">Stock</span>
             </a>
             {% endif %}
 

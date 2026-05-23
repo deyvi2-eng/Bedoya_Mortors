@@ -1,76 +1,247 @@
 {% extends 'base.html' %}
 
 {% block title %}Auditoría del Sistema | Bedoya Motors{% endblock %}
-{% block header_title %}Logs y Trazabilidad{% endblock %}
+{% block header_title %}Historial Operativo{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+<style>
+    /* Estética Ultra-Minimalista */
+    .timeline-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 19px;
+        width: 1px;
+        background-color: #f3f4f6;
+    }
+    .flatpickr-calendar {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #f3f4f6 !important;
+        border-radius: 12px !important;
+    }
+    .flatpickr-day.selected {
+        background: #111827 !important;
+        border-color: #111827 !important;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto space-y-6">
+<div class="max-w-5xl mx-auto space-y-8">
 
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-gray-100">
         <div>
-            <h2 class="text-base font-bold text-gray-900 leading-none">Registro de Actividad (Logs)</h2>
-            <p class="text-xs text-gray-400 mt-1">Monitoreo de seguridad de todas las inserciones, modificaciones y eliminaciones en la base de datos.</p>
+            <h2 class="text-xl font-semibold text-gray-900 tracking-tight">Bitácora de Actividad</h2>
+            <p class="text-xs text-gray-400 mt-1">Seguridad y trazabilidad de las acciones comerciales realizadas en la plataforma.</p>
         </div>
-        <div class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-500 flex items-center gap-2">
-            <i class="ph-fill ph-shield-check text-green-500 text-lg"></i> Modo Seguro Activo
+        
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div class="relative w-full sm:w-auto">
+                <input type="text" id="calendarFilter" placeholder="Seleccionar fecha..." class="w-full sm:w-44 bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-xs font-medium text-gray-700 outline-none focus:border-gray-400 transition-all cursor-pointer">
+                <i class="ph-bold ph-calendar-blank absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            </div>
+
+            <select id="userDropdownFilter" class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 outline-none focus:border-gray-400 transition-all min-w-[180px] w-full sm:w-auto">
+                <option value="">Todos los colaboradores</option>
+            </select>
+
+            <button onclick="resetFilters()" class="text-xs font-bold text-gray-400 hover:text-gray-900 transition-colors px-2 py-2">
+                Limpiar
+            </button>
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
-                <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    <tr>
-                        <th class="px-6 py-4 text-left">Fecha y Hora</th>
-                        <th class="px-6 py-4 text-left">Usuario (Responsable)</th>
-                        <th class="px-6 py-4 text-center">Acción</th>
-                        <th class="px-6 py-4 text-left">Módulo Afectado (Ruta)</th>
-                        <th class="px-6 py-4 text-right">Dirección IP</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50 text-sm text-gray-700">
-                    {% for log in logs %}
-                    <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-gray-900 font-medium">{{ log.timestamp|date:"d M Y" }}</span>
-                            <span class="text-gray-400 text-xs ml-2">{{ log.timestamp|date:"H:i:s" }}</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            {% if log.user %}
-                                <div class="font-bold text-gray-900">{{ log.user.get_full_name }}</div>
-                                <div class="text-[10px] text-gray-400 uppercase tracking-wide">{{ log.user.get_role_display }}</div>
-                            {% else %}
-                                <span class="text-gray-400 italic">Sistema / Anónimo</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            {% if log.action == 'POST' %}
-                                <span class="bg-green-50 text-green-600 border border-green-200 px-2.5 py-1 rounded text-xs font-bold">CREACIÓN (POST)</span>
-                            {% elif log.action == 'PUT' or log.action == 'PATCH' %}
-                                <span class="bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1 rounded text-xs font-bold">EDICIÓN (PUT)</span>
-                            {% elif log.action == 'DELETE' %}
-                                <span class="bg-red-50 text-red-600 border border-red-200 px-2.5 py-1 rounded text-xs font-bold">ELIMINACIÓN (DEL)</span>
-                            {% else %}
-                                <span class="bg-gray-100 text-gray-600 border border-gray-200 px-2.5 py-1 rounded text-xs font-bold">{{ log.action }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-xs font-mono text-gray-500">
-                            {{ log.path }}
-                        </td>
-                        <td class="px-6 py-4 text-right text-xs font-mono text-gray-400">
-                            {{ log.ip_address|default:"Desconocida" }}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-xs">
-                            <i class="ph ph-shield text-4xl text-gray-200 mb-2 block"></i> No hay registros de auditoría.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div id="raw-logs-data" class="hidden">
+        {% for log in logs %}
+        <div class="raw-log-item" 
+             data-date="{{ log.timestamp|date:'Y-m-d' }}"
+             data-date-human="{{ log.timestamp|date:'d \d\e F, Y' }}"
+             data-time="{{ log.timestamp|date:'H:i' }}"
+             data-user="{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}Sistema{% endif %}"
+             data-role="{% if log.user %}{{ log.user.get_role_display }}{% else %}Automático{% endif %}"
+             data-path="{{ log.path }}"
+             data-method="{{ log.action }}"
+             data-ip="{{ log.ip_address|default:'localhost' }}">
         </div>
+        {% endfor %}
     </div>
+
+    <div id="timeline-wrapper" class="space-y-8">
+        </div>
+
 </div>
+
+<script>
+    // Diccionario de traducción comercial limpia (Sin colores chillones, texto plano y elegante)
+    const logRegistryDictionary = {
+        "/sales/api/process/": { action: "Emisión de comprobante", category: "Ventas" },
+        "/cash/api/open/": { action: "Apertura de turno de caja", category: "Caja" },
+        "/cash/api/close/": { action: "Cierre y arqueo de caja", category: "Caja" },
+        "/inventory/api/product/create/": { action: "Creación de nuevo repuesto", category: "Inventario" },
+        "/inventory/api/product/add-stock/": { action: "Ingreso de stock a bodega", category: "Inventario" },
+        "/inventory/api/product/toggle/": { action: "Modificación de visibilidad de producto", category: "Inventario" },
+        "/customers/api/create/": { action: "Registro de nuevo cliente", category: "Clientes" },
+        "/customers/api/toggle/": { action: "Cambio de estado de cliente", category: "Clientes" },
+        "/accounts/api/create/": { action: "Alta de nuevo colaborador", category: "Seguridad" },
+        "/accounts/api/toggle-status/": { action: "Modificación de accesos de usuario", category: "Seguridad" },
+        "/accounts/api/delete/": { action: "Remoción de cuenta de usuario", category: "Seguridad" },
+        "/accounts/login/": { action: "Inicio de sesión correcto", category: "Acceso" },
+        "/accounts/logout/": { action: "Cierre de sesión de plataforma", category: "Acceso" }
+    };
+
+    function translateTechnicalPath(path) {
+        for (const [endpoint, data] of Object.entries(logRegistryDictionary)) {
+            if (path.includes(endpoint)) return data;
+        }
+        return { action: "Modificación de registros internos", category: "Sistema" };
+    }
+
+    let allLogs = [];
+
+    function parseRawLogs() {
+        allLogs = [];
+        $('.raw-log-item').each(function() {
+            const path = $(this).data('path');
+            const translation = translateTechnicalPath(path);
+            
+            allLogs.push({
+                date: $(this).data('date'),
+                dateHuman: $(this).data('date-human'),
+                time: $(this).data('time'),
+                user: $(this).data('user'),
+                role: $(this).data('role'),
+                method: $(this).data('method'),
+                path: path,
+                ip: $(this).data('ip'),
+                actionCommercial: translation.action,
+                category: translation.category
+            });
+        });
+    }
+
+    function renderTimeline(filteredLogs) {
+        const wrapper = document.getElementById('timeline-wrapper');
+        wrapper.innerHTML = '';
+
+        if (filteredLogs.length === 0) {
+            wrapper.innerHTML = `
+                <div class="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                    <i class="ph-bold ph-calendar-x text-3xl text-gray-300 mb-2 block"></i>
+                    <p class="text-xs text-gray-400 font-medium">No se registraron movimientos con los filtros seleccionados.</p>
+                </div>`;
+            return;
+        }
+
+        // Agrupar logs por día
+        const groups = {};
+        filteredLogs.forEach(log => {
+            if (!groups[log.dateHuman]) {
+                groups[log.dateHuman] = [];
+            }
+            groups[log.dateHuman].push(log);
+        });
+
+        // Dibujar cada grupo de días con diseño minimalista
+        for (const [dateHeader, logsInDay] of Object.entries(groups)) {
+            let dayHtml = `
+                <div class="space-y-4">
+                    <div class="sticky top-0 bg-white/90 backdrop-blur-md py-2 z-10 flex items-center gap-3">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">${dateHeader}</h3>
+                        <div class="h-px bg-gray-100 flex-1"></div>
+                        <span class="text-[10px] bg-gray-50 text-gray-400 border border-gray-200 px-2 py-0.5 rounded-md font-medium">${logsInDay.length} acciones</span>
+                    </div>
+                    
+                    <div class="relative timeline-container pl-10 space-y-4">
+            `;
+
+            logsInDay.forEach(log => {
+                dayHtml += `
+                    <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white hover:bg-gray-50/60 rounded-xl border border-transparent hover:border-gray-100 transition-all group">
+                        <div class="absolute left-[-25px] top-4 w-3 h-3 rounded-full bg-white border-2 border-gray-300 group-hover:border-gray-900 transition-colors z-10"></div>
+                        
+                        <div class="space-y-0.5">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs font-medium text-gray-400 font-mono">${log.time}</span>
+                                <span class="text-xs font-semibold text-gray-900">${log.actionCommercial}</span>
+                                <span class="text-[10px] text-gray-400 border border-gray-200 px-1.5 py-0.5 rounded font-medium">${log.category}</span>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                Realizado por <span class="font-bold text-gray-700">${log.user}</span> 
+                                <span class="text-[10px] text-gray-400 uppercase tracking-wider">(${log.role})</span>
+                            </div>
+                        </div>
+
+                        <div class="text-right flex flex-col items-start sm:items-end gap-1 shrink-0">
+                            <span class="text-[10px] font-mono text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">
+                                ${log.method} • ${log.path}
+                            </span>
+                            <span class="text-[10px] text-gray-400 font-mono">IP: ${log.ip}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            dayHtml += `
+                    </div>
+                </div>
+            `;
+            wrapper.insertAdjacentHTML('beforeend', dayHtml);
+        }
+    }
+
+    function applyFilters() {
+        const selectedDate = document.getElementById('calendarFilter').value;
+        const selectedUser = document.getElementById('userDropdownFilter').value;
+
+        const filtered = allLogs.filter(log => {
+            const matchDate = selectedDate ? (log.date === selectedDate) : true;
+            const matchUser = selectedUser ? (log.user === selectedUser) : true;
+            return matchDate && matchUser;
+        });
+
+        renderTimeline(filtered);
+    }
+
+    function resetFilters() {
+        document.getElementById('calendarFilter').value = '';
+        flatpickrInstance.clear();
+        document.getElementById('userDropdownFilter').value = '';
+        renderTimeline(allLogs);
+    }
+
+    $(document).ready(function() {
+        parseRawLogs();
+
+        // Poblar el menú desplegable de usuarios únicos de forma limpia
+        let uniqueUsers = new Set();
+        allLogs.forEach(log => { if(log.user && log.user !== 'Sistema') uniqueUsers.add(log.user); });
+        uniqueUsers.forEach(user => {
+            $('#userDropdownFilter').append(new Option(user, user));
+        });
+
+        // Inicializar el Calendario Minimalista de Flatpickr
+        window.flatpickrInstance = flatpickr('#calendarFilter', {
+            locale: 'es',
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd \\d\e M, Y',
+            disableMobile: "true",
+            onChange: function(selectedDates, dateStr) {
+                applyFilters();
+            }
+        });
+
+        // Escuchar cambios en el selector de usuarios
+        $('#userDropdownFilter').on('change', applyFilters);
+
+        // Renderizado Inicial Completo
+        renderTimeline(allLogs);
+    });
+</script>
 {% endblock %}

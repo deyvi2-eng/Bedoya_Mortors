@@ -10,131 +10,564 @@
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-6">
 
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
+    <!-- HEADER -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        
         <div>
-            <h2 class="text-base font-bold text-gray-900 leading-none">Cuentas de Acceso</h2>
-            <p class="text-xs text-gray-400 mt-1">Cree accesos para sus vendedores y asigne permisos.</p>
+            <h2 class="text-xl font-black text-gray-900">
+                Gestión de Personal
+            </h2>
+
+            <p class="text-sm text-gray-400 mt-1">
+                Administre empleados, permisos y accesos al sistema.
+            </p>
         </div>
-        <button onclick="toggleModal('modal-user')" class="bg-gray-900 hover:bg-black text-white font-bold py-3 px-5 rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-            <i class="ph-bold ph-user-plus"></i> Nuevo Empleado
+
+        <button
+            onclick="toggleModal('modal-user')"
+            class="bg-gray-900 hover:bg-black text-white font-bold py-3 px-5 rounded-2xl text-sm shadow-lg transition-all active:scale-95 flex items-center gap-2"
+        >
+            <i class="ph-bold ph-user-plus text-lg"></i>
+            Nuevo Empleado
         </button>
+
     </div>
 
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-100">
-            <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                <tr>
-                    <th class="px-6 py-4 text-left">Empleado</th>
-                    <th class="px-6 py-4 text-left">Usuario (Login)</th>
-                    <th class="px-6 py-4 text-left">Rol / Permisos</th>
-                    <th class="px-6 py-4 text-center">Registro</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50 text-sm text-gray-700">
-                {% for u in users_list %}
-                <tr class="hover:bg-gray-50/50">
-                    <td class="px-6 py-4 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-sm border border-brand-200">
-                            {{ u.first_name|first|default:"U" }}
-                        </div>
-                        <div>
-                            <div class="font-bold text-gray-900">{{ u.first_name }} {{ u.last_name }}</div>
-                            <div class="text-xs text-gray-400">{{ u.email|default:"Sin correo" }}</div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 font-mono font-bold text-gray-500">{{ u.username }}</td>
-                    <td class="px-6 py-4">
-                        {% if u.role == 'ADMIN' %}
-                            <span class="bg-purple-50 text-purple-600 border border-purple-200 px-3 py-1 rounded-lg text-xs font-bold">ADMINISTRADOR</span>
-                        {% else %}
-                            <span class="bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded-lg text-xs font-bold">VENDEDOR</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4 text-center text-xs text-gray-400">{{ u.date_joined|date:"d M Y" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- TABLA -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+
+        <div class="overflow-x-auto">
+
+            <table class="min-w-full divide-y divide-gray-100">
+
+                <thead class="bg-gray-50 text-xs font-black text-gray-400 uppercase tracking-wider">
+
+                    <tr>
+                        <th class="px-6 py-5 text-left">Empleado</th>
+                        <th class="px-6 py-5 text-left">Usuario</th>
+                        <th class="px-6 py-5 text-left">Rol</th>
+                        <th class="px-6 py-5 text-center">Estado</th>
+                        <th class="px-6 py-5 text-center">Registro</th>
+                        <th class="px-6 py-5 text-center">Acciones</th>
+                    </tr>
+
+                </thead>
+
+                <tbody class="divide-y divide-gray-50 text-sm text-gray-700">
+
+                    {% for u in users_list %}
+
+                    <tr class="hover:bg-gray-50 transition-all">
+
+                        <!-- EMPLEADO -->
+                        <td class="px-6 py-5">
+
+                            <div class="flex items-center gap-4">
+
+                                <div class="w-12 h-12 rounded-2xl bg-brand-100 text-brand-600 flex items-center justify-center font-black text-sm border border-brand-200 shadow-sm">
+                                    {{ u.first_name|first|default:"U" }}
+                                </div>
+
+                                <div>
+
+                                    <div class="font-bold text-gray-900">
+                                        {{ u.first_name }} {{ u.last_name }}
+                                    </div>
+
+                                    <div class="text-xs text-gray-400 mt-0.5">
+                                        {{ u.email|default:"Sin correo registrado" }}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <!-- USERNAME -->
+                        <td class="px-6 py-5">
+
+                            <div class="font-mono font-bold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 inline-block">
+                                {{ u.username }}
+                            </div>
+
+                        </td>
+
+                        <!-- ROL -->
+                        <td class="px-6 py-5">
+
+                            {% if u.role == 'ADMIN' %}
+
+                            <span class="bg-purple-50 text-purple-700 border border-purple-200 px-4 py-2 rounded-xl text-xs font-black">
+                                ADMINISTRADOR
+                            </span>
+
+                            {% else %}
+
+                            <span class="bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded-xl text-xs font-black">
+                                VENDEDOR
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <!-- ESTADO -->
+                        <td class="px-6 py-5 text-center">
+
+                            {% if u.is_active %}
+
+                            <span class="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-xl text-xs font-black">
+                                ACTIVO
+                            </span>
+
+                            {% else %}
+
+                            <span class="bg-red-50 text-red-700 border border-red-200 px-4 py-2 rounded-xl text-xs font-black">
+                                INACTIVO
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <!-- REGISTRO -->
+                        <td class="px-6 py-5 text-center text-xs text-gray-400 font-semibold">
+                            {{ u.date_joined|date:"d M Y" }}
+                        </td>
+
+                        <!-- ACCIONES -->
+                        <td class="px-6 py-5 text-center">
+
+                            {% if request.user != u %}
+
+                            <div class="flex justify-center items-center gap-2">
+
+                                <!-- ACTIVAR / DESACTIVAR -->
+                                <button
+                                    onclick="toggleUser({{ u.id }})"
+                                    class="
+                                        px-4 py-2 rounded-xl text-xs font-black text-white shadow-sm transition-all active:scale-95
+
+                                        {% if u.is_active %}
+                                            bg-orange-500 hover:bg-orange-600
+                                        {% else %}
+                                            bg-green-500 hover:bg-green-600
+                                        {% endif %}
+                                    "
+                                >
+
+                                    {% if u.is_active %}
+                                        Desactivar
+                                    {% else %}
+                                        Activar
+                                    {% endif %}
+
+                                </button>
+
+                                <!-- ELIMINAR -->
+                                <button
+                                    onclick="deleteUser({{ u.id }})"
+                                    class="px-4 py-2 rounded-xl text-xs font-black text-white bg-red-500 hover:bg-red-600 shadow-sm transition-all active:scale-95"
+                                >
+                                    Eliminar
+                                </button>
+
+                            </div>
+
+                            {% else %}
+
+                            <span class="text-xs text-gray-400 font-black">
+                                Cuenta Actual
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
     </div>
+
 </div>
 
-<div id="modal-user" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
+<!-- MODAL -->
+<div id="modal-user" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm overflow-y-auto">
+
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-md border border-gray-100">
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Registrar Empleado</h3>
-                <button onclick="toggleModal('modal-user')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
+
+        <div class="bg-white rounded-3xl overflow-hidden shadow-2xl w-full max-w-lg border border-gray-100">
+
+            <!-- HEADER -->
+            <div class="px-6 py-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+
+                <div>
+                    <h3 class="text-sm font-black uppercase tracking-wider text-gray-900">
+                        Registrar Empleado
+                    </h3>
+
+                    <p class="text-xs text-gray-400 mt-1">
+                        Cree nuevas cuentas para el sistema.
+                    </p>
+                </div>
+
+                <button
+                    onclick="toggleModal('modal-user')"
+                    class="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-500"
+                >
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+
             </div>
+
+            <!-- BODY -->
             <div class="p-6">
-                <form id="form-user" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
+
+                <form id="form-user" class="space-y-5">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombres</label>
-                            <input type="text" id="u_first" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-2">
+                                Nombres
+                            </label>
+
+                            <input
+                                type="text"
+                                id="u_first"
+                                required
+                                class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-500"
+                            >
+
                         </div>
+
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Apellidos</label>
-                            <input type="text" id="u_last" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-2">
+                                Apellidos
+                            </label>
+
+                            <input
+                                type="text"
+                                id="u_last"
+                                required
+                                class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-500"
+                            >
+
                         </div>
+
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Usuario (Para ingresar)</label>
-                        <input type="text" id="u_username" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-2">
+                            Usuario
+                        </label>
+
+                        <input
+                            type="text"
+                            id="u_username"
+                            required
+                            class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-500 font-mono"
+                        >
+
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Contraseña</label>
-                        <input type="password" id="u_password" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-2">
+                            Contraseña
+                        </label>
+
+                        <input
+                            type="password"
+                            id="u_password"
+                            required
+                            class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-500"
+                        >
+
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Rol en el sistema</label>
-                        <select id="u_role" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500 font-bold">
-                            <option value="SELLER">Vendedor (Acceso Limitado)</option>
-                            <option value="ADMIN">Administrador (Control Total)</option>
+
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-2">
+                            Rol
+                        </label>
+
+                        <select
+                            id="u_role"
+                            class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-500 font-bold"
+                        >
+                            <option value="SELLER">Vendedor</option>
+                            <option value="ADMIN">Administrador</option>
                         </select>
+
                     </div>
+
                 </form>
+
             </div>
-            <div class="bg-gray-50 px-6 py-3 flex justify-end gap-2 border-t border-gray-100">
-                <button type="button" onclick="toggleModal('modal-user')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-lg">Cancelar</button>
-                <button type="button" id="btn-save-user" class="px-4 py-2 text-xs font-bold text-white bg-gray-900 rounded-lg hover:bg-black shadow-md">Crear Cuenta</button>
+
+            <!-- FOOTER -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+
+                <button
+                    type="button"
+                    onclick="toggleModal('modal-user')"
+                    class="px-5 py-3 text-sm font-bold text-gray-500 bg-white border border-gray-200 rounded-2xl hover:bg-gray-100"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="button"
+                    id="btn-save-user"
+                    class="px-5 py-3 text-sm font-black text-white bg-gray-900 rounded-2xl hover:bg-black shadow-lg"
+                >
+                    Crear Cuenta
+                </button>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
 <script>
-    const getCSRFToken = () => document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
-    const toggleModal = (id) => document.getElementById(id).classList.toggle('hidden');
 
-    document.getElementById('btn-save-user').addEventListener('click', function() {
-        const form = document.getElementById('form-user');
-        if(!form.checkValidity()) return form.reportValidity();
+const getCSRFToken = () =>
+    document.cookie
+        .split('; ')
+        .find(r => r.startsWith('csrftoken='))
+        .split('=')[1];
 
-        const payload = {
-            first_name: document.getElementById('u_first').value,
-            last_name: document.getElementById('u_last').value,
-            username: document.getElementById('u_username').value,
-            password: document.getElementById('u_password').value,
-            role: document.getElementById('u_role').value
-        };
+const toggleModal = (id) => {
+    document.getElementById(id).classList.toggle('hidden');
+};
 
-        this.disabled = true;
-        this.innerText = 'Creando...';
 
-        fetch('/accounts/api/create/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json().then(data => ({ status: res.status, body: data })))
-        .then(res => {
-            if (res.status === 201) window.location.reload();
-            else {
-                Swal.fire('Error', res.body.error, 'error');
-                this.disabled = false;
-                this.innerText = 'Crear Cuenta';
-            }
-        });
+
+// ==========================
+// CREAR USUARIO
+// ==========================
+document.getElementById('btn-save-user').addEventListener('click', function () {
+
+    const form = document.getElementById('form-user');
+
+    if (!form.checkValidity()) {
+        return form.reportValidity();
+    }
+
+    const payload = {
+
+        first_name: document.getElementById('u_first').value,
+        last_name: document.getElementById('u_last').value,
+        username: document.getElementById('u_username').value,
+        password: document.getElementById('u_password').value,
+        role: document.getElementById('u_role').value
+
+    };
+
+    this.disabled = true;
+    this.innerText = 'Creando...';
+
+    fetch('/accounts/api/create/', {
+
+        method: 'POST',
+
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+
+        body: JSON.stringify(payload)
+
+    })
+
+    .then(res => res.json().then(data => ({
+        status: res.status,
+        body: data
+    })))
+
+    .then(res => {
+
+        if (res.status === 201) {
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Usuario creado',
+                text: res.body.message,
+                confirmButtonColor: '#111827'
+            });
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+
+        } else {
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: res.body.error
+            });
+
+            document.getElementById('btn-save-user').disabled = false;
+            document.getElementById('btn-save-user').innerText = 'Crear Cuenta';
+
+        }
+
     });
+
+});
+
+
+
+// ==========================
+// ACTIVAR / DESACTIVAR
+// ==========================
+async function toggleUser(userId) {
+
+    const result = await Swal.fire({
+
+        title: '¿Cambiar estado?',
+        text: 'El usuario será activado o desactivado.',
+        icon: 'warning',
+
+        showCancelButton: true,
+
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar',
+
+        confirmButtonColor: '#111827'
+
+    });
+
+    if (!result.isConfirmed) return;
+
+    fetch(`/accounts/api/toggle-user/${userId}/`, {
+
+        method: 'POST',
+
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+
+    })
+
+    .then(res => res.json().then(data => ({
+        status: res.status,
+        body: data
+    })))
+
+    .then(res => {
+
+        if (res.status === 200) {
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Correcto',
+                text: res.body.message
+            });
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+
+        } else {
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: res.body.error
+            });
+
+        }
+
+    });
+
+}
+
+
+
+// ==========================
+// ELIMINAR USUARIO
+// ==========================
+async function deleteUser(userId) {
+
+    const result = await Swal.fire({
+
+        title: '¿Eliminar usuario?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+
+        showCancelButton: true,
+
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+
+        confirmButtonColor: '#dc2626'
+
+    });
+
+    if (!result.isConfirmed) return;
+
+    fetch(`/accounts/api/delete-user/${userId}/`, {
+
+        method: 'DELETE',
+
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+
+    })
+
+    .then(res => res.json().then(data => ({
+        status: res.status,
+        body: data
+    })))
+
+    .then(res => {
+
+        if (res.status === 200) {
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Usuario eliminado',
+                text: res.body.message
+            });
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+
+        } else {
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: res.body.error
+            });
+
+        }
+
+    });
+
+}
+
 </script>
+
 {% endblock %}
