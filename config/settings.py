@@ -35,6 +35,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -127,3 +128,4 @@ if not DEBUG:
 # La sesión caduca automáticamente si cierran el navegador (Seguridad en Puntos de Venta físicos)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 43200  # Sesión expira a las 12 horas de inactividad
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

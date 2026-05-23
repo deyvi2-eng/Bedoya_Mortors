@@ -16,7 +16,7 @@ class Sale(BaseModel):
     cash_session = models.ForeignKey(CashSession, on_delete=models.PROTECT, related_name='sales', verbose_name="Sesión de Caja", null=True)
     invoice_number = models.CharField(max_length=20, unique=True, verbose_name="Número de Factura")
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT, verbose_name="Cliente")
-    seller = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Vendedor")
+    seller = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Vendedor")
     
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     iva = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)

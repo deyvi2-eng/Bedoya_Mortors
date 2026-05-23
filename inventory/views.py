@@ -174,3 +174,48 @@ class ProductKardexAPI(APIView):
             },
             "movements": mov_data
         })
+    
+# ==========================================
+# API: CREAR CATEGORÍA
+# ==========================================
+class CategoryCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+        
+        name = request.data.get('name')
+        prefix = request.data.get('prefix')
+        description = request.data.get('description', '')
+
+        if not name or not prefix:
+            return Response({"error": "Nombre y prefijo son obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            category = Category.objects.create(
+                name=name, prefix=prefix.upper(), description=description
+            )
+            return Response({"message": "Categoría creada exitosamente.", "id": category.id}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": "El prefijo ya existe o ocurrió un error."}, status=status.HTTP_400_BAD_REQUEST)
+
+# ==========================================
+# API: CREAR PROVEEDOR
+# ==========================================
+class SupplierCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+        
+        name = request.data.get('name')
+        contact_phone = request.data.get('contact_phone', '')
+        email = request.data.get('email', '')
+
+        if not name:
+            return Response({"error": "El nombre del proveedor es obligatorio."}, status=status.HTTP_400_BAD_REQUEST)
+
+        supplier = Supplier.objects.create(name=name, contact_phone=contact_phone, email=email)
+        return Response({"message": "Proveedor creado exitosamente.", "id": supplier.id}, status=status.HTTP_201_CREATED)

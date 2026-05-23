@@ -142,7 +142,12 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría *</label>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Categoría *</label>
+                                <button type="button" onclick="toggleModal('modal-category')" class="text-[10px] font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1">
+                                    <i class="ph-bold ph-plus"></i> Nueva
+                                </button>
+                            </div>
                             <select name="category" required class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                                 <option value="">Seleccione...</option>
                                 {% for c in categories %}
@@ -150,8 +155,14 @@
                                 {% endfor %}
                             </select>
                         </div>
+                        
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Proveedor Predeterminado</label>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Proveedor</label>
+                                <button type="button" onclick="toggleModal('modal-supplier')" class="text-[10px] font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1">
+                                    <i class="ph-bold ph-plus"></i> Nuevo
+                                </button>
+                            </div>
                             <select name="supplier" class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                                 <option value="">Ninguno...</option>
                                 {% for s in suppliers %}
@@ -277,8 +288,65 @@
     </div>
 </div>
 
+<div id="modal-category" class="fixed inset-0 z-[60] hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-4">
+    <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-md w-full border border-gray-100">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-sm font-bold text-gray-900 uppercase">Nueva Categoría</h3>
+            <button onclick="toggleModal('modal-category')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
+        </div>
+        <div class="p-6">
+            <form id="form-category" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre de la Categoría *</label>
+                    <input type="text" name="name" id="cat_name" required placeholder="Ej: Llantas" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prefijo (3 Letras) *</label>
+                    <input type="text" name="prefix" id="cat_prefix" required maxlength="3" placeholder="Ej: LLA" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm uppercase focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Descripción</label>
+                    <textarea name="description" id="cat_desc" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100">
+            <button onclick="toggleModal('modal-category')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">Cancelar</button>
+            <button id="btn-save-category" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-500 shadow-md">Guardar Categoría</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-supplier" class="fixed inset-0 z-[60] hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-4">
+    <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-md w-full border border-gray-100">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-sm font-bold text-gray-900 uppercase">Nuevo Proveedor</h3>
+            <button onclick="toggleModal('modal-supplier')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
+        </div>
+        <div class="p-6">
+            <form id="form-supplier" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Razón Social / Nombre *</label>
+                    <input type="text" name="name" id="sup_name" required placeholder="Ej: Distribuidora Motopartes S.A." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono de Contacto</label>
+                    <input type="text" name="contact_phone" id="sup_phone" placeholder="Ej: 0991234567" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
+                    <input type="email" name="email" id="sup_email" placeholder="Ej: ventas@proveedor.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+            </form>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100">
+            <button onclick="toggleModal('modal-supplier')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">Cancelar</button>
+            <button id="btn-save-supplier" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-500 shadow-md">Guardar Proveedor</button>
+        </div>
+    </div>
+</div>
+
 <script>
-// Pega esto dentro de tu etiqueta <script>
 async function openKardexModal(id) {
     const res = await fetch(`/inventory/api/product/kardex/${id}/`);
     const data = await res.json();
@@ -407,6 +475,7 @@ async function openKardexModal(id) {
             }
         });
     });
+    
     function toggleProductStatus(productId) {
         Swal.fire({
             title: '¿Cambiar estado del producto?',
@@ -428,6 +497,68 @@ async function openKardexModal(id) {
             }
         });
     }   
-    
+
+    // FUNCIONES AÑADIDAS PARA GUARDAR CATEGORÍA Y PROVEEDOR
+    document.getElementById('btn-save-category').addEventListener('click', function() {
+        const form = document.getElementById('form-category');
+        if(!form.checkValidity()) return form.reportValidity();
+
+        const data = {
+            name: document.getElementById('cat_name').value,
+            prefix: document.getElementById('cat_prefix').value,
+            description: document.getElementById('cat_desc').value
+        };
+
+        this.disabled = true;
+        this.innerText = 'Guardando...';
+
+        fetch('/inventory/api/category/create/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json().then(data => ({ status: res.status, body: data })))
+        .then(result => {
+            if (result.status === 201) {
+                Swal.fire({ title: 'Éxito', text: 'Categoría agregada correctamente.', icon: 'success', confirmButtonColor: '#0d9488' })
+                .then(() => window.location.reload());
+            } else {
+                Swal.fire('Error', result.body.error, 'error');
+                this.disabled = false;
+                this.innerText = 'Guardar Categoría';
+            }
+        });
+    });
+
+    document.getElementById('btn-save-supplier').addEventListener('click', function() {
+        const form = document.getElementById('form-supplier');
+        if(!form.checkValidity()) return form.reportValidity();
+
+        const data = {
+            name: document.getElementById('sup_name').value,
+            contact_phone: document.getElementById('sup_phone').value,
+            email: document.getElementById('sup_email').value
+        };
+
+        this.disabled = true;
+        this.innerText = 'Guardando...';
+
+        fetch('/inventory/api/supplier/create/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json().then(data => ({ status: res.status, body: data })))
+        .then(result => {
+            if (result.status === 201) {
+                Swal.fire({ title: 'Éxito', text: 'Proveedor agregado correctamente.', icon: 'success', confirmButtonColor: '#0d9488' })
+                .then(() => window.location.reload());
+            } else {
+                Swal.fire('Error', result.body.error, 'error');
+                this.disabled = false;
+                this.innerText = 'Guardar Proveedor';
+            }
+        });
+    });
 </script>
 {% endblock %}

@@ -5,9 +5,10 @@ from .views import (
     AddStockAPI, 
     ProductToggleAPI,
     StockMovementLogView,  # <-- Agregado para el Kardex General
-    ProductKardexAPI       # <-- Agregado para el Kardex por Producto
+    ProductKardexAPI,      # <-- Agregado para el Kardex por Producto
+    CategoryCreateAPI,
+    SupplierCreateAPI
 )
-
 app_name = 'inventory'
 
 urlpatterns = [
@@ -24,4 +25,6 @@ urlpatterns = [
     
     # API para ver el Kardex específico de un producto en el Modal
     path('api/product/kardex/<int:product_id>/', ProductKardexAPI.as_view(), name='api-product-kardex'),
+    path('api/category/create/', CategoryCreateAPI.as_view(), name='api-category-create'),
+    path('api/supplier/create/', SupplierCreateAPI.as_view(), name='api-supplier-create'),
 ]
