@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogos del Sistema | Bedoya Motors{% endblock %}
+{% block header_title %}Administración de Catálogos{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Categorías Registradas</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-white text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        <tr>
+                            <th class="px-5 py-3 text-left">Detalle</th>
+                            <th class="px-5 py-3 text-center">Estado</th>
+                            <th class="px-5 py-3 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 text-xs text-gray-700">
+                        {% for c in categories %}
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-5 py-4">
+                                <span class="font-black text-gray-900 block text-sm">{{ c.name }}</span>
+                                <span class="font-mono font-bold text-[10px] text-brand-600 uppercase block mt-1">Ref: {{ c.prefix }}</span>
+                                <span class="text-gray-400 text-xs block mt-1">{{ c.description|default:"Sin descripción" }}</span>
+                            </td>
+                            <td class="px-5 py-4 text-center">
+                                {% if c.is_active %}
+                                    <span class="bg-green-50 text-green-600 px-3 py-1 rounded-lg font-bold text-[10px]">ACTIVO</span>
+                                {% else %}
+                                    <span class="bg-red-50 text-red-600 px-3 py-1 rounded-lg font-bold text-[10px]">INACTIVO</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-5 py-4 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <button onclick="editCategory({{ c.id }}, '{{ c.name }}', '{{ c.prefix }}', '{{ c.description|escapejs }}')" class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-bold transition-colors">Editar</button>
+                                    <button onclick="toggleCategory({{ c.id }})" class="text-gray-500 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg font-bold transition-colors"><i class="ph-bold ph-power"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center py-8 text-gray-400 text-xs font-bold">No hay categorías registradas en el sistema.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Proveedores Autorizados</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-white text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        <tr>
+                            <th class="px-5 py-3 text-left">Empresa / Contacto</th>
+                            <th class="px-5 py-3 text-center">Estado</th>
+                            <th class="px-5 py-3 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 text-xs text-gray-700">
+                        {% for s in suppliers %}
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-5 py-4">
+                                <span class="font-black text-gray-900 block text-sm">{{ s.name }}</span>
+                                <div class="text-gray-500 text-xs mt-1 grid grid-cols-1 gap-0.5">
+                                    <span><i class="ph-bold ph-envelope-simple mr-1"></i> {{ s.email|default:"No registrado" }}</span>
+                                    <span><i class="ph-bold ph-phone mr-1"></i> {{ s.contact_phone|default:"No registrado" }}</span>
+                                </div>
+                            </td>
+                            <td class="px-5 py-4 text-center">
+                                {% if s.is_active %}
+                                    <span class="bg-green-50 text-green-600 px-3 py-1 rounded-lg font-bold text-[10px]">ACTIVO</span>
+                                {% else %}
+                                    <span class="bg-red-50 text-red-600 px-3 py-1 rounded-lg font-bold text-[10px]">INACTIVO</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-5 py-4 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <button onclick="editSupplier({{ s.id }}, '{{ s.name }}', '{{ s.contact_phone }}', '{{ s.email }}')" class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-bold transition-colors">Editar</button>
+                                    <button onclick="toggleSupplier({{ s.id }})" class="text-gray-500 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg font-bold transition-colors"><i class="ph-bold ph-power"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center py-8 text-gray-400 text-xs font-bold">No hay proveedores registrados en el sistema.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-edit-category" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-4">
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full border border-gray-100">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between">
+            <h3 class="text-sm font-bold uppercase">Editar Categoría</h3>
+            <button onclick="toggleModal('modal-edit-category')" class="text-gray-400"><i class="ph-bold ph-x text-lg"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+            <input type="hidden" id="edit_cat_id">
+            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label>
+            <input type="text" id="edit_cat_name" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none"></div>
+            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prefijo</label>
+            <input type="text" id="edit_cat_prefix" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm uppercase font-mono outline-none"></div>
+            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Descripción</label>
+            <textarea id="edit_cat_desc" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none" rows="2"></textarea></div>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100">
+            <button onclick="toggleModal('modal-edit-category')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl">Cancelar</button>
+            <button id="btn-update-category" class="px-4 py-2 text-xs font-bold text-white bg-blue-600 rounded-xl">Actualizar Datos</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-edit-supplier" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-4">
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full border border-gray-100">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between">
+            <h3 class="text-sm font-bold uppercase">Editar Proveedor</h3>
+            <button onclick="toggleModal('modal-edit-supplier')" class="text-gray-400"><i class="ph-bold ph-x text-lg"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+            <input type="hidden" id="edit_sup_id">
+            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Razón Social</label>
+            <input type="text" id="edit_sup_name" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
+                <input type="text" id="edit_sup_phone" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo</label>
+                <input type="email" id="edit_sup_email" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none"></div>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100">
+            <button onclick="toggleModal('modal-edit-supplier')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl">Cancelar</button>
+            <button id="btn-update-supplier" class="px-4 py-2 text-xs font-bold text-white bg-blue-600 rounded-xl">Actualizar Datos</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const getCSRFToken = () => document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
+    function toggleModal(id) {
+        const m = document.getElementById(id);
+        m.classList.contains('hidden') ? m.classList.remove('hidden') : m.classList.add('hidden');
+    }
+
+    /* === LÓGICA CATEGORÍA === */
+    function editCategory(id, name, prefix, desc) {
+        document.getElementById('edit_cat_id').value = id;
+        document.getElementById('edit_cat_name').value = name;
+        document.getElementById('edit_cat_prefix').value = prefix;
+        document.getElementById('edit_cat_desc').value = desc !== 'None' ? desc : '';
+        toggleModal('modal-edit-category');
+    }
+
+    document.getElementById('btn-update-category').addEventListener('click', function() {
+        const id = document.getElementById('edit_cat_id').value;
+        const payload = {
+            name: document.getElementById('edit_cat_name').value,
+            prefix: document.getElementById('edit_cat_prefix').value,
+            description: document.getElementById('edit_cat_desc').value
+        };
+        fetch(`/inventory/api/category/update/${id}/`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() }, body: JSON.stringify(payload)
+        }).then(r => r.json().then(d => { if(r.ok) location.reload(); else Swal.fire('Error', d.error, 'error'); }));
+    });
+
+    function toggleCategory(id) {
+        Swal.fire({ title: '¿Alterar Estado?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Confirmar' }).then(r => {
+            if(r.isConfirmed) {
+                fetch(`/inventory/api/category/toggle/${id}/`, { method: 'POST', headers: { 'X-CSRFToken': getCSRFToken() } })
+                .then(res => res.json().then(data => { if(res.ok) location.reload(); else Swal.fire('Error', data.error, 'error'); }));
+            }
+        });
+    }
+
+    /* === LÓGICA PROVEEDOR === */
+    function editSupplier(id, name, phone, email) {
+        document.getElementById('edit_sup_id').value = id;
+        document.getElementById('edit_sup_name').value = name;
+        document.getElementById('edit_sup_phone').value = phone !== 'None' ? phone : '';
+        document.getElementById('edit_sup_email').value = email !== 'None' ? email : '';
+        toggleModal('modal-edit-supplier');
+    }
+
+    document.getElementById('btn-update-supplier').addEventListener('click', function() {
+        const id = document.getElementById('edit_sup_id').value;
+        const payload = {
+            name: document.getElementById('edit_sup_name').value,
+            contact_phone: document.getElementById('edit_sup_phone').value,
+            email: document.getElementById('edit_sup_email').value
+        };
+        fetch(`/inventory/api/supplier/update/${id}/`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() }, body: JSON.stringify(payload)
+        }).then(r => r.json().then(d => { if(r.ok) location.reload(); else Swal.fire('Error', d.error, 'error'); }));
+    });
+
+    function toggleSupplier(id) {
+        Swal.fire({ title: '¿Alterar Estado?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Confirmar' }).then(r => {
+            if(r.isConfirmed) {
+                fetch(`/inventory/api/supplier/toggle/${id}/`, { method: 'POST', headers: { 'X-CSRFToken': getCSRFToken() } })
+                .then(res => res.json().then(data => { if(res.ok) location.reload(); else Swal.fire('Error', data.error, 'error'); }));
+            }
+        });
+    }
+</script>
+{% endblock %}

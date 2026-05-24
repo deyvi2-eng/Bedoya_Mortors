@@ -219,3 +219,68 @@ class SupplierCreateAPI(APIView):
 
         supplier = Supplier.objects.create(name=name, contact_phone=contact_phone, email=email)
         return Response({"message": "Proveedor creado exitosamente.", "id": supplier.id}, status=status.HTTP_201_CREATED)
+    
+# ==========================================
+# GESTIÓN DE CATÁLOGOS EN INTERFAZ (FRONTEND)
+# ==========================================
+class InventorySettingsView(LoginRequiredMixin, TemplateView):
+    template_name = 'inventory/settings.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Se envía toda la información al frontend
+        context['categories'] = Category.objects.all().order_by('-created_at')
+        context['suppliers'] = Supplier.objects.all().order_by('-created_at')
+        return context
+
+class CategoryUpdateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+        
+        category = get_object_or_404(Category, pk=pk)
+        category.name = request.data.get('name', category.name)
+        category.prefix = request.data.get('prefix', category.prefix).upper()
+        category.description = request.data.get('description', category.description)
+        category.save()
+        return Response({"message": "Categoría actualizada exitosamente."})
+
+class CategoryToggleAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+        
+        category = get_object_or_404(Category, pk=pk)
+        category.is_active = not category.is_active
+        category.save()
+        return Response({"message": "Estado modificado."})
+
+class SupplierUpdateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+        
+        supplier = get_object_or_404(Supplier, pk=pk)
+        supplier.name = request.data.get('name', supplier.name)
+        supplier.contact_phone = request.data.get('contact_phone', supplier.contact_phone)
+        supplier.email = request.data.get('email', supplier.email)
+        supplier.save()
+        return Response({"message": "Proveedor actualizado exitosamente."})
+
+class SupplierToggleAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+        
+        supplier = get_object_or_404(Supplier, pk=pk)
+        supplier.is_active = not supplier.is_active
+        supplier.save()
+        return Response({"message": "Estado modificado."})

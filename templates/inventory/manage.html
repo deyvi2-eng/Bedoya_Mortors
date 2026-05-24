@@ -14,15 +14,24 @@
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-6">
 
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
             <h2 class="text-base font-bold text-gray-900 leading-none">Catálogo de Almacén</h2>
             <p class="text-xs text-gray-400 mt-1">Alta y visualización de repuestos de motocicletas en tiempo real.</p>
         </div>
+        
         {% if request.user.role == 'ADMIN' %}
-        <button onclick="toggleModal('modal-product')" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 px-5 rounded-xl text-xs shadow-md shadow-brand-600/10 transition-all active:scale-95 flex items-center justify-center gap-2">
-            <i class="ph-bold ph-plus"></i> Añadir Nuevo Repuesto
-        </button>
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <button onclick="toggleModal('modal-category')" class="flex-1 lg:flex-none bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-2">
+                <i class="ph-bold ph-folder-plus text-base"></i> Categoría
+            </button>
+            <button onclick="toggleModal('modal-supplier')" class="flex-1 lg:flex-none bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-2">
+                <i class="ph-bold ph-truck text-base"></i> Proveedor
+            </button>
+            <button onclick="toggleModal('modal-product')" class="w-full lg:w-auto bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 px-5 rounded-xl text-xs shadow-md shadow-brand-600/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                <i class="ph-bold ph-plus text-base"></i> Nuevo Repuesto
+            </button>
+        </div>
         {% endif %}
     </div>
 
@@ -107,10 +116,9 @@
     </div>
 </div>
 
-<div id="modal-product" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
+<div id="modal-product" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full">
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-2xl w-full border border-gray-100 mt-10 mb-10">
-            
+        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-2xl w-full border border-gray-100 my-8">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
                 <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Alta de Nuevo Producto</h3>
                 <button onclick="toggleModal('modal-product')" class="text-gray-400 hover:text-gray-600">
@@ -140,13 +148,9 @@
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Comercial *</label>
                             <input type="text" name="name" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                         </div>
-
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="block text-xs font-bold text-gray-500 uppercase">Categoría *</label>
-                                <button type="button" onclick="toggleModal('modal-category')" class="text-[10px] font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1">
-                                    <i class="ph-bold ph-plus"></i> Nueva
-                                </button>
                             </div>
                             <select name="category" required class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                                 <option value="">Seleccione...</option>
@@ -155,13 +159,9 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="block text-xs font-bold text-gray-500 uppercase">Proveedor</label>
-                                <button type="button" onclick="toggleModal('modal-supplier')" class="text-[10px] font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1">
-                                    <i class="ph-bold ph-plus"></i> Nuevo
-                                </button>
                             </div>
                             <select name="supplier" class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                                 <option value="">Ninguno...</option>
@@ -170,7 +170,6 @@
                                 {% endfor %}
                             </select>
                         </div>
-
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Código de Barras (Opcional)</label>
                             <input type="text" name="barcode" placeholder="Ej: 786123456789" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
@@ -184,7 +183,7 @@
                             <input type="text" name="model_compatibility" placeholder="Ej: Universal, FZ16, CBR250" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ubicación Físca en Bodega</label>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ubicación Física en Bodega</label>
                             <input type="text" name="location" placeholder="Ej: Pasillo 3, Estante B" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                         </div>
                     </div>
@@ -214,7 +213,7 @@
     </div>
 </div>
 
-<div id="modal-stock" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
+<div id="modal-stock" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-sm w-full border border-gray-100">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
@@ -246,7 +245,7 @@
     </div>
 </div>
 
-<div id="modal-kardex" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-sm overflow-y-auto w-full h-full">
+<div id="modal-kardex" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden flex flex-col max-h-[85vh]">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
@@ -298,21 +297,21 @@
             <form id="form-category" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre de la Categoría *</label>
-                    <input type="text" name="name" id="cat_name" required placeholder="Ej: Llantas" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    <input type="text" name="name" id="cat_name" required placeholder="Ej: Mecánica" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prefijo (3 Letras) *</label>
-                    <input type="text" name="prefix" id="cat_prefix" required maxlength="3" placeholder="Ej: LLA" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm uppercase focus:ring-2 focus:ring-brand-500 outline-none">
+                    <input type="text" name="prefix" id="cat_prefix" required maxlength="3" placeholder="Ej: MEC" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm uppercase focus:ring-2 focus:ring-brand-500 outline-none font-mono">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Descripción</label>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Descripción (Opcional)</label>
                     <textarea name="description" id="cat_desc" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
                 </div>
             </form>
         </div>
         <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100">
             <button onclick="toggleModal('modal-category')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">Cancelar</button>
-            <button id="btn-save-category" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-500 shadow-md">Guardar Categoría</button>
+            <button id="btn-save-category" class="px-4 py-2 text-xs font-bold text-white bg-gray-900 rounded-xl hover:bg-black shadow-md">Guardar Categoría</button>
         </div>
     </div>
 </div>
@@ -326,70 +325,27 @@
         <div class="p-6">
             <form id="form-supplier" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Razón Social / Nombre *</label>
-                    <input type="text" name="name" id="sup_name" required placeholder="Ej: Distribuidora Motopartes S.A." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Razón Social / Nombre Comercial *</label>
+                    <input type="text" name="name" id="sup_name" required placeholder="Ej: Importadora Bedoya" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono de Contacto</label>
-                    <input type="text" name="contact_phone" id="sup_phone" placeholder="Ej: 0991234567" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
-                    <input type="email" name="email" id="sup_email" placeholder="Ej: ventas@proveedor.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
+                        <input type="text" name="contact_phone" id="sup_phone" placeholder="Ej: 0991234567" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
+                        <input type="email" name="email" id="sup_email" placeholder="Ej: ventas@proveedor.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
                 </div>
             </form>
         </div>
         <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100">
             <button onclick="toggleModal('modal-supplier')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">Cancelar</button>
-            <button id="btn-save-supplier" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-500 shadow-md">Guardar Proveedor</button>
+            <button id="btn-save-supplier" class="px-4 py-2 text-xs font-bold text-white bg-gray-900 rounded-xl hover:bg-black shadow-md">Guardar Proveedor</button>
         </div>
     </div>
 </div>
-
-<script>
-async function openKardexModal(id) {
-    const res = await fetch(`/inventory/api/product/kardex/${id}/`);
-    const data = await res.json();
-    
-    document.getElementById('kardex_code').innerText = data.product.code;
-    document.getElementById('kardex_name').innerText = data.product.name;
-    document.getElementById('kardex_cat').innerText = data.product.category;
-    document.getElementById('kardex_sup').innerText = data.product.supplier;
-    document.getElementById('kardex_stock').innerText = data.product.stock;
-    
-    if(data.product.image) {
-        document.getElementById('kardex_img').src = data.product.image;
-        document.getElementById('kardex_img').classList.remove('hidden');
-        document.getElementById('kardex_no_img').classList.add('hidden');
-    } else {
-        document.getElementById('kardex_img').classList.add('hidden');
-        document.getElementById('kardex_no_img').classList.remove('hidden');
-    }
-
-    const tbody = document.getElementById('kardex_table_body');
-    tbody.innerHTML = '';
-    
-    if(data.movements.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin movimientos</td></tr>`;
-    } else {
-        data.movements.forEach(m => {
-            const isEntry = m.type === 'Entrada';
-            const color = isEntry ? 'text-green-600' : 'text-red-600';
-            tbody.innerHTML += `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-2 font-medium">${m.date}</td>
-                    <td class="px-4 py-2 font-bold ${color}">${m.type}</td>
-                    <td class="px-4 py-2 font-black ${color}">${isEntry ? '+' : '-'}${m.qty}</td>
-                    <td class="px-4 py-2">${m.user}</td>
-                    <td class="px-4 py-2 italic text-gray-500">${m.desc}</td>
-                </tr>
-            `;
-        });
-    }
-    toggleModal('modal-kardex');
-}
-</script>
-
 
 <script>
     const getCSRFToken = () => document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
@@ -399,6 +355,7 @@ async function openKardexModal(id) {
         modal.classList.contains('hidden') ? modal.classList.remove('hidden') : modal.classList.add('hidden');
     }
 
+    // PREVISUALIZACIÓN DE IMAGEN
     const uploader = document.getElementById('image_upload');
     uploader.addEventListener('change', function() {
         const file = this.files[0];
@@ -413,6 +370,7 @@ async function openKardexModal(id) {
         }
     });
 
+    // GUARDAR NUEVO PRODUCTO
     document.getElementById('btn-save-product').addEventListener('click', function() {
         const form = document.getElementById('form-product');
         if(!form.checkValidity()) return form.reportValidity();
@@ -439,6 +397,7 @@ async function openKardexModal(id) {
         });
     });
 
+    // ABRIR Y GUARDAR STOCK
     function openStockModal(id, code, name) {
         document.getElementById('stock_product_id').value = id;
         document.getElementById('lbl-stock-code').innerText = code;
@@ -476,6 +435,7 @@ async function openKardexModal(id) {
         });
     });
     
+    // CAMBIAR ESTADO DEL PRODUCTO
     function toggleProductStatus(productId) {
         Swal.fire({
             title: '¿Cambiar estado del producto?',
@@ -498,7 +458,50 @@ async function openKardexModal(id) {
         });
     }   
 
-    // FUNCIONES AÑADIDAS PARA GUARDAR CATEGORÍA Y PROVEEDOR
+    // ABRIR KARDEX
+    async function openKardexModal(id) {
+        const res = await fetch(`/inventory/api/product/kardex/${id}/`);
+        const data = await res.json();
+        
+        document.getElementById('kardex_code').innerText = data.product.code;
+        document.getElementById('kardex_name').innerText = data.product.name;
+        document.getElementById('kardex_cat').innerText = data.product.category;
+        document.getElementById('kardex_sup').innerText = data.product.supplier;
+        document.getElementById('kardex_stock').innerText = data.product.stock;
+        
+        if(data.product.image) {
+            document.getElementById('kardex_img').src = data.product.image;
+            document.getElementById('kardex_img').classList.remove('hidden');
+            document.getElementById('kardex_no_img').classList.add('hidden');
+        } else {
+            document.getElementById('kardex_img').classList.add('hidden');
+            document.getElementById('kardex_no_img').classList.remove('hidden');
+        }
+
+        const tbody = document.getElementById('kardex_table_body');
+        tbody.innerHTML = '';
+        
+        if(data.movements.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin movimientos</td></tr>`;
+        } else {
+            data.movements.forEach(m => {
+                const isEntry = m.type === 'Entrada';
+                const color = isEntry ? 'text-green-600' : 'text-red-600';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 font-medium">${m.date}</td>
+                        <td class="px-4 py-2 font-bold ${color}">${m.type}</td>
+                        <td class="px-4 py-2 font-black ${color}">${isEntry ? '+' : '-'}${m.qty}</td>
+                        <td class="px-4 py-2">${m.user}</td>
+                        <td class="px-4 py-2 italic text-gray-500">${m.desc}</td>
+                    </tr>
+                `;
+            });
+        }
+        toggleModal('modal-kardex');
+    }
+
+    // GUARDAR CATEGORÍA
     document.getElementById('btn-save-category').addEventListener('click', function() {
         const form = document.getElementById('form-category');
         if(!form.checkValidity()) return form.reportValidity();
@@ -530,6 +533,7 @@ async function openKardexModal(id) {
         });
     });
 
+    // GUARDAR PROVEEDOR
     document.getElementById('btn-save-supplier').addEventListener('click', function() {
         const form = document.getElementById('form-supplier');
         if(!form.checkValidity()) return form.reportValidity();

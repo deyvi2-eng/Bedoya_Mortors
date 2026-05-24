@@ -456,15 +456,13 @@ async function toggleUser(userId) {
 
     if (!result.isConfirmed) return;
 
-    fetch(`/accounts/api/toggle-user/${userId}/`, {
-
+    // Cambia la línea del fetch por esta:
+    fetch(`/accounts/api/toggle-status/${userId}/`, {
         method: 'POST',
-
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCSRFToken()
         }
-
     })
 
     .then(res => res.json().then(data => ({
@@ -524,15 +522,13 @@ async function deleteUser(userId) {
 
     if (!result.isConfirmed) return;
 
-    fetch(`/accounts/api/delete-user/${userId}/`, {
-
+    // Cambia la línea del fetch por esta:
+    fetch(`/accounts/api/delete/${userId}/`, {
         method: 'DELETE',
-
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCSRFToken()
         }
-
     })
 
     .then(res => res.json().then(data => ({
