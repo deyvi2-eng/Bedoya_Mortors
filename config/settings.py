@@ -142,10 +142,17 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUD_NAME'),
     'API_KEY': config('API_KEY'),
-    'API_SECRET': config('API_SECRET')
+    'API_SECRET': config('API_SECRET'),
+    'SECURE': True
 }
-# Le decimos a Django que guarde las fotos subidas (Media) en Cloudinary
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # Mantenemos las URLs base por si acaso
 MEDIA_URL = '/media/'
