@@ -284,3 +284,33 @@ class SupplierToggleAPI(APIView):
         supplier.is_active = not supplier.is_active
         supplier.save()
         return Response({"message": "Estado modificado."})
+    
+
+# ==========================================
+# API: EDITAR Y ELIMINAR PRODUCTO
+# ==========================================
+class ProductUpdateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+        
+        product = get_object_or_404(Product, pk=pk)
+        # Actualizamos los campos necesarios
+        product.name = request.data.get('name', product.name)
+        product.purchase_price = request.data.get('purchase_price', product.purchase_price)
+        product.sale_price = request.data.get('sale_price', product.sale_price)
+        product.save()
+        return Response({"message": "Producto actualizado correctamente."})
+
+class ProductDeleteAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+        
+        product = get_object_or_404(Product, pk=pk)
+        product.delete()
+        return Response({"message": "Producto eliminado permanentemente."})

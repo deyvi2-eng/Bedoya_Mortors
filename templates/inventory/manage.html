@@ -87,16 +87,22 @@
                                 <span class="w-2 h-2 bg-gray-300 rounded-full inline-block"></span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-3.5 text-right flex justify-end gap-2">
+                        <td class="px-6 py-3.5 text-right flex justify-end gap-1">
                             {% if request.user.role == 'ADMIN' %}
-                                <button onclick="openStockModal('{{ p.id }}', '{{ p.code }}', '{{ p.name }}')" class="text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors" title="Ingresar Stock">
-                                    + Ingresar
+                                <button onclick="openStockModal('{{ p.id }}', '{{ p.code }}', '{{ p.name|escapejs }}')" class="p-2 text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors" title="Ingresar Stock">
+                                    <i class="ph-bold ph-plus text-base"></i>
                                 </button>
-                                <button onclick="toggleProductStatus({{ p.id }})" class="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 px-2 py-1.5 rounded-lg text-xs font-bold transition-colors" title="Desactivar/Activar">
-                                    <i class="ph-bold ph-power"></i>
+                                <button onclick="openEditModal({{ p.id }}, '{{ p.name|escapejs }}', {{ p.purchase_price }}, {{ p.sale_price }})" class="p-2 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors" title="Editar Repuesto">
+                                    <i class="ph-bold ph-pencil-simple text-base"></i>
                                 </button>
-                                <button onclick="openKardexModal({{ p.id }})" class="text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 px-2 py-1.5 rounded-lg text-xs font-bold transition-colors" title="Ver Hoja de Vida (Kardex)">
-                                    <i class="ph-bold ph-file-text"></i>
+                                <button onclick="openKardexModal({{ p.id }})" class="p-2 text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors" title="Ver Kardex">
+                                    <i class="ph-bold ph-file-text text-base"></i>
+                                </button>
+                                <button onclick="toggleProductStatus({{ p.id }})" class="p-2 text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors" title="Desactivar/Activar">
+                                    <i class="ph-bold ph-power text-base"></i>
+                                </button>
+                                <button onclick="deleteProduct({{ p.id }})" class="p-2 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 rounded-lg transition-colors" title="Eliminar Permanentemente">
+                                    <i class="ph-bold ph-trash text-base"></i>
                                 </button>
                             {% else %}
                                 <span class="text-xs text-gray-400 italic">Solo lectura</span>
@@ -112,6 +118,37 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-edit" class="fixed inset-0 z-[70] hidden bg-white md:bg-gray-900/60 md:backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-0 md:p-4">
+    <div class="relative bg-white md:rounded-2xl text-left shadow-2xl transform transition-all w-full h-full md:h-auto max-w-lg border border-gray-100 flex flex-col">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center shrink-0">
+            <h3 class="text-sm font-bold text-gray-900 uppercase">Editar Repuesto</h3>
+            <button onclick="toggleModal('modal-edit')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
+        </div>
+        <div class="p-6 flex-1 overflow-y-auto">
+            <form id="form-edit" class="space-y-4">
+                <input type="hidden" id="edit_id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Comercial</label>
+                    <input type="text" id="edit_name" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-3 outline-none text-sm font-medium focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Costo ($)</label>
+                        <input type="number" step="0.01" id="edit_purchase" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-3 text-sm font-bold text-center outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">P. Venta ($)</label>
+                        <input type="number" step="0.01" id="edit_sale" required class="w-full bg-gray-50 border border-gray-200 text-brand-600 rounded-xl px-3 py-3 text-sm font-bold text-center outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="bg-gray-50 p-4 border-t border-gray-100 shrink-0">
+            <button type="button" id="btn-update" class="w-full py-3.5 text-sm font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-500 shadow-md transition-all">Guardar Cambios</button>
         </div>
     </div>
 </div>
@@ -354,6 +391,73 @@
         const modal = document.getElementById(id);
         modal.classList.contains('hidden') ? modal.classList.remove('hidden') : modal.classList.add('hidden');
     }
+
+    // ABRIR MODAL EDICIÓN
+    function openEditModal(id, name, purchase, sale) {
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_name').value = name;
+        document.getElementById('edit_purchase').value = purchase;
+        document.getElementById('edit_sale').value = sale;
+        toggleModal('modal-edit');
+    }
+
+    // ELIMINAR PRODUCTO
+    function deleteProduct(id) {
+        Swal.fire({
+            title: '¿Eliminar repuesto?',
+            text: "Esta acción es irreversible.",
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/inventory/api/product/delete/${id}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCSRFToken() }
+                }).then(res => {
+                    if(res.ok) window.location.reload();
+                    else Swal.fire('Error', 'No se pudo eliminar. Verifica que no tenga historial de ventas.', 'error');
+                });
+            }
+        });
+    }
+
+    // GUARDAR EDICIÓN DE PRODUCTO
+    document.getElementById('btn-update').addEventListener('click', function() {
+        const id = document.getElementById('edit_id').value;
+        const data = {
+            name: document.getElementById('edit_name').value,
+            purchase_price: document.getElementById('edit_purchase').value,
+            sale_price: document.getElementById('edit_sale').value
+        };
+
+        this.disabled = true;
+        this.innerText = 'Guardando...';
+
+        fetch(`/inventory/api/product/update/${id}/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(res => {
+            if(res.message) {
+                Swal.fire({ title: 'Actualizado', text: 'Repuesto modificado exitosamente.', icon: 'success', confirmButtonColor: '#0d9488' })
+                .then(() => window.location.reload());
+            } else {
+                Swal.fire('Error', 'Error al modificar repuesto', 'error');
+                this.disabled = false;
+                this.innerText = 'Guardar Cambios';
+            }
+        }).catch(() => {
+            Swal.fire('Error', 'Error de red', 'error');
+            this.disabled = false;
+            this.innerText = 'Guardar Cambios';
+        });
+    });
 
     // PREVISUALIZACIÓN DE IMAGEN
     const uploader = document.getElementById('image_upload');

@@ -5,6 +5,8 @@ from .views import (
     ProductCreateAPI, 
     AddStockAPI, 
     ProductToggleAPI,
+    ProductUpdateAPI,  # Importación añadida para edición
+    ProductDeleteAPI,  # Importación añadida para eliminación
     
     # Kardex y Movimientos
     StockMovementLogView,
@@ -35,6 +37,10 @@ urlpatterns = [
     path('api/product/create/', ProductCreateAPI.as_view(), name='api-product-create'),
     path('api/product/add-stock/', AddStockAPI.as_view(), name='api-product-add-stock'),
     path('api/product/toggle/<int:product_id>/', ProductToggleAPI.as_view(), name='api-product-toggle'),
+    
+    # Endpoints de Edición y Eliminación de productos
+    path('api/product/update/<int:pk>/', ProductUpdateAPI.as_view(), name='api-product-update'),
+    path('api/product/delete/<int:pk>/', ProductDeleteAPI.as_view(), name='api-product-delete'),
     
     # API para ver el Kardex específico de un producto en el Modal
     path('api/product/kardex/<int:product_id>/', ProductKardexAPI.as_view(), name='api-product-kardex'),
