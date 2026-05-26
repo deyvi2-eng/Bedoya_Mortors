@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import environ
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,16 +21,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    'rest_framework',
-    
-    'core',
+    # --- AÑADE ESTAS DOS LÍNEAS ---
+    'cloudinary_storage',
+    'cloudinary',
+
+    # Tus aplicaciones
     'accounts',
+    'core',
     'inventory',
-    'customers',
     'sales',
+    'customers',
     'cash_register',
-    'audits',
     'reports',
+    'audits',
     'notifications',
 ]
 
@@ -129,3 +133,20 @@ if not DEBUG:
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 43200  # Sesión expira a las 12 horas de inactividad
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+
+# ==========================================
+# CONFIGURACIÓN DE CLOUDINARY (FOTOS GRATIS)
+# ==========================================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUD_NAME'),
+    'API_KEY': config('API_KEY'),
+    'API_SECRET': config('API_SECRET')
+}
+# Le decimos a Django que guarde las fotos subidas (Media) en Cloudinary
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Mantenemos las URLs base por si acaso
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
