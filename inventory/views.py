@@ -41,7 +41,12 @@ class ProductCreateAPI(APIView):
             sale_price = request.data.get('sale_price')
             
             supplier_id = request.data.get('supplier')
-            barcode = request.data.get('barcode', '')
+            
+            # --- CORRECCIÓN PARA EL CÓDIGO DE BARRAS ---
+            barcode = request.data.get('barcode', '').strip()
+            if not barcode:  # Si está vacío, lo convertimos en None
+                barcode = None
+                
             brand = request.data.get('brand', '')
             model_compatibility = request.data.get('model_compatibility', '')
             location = request.data.get('location', '')
