@@ -4,7 +4,7 @@ from customers.models import Customer
 from inventory.models import Product
 from accounts.models import User
 from cash_register.models import CashSession
-
+from decimal import Decimal
 
 class Sale(BaseModel):
     PAYMENT_CHOICES = [
@@ -62,8 +62,13 @@ class SaleDetail(BaseModel):
         return f"{self.quantity}x {self.product.name} (Venta {self.sale.invoice_number})"
 
     def save(self, *args, **kwargs):
-        # MODIFICADO: Solo tomar la foto de los precios si existe un producto físico
+        # MODIFICADO: Tomar la foto de precios calculando correctamente si es líquido
         if not self.pk and self.product:
-            self.historical_price = self.product.sale_price
-            self.historical_cost = self.product.purchase_price
+            if self.product.unit_type == 'ML':
+                # Si es líquido, dividimos el costo para 1000 para que la ganancia sea exacta
+                self.historical_price = self.product.sale_price / Decimal('1000.00')
+                self.historical_cost = self.product.purchase_price / Decimal('1000.00')
+            else:
+                self.historical_price = self.product.sale_price
+                self.historical_cost = self.product.purchase_price
         super().save(*args, **kwargs)

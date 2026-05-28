@@ -157,12 +157,19 @@ class ProcessSaleAPI(APIView):
                             description=f"Venta de {qty}{unidad_str} | Factura: {invoice_number}", user=request.user
                         )
 
-                        line_total = product.sale_price * qty
+                        # ===== CORRECCIÓN CRÍTICA DE LÍQUIDOS =====
+                        # Si es líquido, sacamos el precio por cada mililitro dividiendo para 1000
+                        if product.unit_type == 'ML':
+                            precio_unitario_real = product.sale_price / Decimal('1000.00')
+                        else:
+                            precio_unitario_real = product.sale_price
+
+                        line_total = precio_unitario_real * qty
                         subtotal_calc += line_total
 
                         SaleDetail.objects.create(
                             sale=sale, product=product, quantity=qty,
-                            unit_price=product.sale_price, subtotal=line_total
+                            unit_price=precio_unitario_real, subtotal=line_total
                         )
 
                 # Cálculos finales de la venta

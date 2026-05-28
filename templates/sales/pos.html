@@ -148,7 +148,7 @@
     };
 
     let cart = [];
-    let currentProducts = []; // Almacena temporalmente los resultados para el modal
+    let currentProducts = []; 
     const IVA_RATE = 0.15;
 
     function saveState() {
@@ -186,60 +186,62 @@
         const query = e.target.value;
         if (query.length < 2) return;
 
-        const res = await fetch(`/sales/api/search-products/?q=${query}`);
-        const data = await res.json();
-        
-        currentProducts = data.products; // Se guardan para acceder desde el modal
-        productResults.innerHTML = '';
-
-        if (data.products.length === 0) {
-            productResults.innerHTML = `
-                <div class="col-span-full text-center py-16 opacity-60">
-                    <i class="ph-light ph-magnifying-glass text-4xl text-slate-400 mb-2"></i>
-                    <p class="text-xs font-medium text-slate-500">Sin resultados en el catálogo</p>
-                </div>
-            `;
-            return;
-        }
-
-        data.products.forEach(p => {
-            const publicPrice = p.price * (1 + IVA_RATE);
-            const isLiquid = p.unit_type === 'ML';
-            const hasStock = p.stock > 0;
+        try {
+            const res = await fetch(`/sales/api/search-products/?q=${query}`);
+            const data = await res.json();
             
-            const imgHtml = p.image 
-                ? `<img src="${p.image}" class="w-full h-full object-contain mix-blend-multiply">` 
-                : `<i class="ph-light ph-image text-3xl text-slate-300"></i>`;
+            currentProducts = data.products; 
+            productResults.innerHTML = '';
 
-            // Al hacer clic, ahora se abre la ventana de detalles
-            const html = `
-                <div onclick="showProductModal(${p.id})"
-                    class="hover-lift bg-white rounded-2xl border border-slate-100 cursor-pointer overflow-hidden flex flex-col h-full shadow-sm relative group">
-                    
-                    <div class="h-28 bg-slate-50/50 flex items-center justify-center relative border-b border-slate-50 p-2">
-                        ${imgHtml}
-                        ${isLiquid ? `<div class="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[8px] font-black tracking-widest border border-blue-100">LIQ</div>` : ''}
+            if (data.products.length === 0) {
+                productResults.innerHTML = `
+                    <div class="col-span-full text-center py-16 opacity-60">
+                        <i class="ph-light ph-magnifying-glass text-4xl text-slate-400 mb-2"></i>
+                        <p class="text-xs font-medium text-slate-500">Sin resultados en el catálogo</p>
                     </div>
-                    
-                    <div class="p-3 flex flex-col justify-between flex-1">
-                        <div>
-                            <span class="text-[9px] text-slate-400 font-mono font-bold block mb-1 uppercase tracking-widest">${p.code}</span>
-                            <h3 class="text-xs font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-cyan-600 transition-colors">${p.name}</h3>
+                `;
+                return;
+            }
+
+            data.products.forEach(p => {
+                const publicPrice = p.price * (1 + IVA_RATE);
+                const isLiquid = p.unit_type === 'ML';
+                const hasStock = p.stock > 0;
+                const displayPrice = isLiquid ? `$${publicPrice.toFixed(2)} /Litro` : `$${publicPrice.toFixed(2)}`;
+                const imgHtml = p.image 
+                    ? `<img src="${p.image}" class="w-full h-full object-contain mix-blend-multiply">` 
+                    : `<i class="ph-light ph-image text-3xl text-slate-300"></i>`;
+
+                const html = `
+                    <div onclick="showProductModal(${p.id})"
+                        class="hover-lift bg-white rounded-2xl border border-slate-100 cursor-pointer overflow-hidden flex flex-col h-full shadow-sm relative group">
+                        
+                        <div class="h-28 bg-slate-50/50 flex items-center justify-center relative border-b border-slate-50 p-2">
+                            ${imgHtml}
+                            ${isLiquid ? `<div class="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[8px] font-black tracking-widest border border-blue-100">LIQ</div>` : ''}
                         </div>
-                        <div class="mt-3 flex items-center justify-between border-t border-slate-50 pt-2">
-                            <span class="text-[10px] font-bold ${hasStock ? 'text-emerald-500' : 'text-red-500'}">
-                                ${hasStock ? `Stock: ${p.stock}` : 'Agotado'}
-                            </span>
-                            <span class="text-sm font-black text-slate-900">$${publicPrice.toFixed(2)}</span>
+                        
+                        <div class="p-3 flex flex-col justify-between flex-1">
+                            <div>
+                                <span class="text-[9px] text-slate-400 font-mono font-bold block mb-1 uppercase tracking-widest">${p.code}</span>
+                                <h3 class="text-xs font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-cyan-600 transition-colors">${p.name}</h3>
+                            </div>
+                            <div class="mt-3 flex items-center justify-between border-t border-slate-50 pt-2">
+                                <span class="text-[10px] font-bold ${hasStock ? 'text-emerald-500' : 'text-red-500'}">
+                                    ${hasStock ? `Stock: ${p.stock}` : 'Agotado'}
+                                </span>
+                                <span class="text-sm font-black text-slate-900">${displayPrice}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            productResults.insertAdjacentHTML('beforeend', html);
-        });
+                `;
+                productResults.insertAdjacentHTML('beforeend', html);
+            });
+        } catch (error) {
+            console.error("Error al buscar productos:", error);
+        }
     }, 300));
 
-    // Variable global temporal para el modal
     window.currentModalData = { price: 0, step: 1, max: 0 };
 
     function showProductModal(id) {
@@ -252,8 +254,9 @@
             : `<div class="py-6"><i class="ph-light ph-image text-6xl text-slate-300"></i></div>`;
         const unitLabel = p.unit_type === 'ML' ? 'ml' : 'u';
         const isLiquid = p.unit_type === 'ML';
-        const step = isLiquid ? 100 : 1; // Enteros estrictos
-
+        const step = isLiquid ? 100 : 1; 
+        const pricePerUnit = isLiquid ? publicPrice / 1000 : publicPrice;
+        
         const existingInCart = cart.find(item => String(item.id) === String(p.id));
         const currentCartQty = existingInCart ? existingInCart.quantity : 0;
         const availableStock = p.stock - currentCartQty;
@@ -262,8 +265,7 @@
             return Swal.fire('Sin Stock', 'Ya has agregado todo el stock disponible al carrito.', 'warning');
         }
 
-        // Guardar datos para el cálculo en tiempo real
-        window.currentModalData = { price: publicPrice, step: step, max: availableStock };
+        window.currentModalData = { price: pricePerUnit, step: step, max: availableStock };
 
         Swal.fire({
             html: `
@@ -280,7 +282,7 @@
                             <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Stock Restante: ${availableStock}</span>
                             <div class="text-right">
                                 <span class="block text-[10px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Total Estimado</span>
-                                <span class="text-2xl font-black text-slate-900" id="modal_total_price">$${(publicPrice * step).toFixed(2)}</span>
+                                <span class="text-2xl font-black text-slate-900" id="modal_total_price">$${(pricePerUnit * step).toFixed(2)}</span>
                             </div>
                         </div>
 
@@ -328,7 +330,6 @@
         
         if (dir !== 0) current += (dir * step);
         
-        // Validaciones estrictas
         if (current < step) current = step;
         if (current > max) {
             current = max;
@@ -445,13 +446,11 @@
         if (autoSave) saveState();
     }
 
-    // Se añade el parámetro selectedQty con un valor nulo por defecto
     function addToCart(id, code, name, base_price, stock, unit_type, selectedQty = null) {
         if (stock <= 0) return Swal.fire('Aviso', 'No hay stock disponible.', 'error');
         
         const existing = cart.find(item => item.id === id);
         
-        // Si viene una cantidad seleccionada desde el modal, la usamos. Si no, usamos las reglas por defecto.
         let qtyToAdd = selectedQty !== null ? parseFloat(selectedQty) : (unit_type === 'ML' ? 100 : 1);
 
         if (existing) {
@@ -463,14 +462,12 @@
             cart.push({ id, code, name, price: base_price, quantity: qtyToAdd, stock, unit_type, is_service: false });
         }
 
-        // Limpiamos el buscador después de agregar
         document.getElementById('product_search').value = '';
         document.getElementById('product_results').innerHTML = '';
         
         renderCart();
         saveState();
         
-        // Opcional: Pequeña alerta de confirmación
         const Toast = Swal.mixin({
             toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true
         });
@@ -484,7 +481,7 @@
         let step = item.unit_type === 'ML' ? 100 : 1;
         let qty = parseFloat(newQty);
 
-        if (isNaN(qty) || qty < step) qty = step; // Mínimo permitido
+        if (isNaN(qty) || qty < step) qty = step; 
 
         if (!item.is_service && qty > item.stock) {
             qty = item.stock;
@@ -501,7 +498,6 @@
     }
 
     function removeFromCart(id) {
-        // Forzamos a que ambos sean de tipo texto para que la comparación sea exacta
         cart = cart.filter(i => String(i.id) !== String(id));
         renderCart();
         saveState();
@@ -522,14 +518,19 @@
         }
 
         cart.forEach(item => {
-            const lineTotal = item.price * item.quantity;
-            subtotal += lineTotal;
-            const publicUnitPrice = item.price * (1 + IVA_RATE);
-            const lineTotalPublic = lineTotal * (1 + IVA_RATE);
-            
             const isLiquid = item.unit_type === 'ML';
+            const priceForCalculation = isLiquid ? item.price / 1000 : item.price;
+            
+            // ERROR CORREGIDO AQUI: Habían dos declaraciones de 'const lineTotal'.
+            const lineTotal = priceForCalculation * item.quantity;
+            
+            subtotal += lineTotal;
+            
+            const publicUnitPrice = priceForCalculation * (1 + IVA_RATE);
+            const lineTotalPublic = lineTotal * (1 + IVA_RATE);
+
             const unitLabel = isLiquid ? 'ml' : 'u';
-            const step = isLiquid ? 100 : 1; // Enteros estrictos
+            const step = isLiquid ? 100 : 1; 
 
             const badgeHtml = item.is_service 
                 ? `<span class="px-2 py-0.5 rounded bg-purple-50 text-purple-600 text-[8px] font-black tracking-widest"><i class="ph-bold ph-wrench"></i> ${item.code}</span>`
@@ -576,6 +577,7 @@
         document.getElementById('lbl_iva').innerText = `$${iva.toFixed(2)}`;
         document.getElementById('lbl_total').innerText = `$${total.toFixed(2)}`;
     }
+
     async function processSale() {
         if (cart.length === 0) return Swal.fire('Atención', 'Carrito vacío', 'warning');
         
