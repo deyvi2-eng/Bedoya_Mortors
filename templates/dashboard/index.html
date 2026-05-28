@@ -11,130 +11,154 @@
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
     
-    <div class="bg-white p-3 md:p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-        <h2 class="text-sm md:text-base font-black text-gray-900 flex items-center gap-2">
-            <i class="ph-fill ph-funnel text-brand-500 text-lg"></i> Filtros de Rendimiento
+    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <h2 class="text-sm font-bold text-gray-800 flex items-center gap-2 px-2">
+            <i class="ph-bold ph-funnel text-brand-500"></i> Filtros
         </h2>
         
         <form id="date-filter-form" class="grid grid-cols-2 sm:flex items-center gap-2 w-full md:w-auto" method="GET">
             <div class="col-span-1 relative">
-                <i class="ph-bold ph-calendar-blank absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                <input type="date" name="start_date" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-2 py-2 md:py-2.5 text-[11px] md:text-sm outline-none focus:ring-2 focus:ring-brand-500 text-gray-700 font-medium" value="{{ request.GET.start_date|default:start_date }}">
+                <input type="date" name="start_date" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-brand-500 text-gray-700 font-medium" value="{{ request.GET.start_date|default:start_date }}">
             </div>
-            
             <div class="hidden sm:block text-gray-300 font-bold text-xs">-</div>
-            
             <div class="col-span-1 relative">
-                <i class="ph-bold ph-calendar-blank absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                <input type="date" name="end_date" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-2 py-2 md:py-2.5 text-[11px] md:text-sm outline-none focus:ring-2 focus:ring-brand-500 text-gray-700 font-medium" value="{{ request.GET.end_date|default:end_date }}">
+                <input type="date" name="end_date" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-brand-500 text-gray-700 font-medium" value="{{ request.GET.end_date|default:end_date }}">
             </div>
-            
-            <div class="col-span-2 sm:col-auto flex gap-2 mt-1 sm:mt-0">
-                <button type="submit" class="flex-1 sm:flex-none bg-gray-900 hover:bg-black text-white px-4 py-2 md:py-2.5 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5">
-                    <i class="ph-bold ph-magnifying-glass"></i> Filtrar
+            <div class="col-span-2 sm:col-auto flex gap-2">
+                <button type="submit" class="flex-1 sm:flex-none bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">
+                    Filtrar
                 </button>
-                <button type="button" onclick="exportFilteredExcel()" class="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 md:py-2.5 rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-1.5">
-                    <i class="ph-bold ph-microsoft-excel-logo"></i> Excel
+                <button type="button" onclick="exportFilteredExcel()" class="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">
+                    Excel
                 </button>
             </div>
         </form>
     </div>
     
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
-        
-        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-green-200 hover:shadow-md transition-all group relative overflow-hidden">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full blur-2xl group-hover:bg-green-100 transition-colors"></div>
-            <div class="relative">
-                <div class="flex justify-between items-start mb-2 md:mb-4">
-                    <span class="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Ingresos</span>
-                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-green-50 text-green-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                        <i class="ph-bold ph-currency-dollar text-base md:text-xl"></i>
-                    </div>
-                </div>
-                <h3 class="text-xl md:text-3xl font-black text-gray-900 tracking-tight">${{ ingresos_hoy|floatformat:2 }}</h3>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Ingresos</p>
+                <h3 class="text-lg md:text-xl font-black text-gray-800">${{ ingresos_hoy|floatformat:2 }}</h3>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-green-50 border border-green-100 text-green-600 flex items-center justify-center">
+                <i class="ph-bold ph-currency-dollar text-lg"></i>
             </div>
         </div>
 
-        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all group relative overflow-hidden">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full blur-2xl group-hover:bg-blue-100 transition-colors"></div>
-            <div class="relative">
-                <div class="flex justify-between items-start mb-2 md:mb-4">
-                    <span class="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Ventas</span>
-                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                        <i class="ph-bold ph-receipt text-base md:text-xl"></i>
-                    </div>
-                </div>
-                <h3 class="text-xl md:text-3xl font-black text-gray-900 tracking-tight">{{ operaciones_hoy }}</h3>
+        <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Ventas</p>
+                <h3 class="text-lg md:text-xl font-black text-gray-800">{{ operaciones_hoy }}</h3>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
+                <i class="ph-bold ph-receipt text-lg"></i>
             </div>
         </div>
 
-        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-purple-200 hover:shadow-md transition-all group relative overflow-hidden">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-50 rounded-full blur-2xl group-hover:bg-purple-100 transition-colors"></div>
-            <div class="relative">
-                <div class="flex justify-between items-start mb-2 md:mb-4">
-                    <span class="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Clientes</span>
-                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                        <i class="ph-bold ph-users text-base md:text-xl"></i>
-                    </div>
-                </div>
-                <h3 class="text-xl md:text-3xl font-black text-gray-900 tracking-tight">{{ total_clientes }}</h3>
+        <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Clientes</p>
+                <h3 class="text-lg md:text-xl font-black text-gray-800">{{ total_clientes }}</h3>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center">
+                <i class="ph-bold ph-users text-lg"></i>
             </div>
         </div>
 
-        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-red-100 hover:border-red-300 hover:shadow-md transition-all group relative overflow-hidden">
-            <div class="absolute right-0 top-0 w-1.5 h-full bg-red-500"></div>
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-red-50 rounded-full blur-2xl group-hover:bg-red-100 transition-colors"></div>
-            <div class="relative">
-                <div class="flex justify-between items-start mb-2 md:mb-4">
-                    <span class="text-[10px] md:text-xs font-black text-red-500 uppercase tracking-widest">Stock Crítico</span>
-                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                        <i class="ph-bold ph-warning-circle text-base md:text-xl"></i>
-                    </div>
-                </div>
-                <h3 class="text-xl md:text-3xl font-black text-gray-900 tracking-tight">{{ stock_critico }}</h3>
+        <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Stock Crítico</p>
+                <h3 class="text-lg md:text-xl font-black text-red-600">{{ stock_critico }}</h3>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-red-50 border border-red-100 text-red-500 flex items-center justify-center">
+                <i class="ph-bold ph-warning-circle text-lg"></i>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-5">
-        
-        <div class="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-            <div class="flex items-center gap-2 mb-4 md:mb-6">
-                <i class="ph-fill ph-trend-up text-brand-500 text-lg"></i>
-                <h4 class="text-xs md:text-sm font-black text-gray-900 uppercase tracking-widest">Curva de Rendimiento</h4>
+    {% if is_admin %}
+    <div class="mt-6 mb-2 px-1 flex items-center gap-2">
+        <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-1 w-full">Resumen Financiero</h2>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-gray-900 p-3 md:p-4 rounded-xl shadow-md flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Fondo + Efectivo</p>
+                <h3 class="text-lg md:text-xl font-black text-white">${{ dinero_actual_caja|floatformat:2 }}</h3>
             </div>
-            <div class="relative flex-1 min-h-[220px] md:min-h-[300px] w-full">
+            <div class="w-8 h-8 rounded-lg bg-gray-800 border border-gray-700 text-green-400 flex items-center justify-center">
+                <i class="ph-bold ph-wallet text-lg"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5" title="Suma del costo de compra en bodega">Capital Stock</p>
+                <h3 class="text-lg md:text-xl font-black text-gray-800">${{ capital_invertido|floatformat:2 }}</h3>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 text-gray-500 flex items-center justify-center cursor-help">
+                <i class="ph-bold ph-box-arrow-down text-lg"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-brand-500 uppercase tracking-wider mb-0.5" title="Valor proyectado si se vende todo">Total Público</p>
+                <h3 class="text-lg md:text-xl font-black text-gray-800">${{ valor_publico|floatformat:2 }}</h3>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center cursor-help">
+                <i class="ph-bold ph-tag text-lg"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5" title="Total Público - Capital Stock">Ganancia Neta</p>
+                <h3 class="text-lg md:text-xl font-black text-gray-800">${{ ganancia_proyectada|floatformat:2 }}</h3>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center cursor-help">
+                <i class="ph-bold ph-trend-up text-lg"></i>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-2">
+        <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+            <div class="flex items-center gap-2 mb-4">
+                <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Curva de Rendimiento</h4>
+            </div>
+            <div class="relative flex-1 min-h-[220px] md:min-h-[280px] w-full">
                 <canvas id="salesChart"></canvas>
             </div>
         </div>
 
-        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[300px] lg:h-auto">
-            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-50">
-                <h4 class="text-xs md:text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                    <i class="ph-fill ph-clock-counter-clockwise text-brand-500 text-lg"></i> Actividad
-                </h4>
-                <a href="/sales/pos/" class="text-[10px] font-black uppercase tracking-wider text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1.5 rounded-lg transition-colors">POS &rarr;</a>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col h-[280px] lg:h-auto">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-50">
+                <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Actividad</h4>
+                <a href="/sales/pos/" class="text-[10px] font-bold text-brand-600 hover:text-brand-700">Ir a POS &rarr;</a>
             </div>
             
             <div class="flex-1 overflow-y-auto no-scrollbar pr-1">
-                <ul class="space-y-2.5">
+                <ul class="space-y-2">
                     {% for sale in recent_sales %}
-                    <li class="flex items-center justify-between p-2.5 md:p-3 bg-gray-50/80 hover:bg-gray-100 rounded-xl transition-colors border border-gray-100/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white flex items-center justify-center text-gray-600 shadow-sm shrink-0">
-                                <i class="ph-fill ph-check-circle text-green-500 text-base md:text-lg"></i>
+                    <li class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">
+                                <i class="ph-bold ph-check text-sm"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[11px] md:text-xs font-black text-gray-900 truncate w-32 md:w-40">{{ sale.customer.first_name }} {{ sale.customer.last_name }}</p>
-                                <p class="text-[9px] md:text-[10px] text-gray-500 font-mono mt-0.5">{{ sale.invoice_number }} • {{ sale.created_at|date:"H:i" }}</p>
+                                <p class="text-xs font-bold text-gray-700 truncate w-32">{{ sale.customer.first_name }} {{ sale.customer.last_name }}</p>
+                                <p class="text-[9px] text-gray-400 font-mono mt-0.5">{{ sale.invoice_number }}</p>
                             </div>
                         </div>
-                        <span class="text-xs md:text-sm font-black text-brand-600">${{ sale.total|floatformat:2 }}</span>
+                        <span class="text-xs font-black text-gray-800">${{ sale.total|floatformat:2 }}</span>
                     </li>
                     {% empty %}
-                    <li class="text-xs text-gray-400 text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 flex flex-col items-center">
-                        <i class="ph-bold ph-receipt text-3xl mb-2 text-gray-300"></i>
-                        Sin transacciones recientes.
+                    <li class="text-xs text-gray-400 text-center py-8 flex flex-col items-center">
+                        Sin actividad reciente.
                     </li>
                     {% endfor %}
                 </ul>
@@ -146,9 +170,8 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const ctx = document.getElementById('salesChart').getContext('2d');
-        
         let gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(6, 182, 212, 0.35)'); // Tailwind cyan-500 adaptado
+        gradient.addColorStop(0, 'rgba(6, 182, 212, 0.2)'); 
         gradient.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
 
         new Chart(ctx, {
@@ -160,14 +183,13 @@
                     data: {{ chart_data|safe }},
                     borderColor: '#06b6d4', 
                     backgroundColor: gradient,
-                    borderWidth: 3,
+                    borderWidth: 2,
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: '#06b6d4',
                     pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
+                    pointRadius: 3,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.3
                 }]
             },
             options: {
@@ -176,28 +198,17 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#0f172a',
-                        padding: 12,
-                        titleFont: { family: 'Inter', size: 12 },
-                        bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
+                        backgroundColor: '#1f2937',
+                        padding: 10,
+                        titleFont: { size: 11 },
+                        bodyFont: { size: 13, weight: 'bold' },
                         displayColors: false,
-                        callbacks: {
-                            label: function(context) { return '$' + context.parsed.y; }
-                        }
+                        callbacks: { label: function(context) { return '$' + context.parsed.y; } }
                     }
                 },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        border: { display: false },
-                        grid: { color: '#f8fafc', drawBorder: false },
-                        ticks: { font: { family: 'Inter', size: 10 }, color: '#94a3b8' }
-                    },
-                    x: {
-                        border: { display: false },
-                        grid: { display: false },
-                        ticks: { font: { family: 'Inter', size: 10 }, color: '#94a3b8', maxRotation: 45, minRotation: 45 }
-                    }
+                    y: { beginAtZero: true, border: { display: false }, grid: { color: '#f8fafc' }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
+                    x: { border: { display: false }, grid: { display: false }, ticks: { font: { size: 10 }, color: '#94a3b8' } }
                 }
             }
         });
