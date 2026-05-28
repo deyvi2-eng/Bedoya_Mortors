@@ -2,7 +2,9 @@ from django.db import models, transaction
 from core.models import BaseModel
 from accounts.models import User
 
-
+# ==========================================
+# CATEGORÍAS
+# ==========================================
 class Category(BaseModel):
     name = models.CharField(max_length=100, verbose_name="Nombre de Categoría")
     prefix = models.CharField(max_length=3, unique=True, help_text="Prefijo exacto de 3 letras. Ej: ACE, LLA, MOT")
@@ -15,6 +17,9 @@ class Category(BaseModel):
     def __str__(self):
         return f"{self.name} ({self.prefix})"
 
+# ==========================================
+# PROVEEDORES
+# ==========================================
 class Supplier(BaseModel):
     name = models.CharField(max_length=150, verbose_name="Razón Social / Nombre")
     contact_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
@@ -27,7 +32,16 @@ class Supplier(BaseModel):
     def __str__(self):
         return self.name
 
+# ==========================================
+# PRODUCTOS (SOPORTE PARA REPUESTOS Y LÍQUIDOS)
+# ==========================================
 class Product(BaseModel):
+    # Tipos de unidad para poder diferenciar repuestos (U) de aceites/refrigerantes (ML)
+    UNIT_CHOICES = [
+        ('U', 'Unidades'),
+        ('ML', 'Mililitros (Líquidos)'),
+    ]
+
     # Identificadores
     code = models.CharField(max_length=20, unique=True, blank=True, verbose_name="Código Interno")
     barcode = models.CharField(max_length=50, unique=True, blank=True, null=True, verbose_name="Código de Barras")
@@ -39,18 +53,21 @@ class Product(BaseModel):
     brand = models.CharField(max_length=100, blank=True, null=True, verbose_name="Marca")
     model_compatibility = models.CharField(max_length=255, blank=True, null=True, verbose_name="Compatibilidad (Motos)")
     
-    # Precios
-    purchase_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio de Compra")
-    sale_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio de Venta")
+    # Medidas
+    unit_type = models.CharField(max_length=2, choices=UNIT_CHOICES, default='U', verbose_name="Tipo de Unidad")
+    unit_measure = models.CharField(max_length=50, default="Unidad", verbose_name="Unidad de Medida / Presentación")
     
-    # Inventario
-    stock_actual = models.IntegerField(default=0, verbose_name="Stock Actual")
-    stock_minimo = models.IntegerField(default=5, verbose_name="Stock Mínimo")
-    stock_critico = models.IntegerField(default=2, verbose_name="Stock Crítico")
+    # Precios (Con 4 decimales para permitir precios micro-fraccionados por mililitro)
+    purchase_price = models.DecimalField(max_digits=12, decimal_places=4, verbose_name="Precio de Compra")
+    sale_price = models.DecimalField(max_digits=12, decimal_places=4, verbose_name="Precio de Venta")
+    
+    # Inventario (Convertidos a DecimalField para soportar 1.5 Litros o 500.50 ml)
+    stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Stock Actual")
+    stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=5.00, verbose_name="Stock Mínimo")
+    stock_critico = models.DecimalField(max_digits=10, decimal_places=2, default=2.00, verbose_name="Stock Crítico")
+    
+    # Relaciones y Ubicación
     location = models.CharField(max_length=100, blank=True, null=True, verbose_name="Ubicación en Bodega")
-    unit_measure = models.CharField(max_length=50, default="Unidad", verbose_name="Unidad de Medida")
-    
-    # Relaciones y multimedia
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Proveedor")
     image = models.ImageField(upload_to='products/', blank=True, null=True, verbose_name="Imagen del Producto")
 
@@ -91,7 +108,9 @@ class Product(BaseModel):
         
         super().save(*args, **kwargs)
 
-
+# ==========================================
+# MOVIMIENTOS DE STOCK (KARDEX)
+# ==========================================
 class StockMovement(BaseModel):
     class MovementType(models.TextChoices):
         IN = 'IN', 'Entrada'
@@ -100,7 +119,10 @@ class StockMovement(BaseModel):
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Producto")
     movement_type = models.CharField(max_length=10, choices=MovementType.choices, verbose_name="Tipo de Movimiento")
-    quantity = models.IntegerField(verbose_name="Cantidad")
+    
+    # Cambiado a DecimalField para registrar movimientos exactos de líquidos (ej: -500.00 ml)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Cantidad")
+    
     description = models.CharField(max_length=255, verbose_name="Descripción / Motivo")
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Registrado por")
 

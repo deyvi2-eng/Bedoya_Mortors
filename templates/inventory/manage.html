@@ -17,7 +17,7 @@
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
             <h2 class="text-base font-bold text-gray-900 leading-none">Catálogo de Almacén</h2>
-            <p class="text-xs text-gray-400 mt-1">Alta y visualización de repuestos de motocicletas en tiempo real.</p>
+            <p class="text-xs text-gray-400 mt-1">Alta, edición avanzada y control de repuestos y líquidos.</p>
         </div>
         
         {% if request.user.role == 'ADMIN' %}
@@ -29,7 +29,7 @@
                 <i class="ph-bold ph-truck text-base"></i> Proveedor
             </button>
             <button onclick="toggleModal('modal-product')" class="w-full lg:w-auto bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 px-5 rounded-xl text-xs shadow-md shadow-brand-600/20 transition-all active:scale-95 flex items-center justify-center gap-2">
-                <i class="ph-bold ph-plus text-base"></i> Nuevo Repuesto
+                <i class="ph-bold ph-plus text-base"></i> Nuevo Producto
             </button>
         </div>
         {% endif %}
@@ -70,11 +70,14 @@
                     {% for p in products %}
                     <tr class="product-row hover:bg-gray-50/50 transition-colors" data-name="{{ p.code|lower }} {{ p.name|lower }} {{ p.description|lower }}" data-category="{{ p.category.name }}">
                         <td class="px-6 py-3.5 flex items-center gap-3.5">
-                            <div class="w-11 h-11 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+                            <div class="w-11 h-11 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center shrink-0 shadow-sm relative">
                                 {% if p.image %}
                                     <img src="{{ p.image.url }}" alt="Repuesto" class="w-full h-full object-cover">
                                 {% else %}
                                     <i class="ph ph-image text-gray-300 text-xl"></i>
+                                {% endif %}
+                                {% if p.unit_type == 'ML' %}
+                                    <div class="absolute bottom-0 right-0 bg-blue-500 text-white text-[8px] font-bold px-1 rounded-tl shadow-sm">Líq</div>
                                 {% endif %}
                             </div>
                             <div class="min-w-0">
@@ -95,7 +98,7 @@
                             {% elif p.stock_actual <= p.stock_minimo %}
                                 <span class="bg-amber-50 text-amber-600 font-bold px-2.5 py-1 rounded-lg text-xs border border-amber-100">{{ p.stock_actual }} (Bajo)</span>
                             {% else %}
-                                <span class="bg-gray-50 text-gray-800 font-bold px-2.5 py-1 rounded-lg text-xs border border-gray-200/60">{{ p.stock_actual }} u.</span>
+                                <span class="bg-gray-50 text-gray-800 font-bold px-2.5 py-1 rounded-lg text-xs border border-gray-200/60">{{ p.stock_actual }} {% if p.unit_type == 'ML' %}ml{% else %}u.{% endif %}</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-3.5 text-center">
@@ -107,10 +110,11 @@
                         </td>
                         <td class="px-6 py-3.5 text-right flex justify-end gap-1">
                             {% if request.user.role == 'ADMIN' %}
-                                <button onclick="openStockModal('{{ p.id }}', '{{ p.code }}', '{{ p.name|escapejs }}')" class="p-2 text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors" title="Ingresar Stock">
+                                <button onclick="openStockModal('{{ p.id }}', '{{ p.code }}', '{{ p.name|escapejs }}', '{{ p.unit_type }}')" class="p-2 text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors" title="Ingresar Stock">
                                     <i class="ph-bold ph-plus text-base"></i>
                                 </button>
-                                <button onclick="openEditModal({{ p.id }}, '{{ p.name|escapejs }}', {{ p.purchase_price }}, {{ p.sale_price }})" class="p-2 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors" title="Editar Repuesto">
+                                
+                                <button onclick="openEditModal('{{ p.id }}', '{{ p.name|escapejs }}', '{{ p.description|escapejs }}', '{{ p.category.id }}', '{{ p.supplier.id|default:"" }}', '{{ p.brand|escapejs }}', '{{ p.model_compatibility|escapejs }}', '{{ p.unit_type }}', '{{ p.location|escapejs }}', '{{ p.purchase_price }}', '{{ p.sale_price }}', '{{ p.stock_minimo }}', '{{ p.stock_critico }}')" class="p-2 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors" title="Edición Avanzada">
                                     <i class="ph-bold ph-pencil-simple text-base"></i>
                                 </button>
                                 <button onclick="openKardexModal({{ p.id }})" class="p-2 text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors" title="Ver Kardex">
@@ -153,36 +157,92 @@
 </div>
 
 <div id="modal-edit" class="fixed inset-0 z-[70] hidden bg-white md:bg-gray-900/60 md:backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-0 md:p-4">
-    <div class="relative bg-white md:rounded-2xl text-left shadow-2xl transform transition-all w-full h-full md:h-auto max-w-lg border border-gray-100 flex flex-col">
-        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center shrink-0">
-            <h3 class="text-sm font-bold text-gray-900 uppercase">Editar Repuesto</h3>
+    <div class="relative bg-white md:rounded-2xl text-left shadow-2xl transform transition-all w-full h-full md:h-auto max-w-2xl border border-gray-100 flex flex-col">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center shrink-0 sticky top-0 z-10">
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Edición Avanzada</h3>
             <button onclick="toggleModal('modal-edit')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
         </div>
-        <div class="p-6 flex-1 overflow-y-auto">
+        <div class="p-6 flex-1 overflow-y-auto max-h-[75vh]">
             <form id="form-edit" class="space-y-4">
-                <input type="hidden" id="edit_id">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Comercial</label>
-                    <input type="text" id="edit_name" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-3 outline-none text-sm font-medium focus:ring-2 focus:ring-brand-500">
+                <input type="hidden" id="edit_id" name="id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Comercial *</label>
+                        <input type="text" id="edit_name" name="name" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Descripción del Producto</label>
+                        <textarea id="edit_description" name="description" rows="2" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría *</label>
+                        <select id="edit_category" name="category" required class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                            <option value="">Seleccione...</option>
+                            {% for c in categories %}
+                                <option value="{{ c.id }}">{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Proveedor</label>
+                        <select id="edit_supplier" name="supplier" class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                            <option value="">Ninguno...</option>
+                            {% for s in suppliers %}
+                                <option value="{{ s.id }}">{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Marca</label>
+                        <input type="text" id="edit_brand" name="brand" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo de Medida *</label>
+                        <select id="edit_unit_type" name="unit_type" required class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                            <option value="U">Unidades (Repuestos)</option>
+                            <option value="ML">Líquidos (Mililitros)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Compatibilidad (Modelos de Moto)</label>
+                        <input type="text" id="edit_compatibility" name="model_compatibility" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ubicación Física en Bodega</label>
+                        <input type="text" id="edit_location" name="location" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                    </div>
                 </div>
-                <div class="grid grid-cols-3 gap-3">
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-gray-100 pt-4 mt-2">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Costo ($)</label>
-                        <input type="number" step="0.01" id="edit_purchase" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-2 py-3 text-sm font-bold text-center outline-none focus:ring-2 focus:ring-brand-500">
+                        <input type="number" step="0.0001" min="0" id="edit_purchase" name="purchase_price" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-2 py-2.5 text-xs font-bold text-center outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Base (Sin 15%)</label>
-                        <input type="number" step="0.01" id="edit_sale" required class="w-full bg-gray-50 border border-gray-200 text-brand-600 rounded-xl px-2 py-3 text-sm font-bold text-center outline-none focus:ring-2 focus:ring-brand-500">
+                        <input type="number" step="0.0001" min="0" id="edit_sale" name="sale_price" required class="w-full bg-gray-50 border border-gray-200 text-brand-600 rounded-xl px-2 py-2.5 text-xs font-bold text-center outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Final (Con 15%)</label>
-                        <input type="number" step="0.01" id="edit_final" required class="w-full bg-green-50 border border-green-200 text-green-700 rounded-xl px-2 py-3 text-sm font-black text-center outline-none focus:ring-2 focus:ring-green-500">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">P. Público (15%)</label>
+                        <input type="number" step="0.01" min="0" id="edit_final" required class="w-full bg-green-50 border border-green-200 text-green-700 rounded-xl px-2 py-2.5 text-xs font-black text-center outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1" title="Stock Mínimo">Mínimo</label>
+                            <input type="number" step="0.01" min="0" id="edit_min" name="stock_minimo" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-1 py-2.5 text-[10px] font-bold text-center outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1" title="Stock Crítico">Crítico</label>
+                            <input type="number" step="0.01" min="0" id="edit_crit" name="stock_critico" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-1 py-2.5 text-[10px] font-bold text-center outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
                     </div>
                 </div>
             </form>
         </div>
-        <div class="bg-gray-50 p-4 border-t border-gray-100 shrink-0">
-            <button type="button" id="btn-update" class="w-full py-3.5 text-sm font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-500 shadow-md transition-all">Guardar Cambios</button>
+        <div class="bg-gray-50 p-4 border-t border-gray-100 shrink-0 flex justify-end gap-3 sticky bottom-0 z-10">
+            <button type="button" onclick="toggleModal('modal-edit')" class="px-5 py-2.5 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">Cancelar</button>
+            <button type="button" id="btn-update" class="px-5 py-2.5 text-xs font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-500 shadow-md transition-all">Guardar Cambios</button>
         </div>
     </div>
 </div>
@@ -224,9 +284,7 @@
                             <textarea name="description" rows="2" placeholder="Detalles técnicos, materiales..." class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500"></textarea>
                         </div>
                         <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="block text-xs font-bold text-gray-500 uppercase">Categoría *</label>
-                            </div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría *</label>
                             <select name="category" required class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                                 <option value="">Seleccione...</option>
                                 {% for c in categories %}
@@ -235,9 +293,7 @@
                             </select>
                         </div>
                         <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="block text-xs font-bold text-gray-500 uppercase">Proveedor</label>
-                            </div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Proveedor</label>
                             <select name="supplier" class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                                 <option value="">Ninguno...</option>
                                 {% for s in suppliers %}
@@ -246,35 +302,48 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Código de Barras (Opcional)</label>
-                            <input type="text" name="barcode" placeholder="Ej: 786123456789" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
-                        </div>
-                        <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Marca</label>
                             <input type="text" name="brand" placeholder="Ej: Yamaha, Honda, Genérico" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo de Medida *</label>
+                            <select name="unit_type" required class="w-full bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                                <option value="U">Unidades (Repuestos)</option>
+                                <option value="ML">Líquidos (Mililitros)</option>
+                            </select>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Compatibilidad (Modelos de Moto)</label>
                             <input type="text" name="model_compatibility" placeholder="Ej: Universal, FZ16, CBR250" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ubicación Física en Bodega</label>
+                            <input type="text" name="location" placeholder="Ej: Pasillo 3, Estante B" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 outline-none text-xs font-medium focus:ring-2 focus:ring-brand-500">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-gray-100 pt-4 mt-2">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Costo ($)</label>
-                            <input type="number" step="0.01" name="purchase_price" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs font-bold text-center">
+                            <input type="number" step="0.0001" min="0" name="purchase_price" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs font-bold text-center">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Base (Sin 15%)</label>
-                            <input type="number" step="0.01" name="sale_price" id="calc_base" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs font-bold text-center text-brand-600">
+                            <input type="number" step="0.0001" min="0" name="sale_price" id="calc_base" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs font-bold text-center text-brand-600">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">P. Público (Con 15%)</label>
-                            <input type="number" step="0.01" id="calc_final" required class="w-full bg-green-50 border border-green-200 text-green-700 rounded-xl px-3 py-2.5 text-xs font-black text-center focus:ring-2 focus:ring-green-500 outline-none">
+                            <input type="number" step="0.01" min="0" id="calc_final" required class="w-full bg-green-50 border border-green-200 text-green-700 rounded-xl px-3 py-2.5 text-xs font-black text-center focus:ring-2 focus:ring-green-500 outline-none">
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Mínimo Stock</label>
-                            <input type="number" name="stock_minimo" value="5" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs font-bold text-center">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Mínimo</label>
+                                <input type="number" step="0.01" min="0" name="stock_minimo" value="5" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-1 py-2.5 text-[10px] font-bold text-center">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Crítico</label>
+                                <input type="number" step="0.01" min="0" name="stock_critico" value="2" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-1 py-2.5 text-[10px] font-bold text-center">
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -288,9 +357,9 @@
     </div>
 </div>
 
-<div id="modal-stock" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full">
+<div id="modal-stock" class="fixed inset-0 z-[80] hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full">
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-sm w-full border border-gray-100">
+        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-md w-full border border-gray-100">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                 <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Ingreso de Mercadería</h3>
                 <button onclick="toggleModal('modal-stock')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
@@ -299,22 +368,45 @@
                 <div class="mb-4">
                     <p class="text-xs text-gray-500 uppercase tracking-wider mb-1" id="lbl-stock-code"></p>
                     <p class="text-sm font-bold text-gray-900 leading-tight" id="lbl-stock-name"></p>
+                    <span id="lbl-stock-type" class="mt-2 inline-block px-2 py-1 bg-brand-50 text-brand-600 text-[10px] font-black rounded uppercase shadow-sm"></span>
                 </div>
+                
                 <form id="form-stock" class="space-y-4">
                     <input type="hidden" id="stock_product_id">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad Recibida</label>
-                        <input type="number" id="stock_quantity" min="1" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-lg font-bold text-center focus:ring-2 focus:ring-brand-500 outline-none">
+                    
+                    <div id="liquid_calculator" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4 shadow-inner">
+                        <p class="text-[10px] font-black text-blue-600 uppercase mb-3"><i class="ph-bold ph-calculator"></i> Calculadora Rápida de Envases</p>
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-blue-800 mb-1">N° de Frascos</label>
+                                <input type="number" id="calc_bottles" min="1" placeholder="Ej: 3" class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all">
+                            </div>
+                            <span class="text-blue-400 font-black text-lg mt-4">X</span>
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-blue-800 mb-1">Mililitros c/u</label>
+                                <input type="number" id="calc_ml" min="1" placeholder="Ej: 1000" class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all">
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-blue-500 mt-3 text-center italic font-medium">Esto llenará automáticamente el total a ingresar abajo.</p>
                     </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Total a Ingresar al Inventario</label>
+                        <div class="relative">
+                            <input type="number" step="0.01" id="stock_quantity" min="0.01" required class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl pl-4 pr-12 py-3 text-xl font-black text-center focus:ring-2 focus:ring-brand-500 outline-none shadow-sm transition-all">
+                            <span id="stock_unit_label" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm"></span>
+                        </div>
+                    </div>
+                    
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ref. Factura Proveedor (Opcional)</label>
-                        <input type="text" id="stock_invoice" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-brand-500 outline-none">
+                        <input type="text" id="stock_invoice" class="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-brand-500 outline-none shadow-sm transition-all">
                     </div>
                 </form>
             </div>
             <div class="bg-gray-50 px-6 py-3 flex justify-end gap-2 border-t border-gray-100">
-                <button type="button" onclick="toggleModal('modal-stock')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancelar</button>
-                <button type="button" id="btn-save-stock" class="px-4 py-2 text-xs font-bold text-white bg-green-600 rounded-lg hover:bg-green-500 shadow-md">Confirmar Ingreso</button>
+                <button type="button" onclick="toggleModal('modal-stock')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">Cancelar</button>
+                <button type="button" id="btn-save-stock" class="px-4 py-2 text-xs font-bold text-white bg-green-600 rounded-lg hover:bg-green-500 shadow-md shadow-green-600/20 transition-all">Confirmar Ingreso</button>
             </div>
         </div>
     </div>
@@ -362,66 +454,6 @@
     </div>
 </div>
 
-<div id="modal-category" class="fixed inset-0 z-[60] hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-4">
-    <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-md w-full border border-gray-100">
-        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-            <h3 class="text-sm font-bold text-gray-900 uppercase">Nueva Categoría</h3>
-            <button onclick="toggleModal('modal-category')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
-        </div>
-        <div class="p-6">
-            <form id="form-category" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre de la Categoría *</label>
-                    <input type="text" name="name" id="cat_name" required placeholder="Ej: Mecánica" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prefijo (3 Letras) *</label>
-                    <input type="text" name="prefix" id="cat_prefix" required maxlength="3" placeholder="Ej: MEC" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm uppercase focus:ring-2 focus:ring-brand-500 outline-none font-mono">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Descripción (Opcional)</label>
-                    <textarea name="description" id="cat_desc" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
-                </div>
-            </form>
-        </div>
-        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100">
-            <button onclick="toggleModal('modal-category')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">Cancelar</button>
-            <button id="btn-save-category" class="px-4 py-2 text-xs font-bold text-white bg-gray-900 rounded-xl hover:bg-black shadow-md">Guardar Categoría</button>
-        </div>
-    </div>
-</div>
-
-<div id="modal-supplier" class="fixed inset-0 z-[60] hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-4">
-    <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all max-w-md w-full border border-gray-100">
-        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-            <h3 class="text-sm font-bold text-gray-900 uppercase">Nuevo Proveedor</h3>
-            <button onclick="toggleModal('modal-supplier')" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
-        </div>
-        <div class="p-6">
-            <form id="form-supplier" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Razón Social / Nombre Comercial *</label>
-                    <input type="text" name="name" id="sup_name" required placeholder="Ej: Importadora Bedoya" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
-                        <input type="text" name="contact_phone" id="sup_phone" placeholder="Ej: 0991234567" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
-                        <input type="email" name="email" id="sup_email" placeholder="Ej: ventas@proveedor.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100">
-            <button onclick="toggleModal('modal-supplier')" class="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">Cancelar</button>
-            <button id="btn-save-supplier" class="px-4 py-2 text-xs font-bold text-white bg-gray-900 rounded-xl hover:bg-black shadow-md">Guardar Proveedor</button>
-        </div>
-    </div>
-</div>
-
 <script>
     const getCSRFToken = () => document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
 
@@ -449,7 +481,6 @@
         const query = searchInput.value.toLowerCase();
         const category = categoryFilter.value;
 
-        // 1. Filtrar los datos
         filteredRows = allRows.filter(row => {
             const rowData = row.getAttribute('data-name');
             const rowCat = row.getAttribute('data-category');
@@ -458,10 +489,8 @@
             return matchesSearch && matchesCat;
         });
 
-        // Ocultar todos primero
         allRows.forEach(row => row.style.display = 'none');
 
-        // 2. Aplicar paginación a los filtrados
         const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
         if(currentPage > totalPages) currentPage = totalPages;
         if(currentPage < 1) currentPage = 1;
@@ -472,7 +501,6 @@
         const rowsToShow = filteredRows.slice(start, end);
         rowsToShow.forEach(row => row.style.display = '');
 
-        // 3. Actualizar UI
         noResultsRow.style.display = filteredRows.length === 0 ? '' : 'none';
         pageInfo.innerText = `Mostrando ${filteredRows.length > 0 ? start + 1 : 0} a ${Math.min(end, filteredRows.length)} de ${filteredRows.length} repuestos`;
         
@@ -485,18 +513,16 @@
     btnPrevPage.addEventListener('click', () => { if(currentPage > 1) { currentPage--; renderTable(); }});
     btnNextPage.addEventListener('click', () => { const maxP = Math.ceil(filteredRows.length/rowsPerPage); if(currentPage < maxP) { currentPage++; renderTable(); }});
     
-    // Iniciar tabla
     renderTable();
 
-
     // ==========================================
-    // CÁLCULOS AUTOMÁTICOS DE 15% (CREACIÓN)
+    // CÁLCULOS AUTOMÁTICOS DE 15% (CREACIÓN Y EDICIÓN)
     // ==========================================
     const calcBase = document.getElementById('calc_base');
     const calcFinal = document.getElementById('calc_final');
-
+    
     calcFinal.addEventListener('input', function() {
-        if(this.value) calcBase.value = (parseFloat(this.value) / 1.15).toFixed(2);
+        if(this.value) calcBase.value = (parseFloat(this.value) / 1.15).toFixed(4);
         else calcBase.value = '';
     });
 
@@ -505,14 +531,11 @@
         else calcFinal.value = '';
     });
 
-    // ==========================================
-    // CÁLCULOS AUTOMÁTICOS DE 15% (EDICIÓN)
-    // ==========================================
     const editBase = document.getElementById('edit_sale');
     const editFinal = document.getElementById('edit_final');
 
     editFinal.addEventListener('input', function() {
-        if(this.value) editBase.value = (parseFloat(this.value) / 1.15).toFixed(2);
+        if(this.value) editBase.value = (parseFloat(this.value) / 1.15).toFixed(4);
         else editBase.value = '';
     });
 
@@ -521,48 +544,49 @@
         else editFinal.value = '';
     });
 
-
     // ==========================================
     // LÓGICA DE MODALES Y APIS
     // ==========================================
-    function openEditModal(id, name, purchase, sale) {
+    
+    function openEditModal(id, name, description, category, supplier, brand, compatibility, unitType, location, purchase, sale, minStock, critStock) {
         document.getElementById('edit_id').value = id;
         document.getElementById('edit_name').value = name;
-        document.getElementById('edit_purchase').value = purchase;
-        document.getElementById('edit_sale').value = sale;
-        document.getElementById('edit_final').value = (parseFloat(sale) * 1.15).toFixed(2);
+        document.getElementById('edit_description').value = description;
+        document.getElementById('edit_category').value = category;
+        document.getElementById('edit_supplier').value = supplier;
+        document.getElementById('edit_brand').value = brand;
+        document.getElementById('edit_unit_type').value = unitType;
+        document.getElementById('edit_compatibility').value = compatibility;
+        document.getElementById('edit_location').value = location;
+        
+        document.getElementById('edit_purchase').value = parseFloat(purchase.replace(',','.')).toFixed(4);
+        document.getElementById('edit_sale').value = parseFloat(sale.replace(',','.')).toFixed(4);
+        document.getElementById('edit_final').value = (parseFloat(sale.replace(',','.')) * 1.15).toFixed(2);
+        
+        document.getElementById('edit_min').value = parseFloat(minStock.replace(',','.')).toFixed(2);
+        document.getElementById('edit_crit').value = parseFloat(critStock.replace(',','.')).toFixed(2);
+        
         toggleModal('modal-edit');
     }
 
-    function deleteProduct(id) {
-        Swal.fire({
-            title: '¿Eliminar repuesto?',
-            text: "Esta acción es irreversible.",
-            icon: 'error',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#9ca3af',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`/inventory/api/product/delete/${id}/`, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': getCSRFToken() }
-                }).then(res => {
-                    if(res.ok) window.location.reload();
-                    else Swal.fire('Error', 'No se pudo eliminar. Verifica que no tenga historial de ventas.', 'error');
-                });
-            }
-        });
-    }
-
     document.getElementById('btn-update').addEventListener('click', function() {
+        const form = document.getElementById('form-edit');
+        if(!form.checkValidity()) return form.reportValidity();
+        
         const id = document.getElementById('edit_id').value;
         const data = {
             name: document.getElementById('edit_name').value,
+            description: document.getElementById('edit_description').value,
+            category_id: document.getElementById('edit_category').value,
+            supplier_id: document.getElementById('edit_supplier').value,
+            brand: document.getElementById('edit_brand').value,
+            unit_type: document.getElementById('edit_unit_type').value,
+            model_compatibility: document.getElementById('edit_compatibility').value,
+            location: document.getElementById('edit_location').value,
             purchase_price: document.getElementById('edit_purchase').value,
-            sale_price: document.getElementById('edit_sale').value
+            sale_price: document.getElementById('edit_sale').value,
+            stock_minimo: document.getElementById('edit_min').value,
+            stock_critico: document.getElementById('edit_crit').value
         };
 
         this.disabled = true;
@@ -589,6 +613,29 @@
             this.innerText = 'Guardar Cambios';
         });
     });
+
+    function deleteProduct(id) {
+        Swal.fire({
+            title: '¿Eliminar repuesto?',
+            text: "Esta acción es irreversible.",
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/inventory/api/product/delete/${id}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCSRFToken() }
+                }).then(res => {
+                    if(res.ok) window.location.reload();
+                    else Swal.fire('Error', 'No se pudo eliminar. Verifica que no tenga historial de ventas.', 'error');
+                });
+            }
+        });
+    }
 
     const uploader = document.getElementById('image_upload');
     uploader.addEventListener('change', function() {
@@ -630,29 +677,65 @@
         });
     });
 
-    function openStockModal(id, code, name) {
+    // ==========================================
+    // INGRESO DE STOCK Y CALCULADORA LÍQUIDA
+    // ==========================================
+    function openStockModal(id, code, name, unitType) {
         document.getElementById('stock_product_id').value = id;
         document.getElementById('lbl-stock-code').innerText = code;
         document.getElementById('lbl-stock-name').innerText = name;
+        
         document.getElementById('stock_quantity').value = '';
         document.getElementById('stock_invoice').value = '';
+        document.getElementById('calc_bottles').value = '';
+        document.getElementById('calc_ml').value = '';
+
+        // Si es líquido, activa la calculadora
+        if (unitType === 'ML') {
+            document.getElementById('lbl-stock-type').innerText = 'Líquido (Fraccional)';
+            document.getElementById('lbl-stock-type').className = 'mt-2 inline-block px-2.5 py-1 bg-blue-100 text-blue-700 text-[10px] font-black rounded uppercase shadow-sm';
+            document.getElementById('liquid_calculator').classList.remove('hidden');
+            document.getElementById('stock_unit_label').innerText = 'ml';
+        } else {
+            document.getElementById('lbl-stock-type').innerText = 'Unidad Estándar';
+            document.getElementById('lbl-stock-type').className = 'mt-2 inline-block px-2.5 py-1 bg-gray-100 text-gray-600 text-[10px] font-black rounded uppercase shadow-sm';
+            document.getElementById('liquid_calculator').classList.add('hidden');
+            document.getElementById('stock_unit_label').innerText = 'u.';
+        }
+
         toggleModal('modal-stock');
     }
+
+    // Auto-Cálculo de Frascos a Mililitros
+    const calcBottles = document.getElementById('calc_bottles');
+    const calcMl = document.getElementById('calc_ml');
+    const stockQty = document.getElementById('stock_quantity');
+
+    function calculateLiquidStock() {
+        const bottles = parseFloat(calcBottles.value) || 0;
+        const ml = parseFloat(calcMl.value) || 0;
+        if (bottles > 0 && ml > 0) {
+            stockQty.value = (bottles * ml).toFixed(2);
+        }
+    }
+
+    calcBottles.addEventListener('input', calculateLiquidStock);
+    calcMl.addEventListener('input', calculateLiquidStock);
 
     document.getElementById('btn-save-stock').addEventListener('click', function() {
         const prodId = document.getElementById('stock_product_id').value;
         const qty = document.getElementById('stock_quantity').value;
         const invoice = document.getElementById('stock_invoice').value;
 
-        if(!qty || qty <= 0) return Swal.fire('Atención', 'Ingrese una cantidad válida mayor a cero.', 'warning');
+        if(!qty || parseFloat(qty) <= 0) return Swal.fire('Atención', 'Ingrese una cantidad válida mayor a cero.', 'warning');
 
         this.disabled = true;
-        this.innerText = 'Procesando...';
+        this.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Procesando...';
 
         fetch('/inventory/api/product/add-stock/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
-            body: JSON.stringify({ product_id: prodId, quantity: qty, invoice_ref: invoice })
+            body: JSON.stringify({ product_id: prodId, quantity: parseFloat(qty), invoice_ref: invoice })
         })
         .then(res => res.json().then(data => ({ status: res.status, body: data })))
         .then(result => {
@@ -697,7 +780,10 @@
         document.getElementById('kardex_name').innerText = data.product.name;
         document.getElementById('kardex_cat').innerText = data.product.category;
         document.getElementById('kardex_sup').innerText = data.product.supplier;
-        document.getElementById('kardex_stock').innerText = data.product.stock;
+        
+        // Formateo del stock para mostrar 'ml' o 'u.' en el Kardex
+        const stockDisplay = data.product.unit_type === 'ML' ? `${data.product.stock} ml` : `${data.product.stock} u.`;
+        document.getElementById('kardex_stock').innerText = stockDisplay;
         
         if(data.product.image) {
             document.getElementById('kardex_img').src = data.product.image;
@@ -730,67 +816,5 @@
         }
         toggleModal('modal-kardex');
     }
-
-    document.getElementById('btn-save-category').addEventListener('click', function() {
-        const form = document.getElementById('form-category');
-        if(!form.checkValidity()) return form.reportValidity();
-
-        const data = {
-            name: document.getElementById('cat_name').value,
-            prefix: document.getElementById('cat_prefix').value,
-            description: document.getElementById('cat_desc').value
-        };
-
-        this.disabled = true;
-        this.innerText = 'Guardando...';
-
-        fetch('/inventory/api/category/create/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
-            body: JSON.stringify(data)
-        })
-        .then(res => res.json().then(data => ({ status: res.status, body: data })))
-        .then(result => {
-            if (result.status === 201) {
-                Swal.fire({ title: 'Éxito', text: 'Categoría agregada correctamente.', icon: 'success', confirmButtonColor: '#0d9488' })
-                .then(() => window.location.reload());
-            } else {
-                Swal.fire('Error', result.body.error, 'error');
-                this.disabled = false;
-                this.innerText = 'Guardar Categoría';
-            }
-        });
-    });
-
-    document.getElementById('btn-save-supplier').addEventListener('click', function() {
-        const form = document.getElementById('form-supplier');
-        if(!form.checkValidity()) return form.reportValidity();
-
-        const data = {
-            name: document.getElementById('sup_name').value,
-            contact_phone: document.getElementById('sup_phone').value,
-            email: document.getElementById('sup_email').value
-        };
-
-        this.disabled = true;
-        this.innerText = 'Guardando...';
-
-        fetch('/inventory/api/supplier/create/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
-            body: JSON.stringify(data)
-        })
-        .then(res => res.json().then(data => ({ status: res.status, body: data })))
-        .then(result => {
-            if (result.status === 201) {
-                Swal.fire({ title: 'Éxito', text: 'Proveedor agregado correctamente.', icon: 'success', confirmButtonColor: '#0d9488' })
-                .then(() => window.location.reload());
-            } else {
-                Swal.fire('Error', result.body.error, 'error');
-                this.disabled = false;
-                this.innerText = 'Guardar Proveedor';
-            }
-        });
-    });
 </script>
 {% endblock %}

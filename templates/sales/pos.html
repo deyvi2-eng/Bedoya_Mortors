@@ -1,368 +1,951 @@
 {% extends 'base.html' %}
 
 {% block title %}Punto de Venta | Bedoya Motors{% endblock %}
-{% block header_title %}Caja Rápida (POS){% endblock %}
+{% block header_title %}Punto de Venta Inteligente{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <style>
-    /* Estilos para ocultar scrollbars pero permitir scroll */
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .glass-card {
+
+        background:
+            rgba(255, 255, 255, 0.72);
+
+        backdrop-filter: blur(18px);
+
+        border:
+            1px solid rgba(226, 232, 240, 0.7);
+    }
+
+    .product-card {
+        transition: .22s ease;
+    }
+
+    .product-card:hover {
+
+        transform:
+            translateY(-4px);
+
+        box-shadow:
+            0 20px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .cart-item {
+        transition: .22s ease;
+    }
+
+    .cart-item:hover {
+        transform: scale(1.01);
+    }
+
+    .floating-btn {
+        box-shadow:
+            0 20px 45px rgba(6, 182, 212, 0.30);
+    }
+
+    @media(max-width:1024px) {
+
+        .mobile-cart {
+
+            position: fixed;
+
+            bottom: 92px;
+            right: 18px;
+
+            z-index: 60;
+        }
+    }
+
+    @media(max-width:768px) {
+
+        .mobile-spacing {
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+        }
+
+        .product-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr)) !important;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto h-[calc(100vh-8rem)] flex flex-col lg:flex-row gap-6">
-    
-    <div class="flex-1 flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        
-        <div class="p-4 border-b border-gray-100 bg-gray-50/50">
-            <div class="relative">
-                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-                <input type="text" id="product_search" placeholder="Escanear código de barras o buscar repuesto..." class="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition-all">
-            </div>
-        </div>
 
-        <div class="flex-1 overflow-y-auto no-scrollbar p-4 bg-gray-50">
-            <div id="product_results" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                <div class="col-span-full text-center text-gray-400 text-xs py-10">
-                    <i class="ph-bold ph-scan text-4xl block mb-2 text-gray-300"></i>
-                    Ingrese un código o nombre para comenzar a facturar.
-                </div>
-            </div>
-        </div>
-    </div>
+<div
+    class="max-w-[1700px] mx-auto h-auto lg:h-[calc(100vh-7rem)] flex flex-col xl:flex-row gap-5 relative">
 
-    <div class="w-full lg:w-96 flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        
-        <div class="p-4 border-b border-gray-100 bg-brand-50">
-            <div class="relative">
-                <input type="text" id="customer_search" placeholder="Buscar cliente por CI o Nombre..." class="w-full bg-white border border-brand-200 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-brand-500 shadow-sm mb-2">
-                <div id="customer_results" class="absolute z-10 w-full bg-white border border-gray-100 shadow-xl rounded-xl mt-1 hidden max-h-40 overflow-y-auto"></div>
-            </div>
-            
-            <div id="selected_customer_card" class="hidden flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-brand-200 shadow-sm">
+    <!-- PRODUCTS -->
+    <section
+        class="flex-1 flex flex-col overflow-hidden glass-card rounded-[2rem] shadow-xl min-h-[500px]">
+
+        <!-- TOP -->
+        <div
+            class="p-4 md:p-5 border-b border-slate-100 bg-white/70 backdrop-blur-xl sticky top-0 z-20">
+
+            <div
+                class="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+
                 <div>
-                    <span class="block text-xs font-bold text-gray-900" id="lbl_customer_name"></span>
-                    <span class="block text-[10px] text-brand-600 font-mono" id="lbl_customer_ci"></span>
+
+                    <h2
+                        class="text-xl md:text-2xl font-black tracking-tight text-slate-900">
+                        Caja Rápida POS
+                    </h2>
+
+                    <p
+                        class="text-xs text-slate-400 font-medium mt-1">
+                        Gestión moderna de ventas, líquidos y facturación.
+                    </p>
+
                 </div>
-                <button onclick="clearCustomer()" class="text-gray-400 hover:text-red-500"><i class="ph-bold ph-x-circle text-lg"></i></button>
+
+                <div
+                    class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+
+                    <i
+                        class="ph-bold ph-magnifying-glass text-slate-400 text-lg">
+                    </i>
+
+                    <input type="text"
+                        id="product_search"
+                        placeholder="Buscar productos, aceites o códigos..."
+                        class="bg-transparent outline-none border-none text-sm font-semibold w-full placeholder:text-slate-400">
+
+                </div>
+
             </div>
-            <input type="hidden" id="selected_customer_id">
+
         </div>
 
-        <div class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3" id="cart_items_container">
-            </div>
+        <!-- PRODUCTS -->
+        <div
+            class="flex-1 overflow-y-auto no-scrollbar p-4 md:p-5 bg-slate-50/70">
 
-        <div class="p-5 border-t border-gray-100 bg-gray-900 text-white">
-            <div class="space-y-2 text-sm mb-4">
-                <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="lbl_subtotal">$0.00</span></div>
-                <div class="flex justify-between text-gray-400"><span>IVA (15%)</span><span id="lbl_iva">$0.00</span></div>
-                <div class="flex justify-between font-bold text-xl text-white mt-2 pt-2 border-t border-gray-700">
-                    <span>Total</span><span id="lbl_total" class="text-brand-400">$0.00</span>
+            <div id="product_results"
+                class="product-grid grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+
+                <div
+                    class="col-span-full flex flex-col items-center justify-center text-center py-24">
+
+                    <div
+                        class="w-24 h-24 rounded-full bg-cyan-50 border border-cyan-100 flex items-center justify-center mb-5">
+
+                        <i
+                            class="ph-fill ph-shopping-cart text-5xl text-cyan-500">
+                        </i>
+
+                    </div>
+
+                    <h3
+                        class="text-lg font-black text-slate-700">
+                        Bienvenido al POS
+                    </h3>
+
+                    <p
+                        class="text-sm text-slate-400 mt-2 max-w-md">
+                        Busque productos, repuestos, aceites o líquidos para comenzar una nueva venta.
+                    </p>
+
                 </div>
+
             </div>
 
-            <div class="mb-4">
-                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Método de Pago</label>
-                <select id="payment_method" class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 font-bold">
-                    <option value="CASH">Efectivo</option>
-                    <option value="TRANSFER">Transferencia</option>
-                    <option value="CARD">Tarjeta (T/C o T/D)</option>
+        </div>
+
+    </section>
+
+    <!-- CART -->
+    <aside id="cart_panel"
+        class="w-full xl:w-[420px] flex flex-col overflow-hidden glass-card rounded-[2rem] shadow-xl h-auto xl:h-full">
+
+        <!-- CLIENT -->
+        <div
+            class="p-5 border-b border-slate-100 bg-gradient-to-br from-cyan-50/70 to-white">
+
+            <div
+                class="flex items-center justify-between mb-4">
+
+                <div>
+
+                    <span
+                        class="text-[10px] uppercase tracking-[0.28em] font-black text-cyan-600">
+                        Cliente
+                    </span>
+
+                    <h3
+                        class="text-lg font-black text-slate-900 mt-1">
+                        Facturación
+                    </h3>
+
+                </div>
+
+                <div
+                    class="w-12 h-12 rounded-2xl bg-white border border-cyan-100 flex items-center justify-center shadow-sm">
+
+                    <i
+                        class="ph-fill ph-user-circle text-cyan-600 text-2xl">
+                    </i>
+
+                </div>
+
+            </div>
+
+            <div class="relative">
+
+                <input type="text"
+                    id="customer_search"
+                    placeholder="Buscar cliente..."
+                    class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm">
+
+                <div id="customer_results"
+                    class="hidden absolute z-50 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 mt-2 overflow-hidden max-h-60 overflow-y-auto">
+                </div>
+
+            </div>
+
+            <!-- CUSTOMER -->
+            <div id="selected_customer_card"
+                class="hidden mt-4 rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
+
+                <div
+                    class="flex items-center justify-between gap-3">
+
+                    <div class="min-w-0">
+
+                        <span id="lbl_customer_name"
+                            class="block text-sm font-black text-slate-900 truncate">
+                        </span>
+
+                        <span id="lbl_customer_phone"
+                            class="flex items-center gap-1 text-[11px] text-slate-400 mt-1">
+                        </span>
+
+                    </div>
+
+                    <button onclick="clearCustomer()"
+                        class="w-9 h-9 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+
+                        <i
+                            class="ph-bold ph-trash">
+                        </i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <input type="hidden"
+                id="selected_customer_id">
+
+            <input type="hidden"
+                id="selected_customer_raw_phone">
+
+        </div>
+
+        <!-- CART ITEMS -->
+        <div id="cart_items_container"
+            class="flex-1 overflow-y-auto no-scrollbar p-5 space-y-3 bg-white">
+
+        </div>
+
+        <!-- TOTAL -->
+        <div
+            class="p-5 md:p-6 border-t border-slate-100 bg-slate-950 text-white">
+
+            <!-- SUMMARY -->
+            <div class="space-y-3 mb-6">
+
+                <div
+                    class="flex justify-between text-sm text-slate-400 font-medium">
+
+                    <span>Subtotal</span>
+
+                    <span id="lbl_subtotal">
+                        $0.00
+                    </span>
+
+                </div>
+
+                <div
+                    class="flex justify-between text-sm text-slate-400 font-medium">
+
+                    <span>IVA 15%</span>
+
+                    <span id="lbl_iva">
+                        $0.00
+                    </span>
+
+                </div>
+
+                <div
+                    class="pt-4 border-t border-slate-800 flex justify-between items-end">
+
+                    <div>
+
+                        <span
+                            class="text-xs uppercase tracking-widest text-slate-500 font-black">
+                            Total
+                        </span>
+
+                        <h2
+                            id="lbl_total"
+                            class="text-3xl font-black tracking-tight text-cyan-400 mt-1">
+                            $0.00
+                        </h2>
+
+                    </div>
+
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center">
+
+                        <i
+                            class="ph-fill ph-currency-dollar text-cyan-400 text-2xl">
+                        </i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- PAYMENT -->
+            <div class="mb-5">
+
+                <label
+                    class="block text-[10px] uppercase tracking-[0.28em] text-slate-500 font-black mb-2">
+                    Método de Pago
+                </label>
+
+                <select id="payment_method"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-cyan-500">
+
+                    <option value="CASH">
+                        💵 Efectivo
+                    </option>
+
+                    <option value="TRANSFER">
+                        🏦 Transferencia
+                    </option>
+
+                    <option value="CARD">
+                        💳 Tarjeta
+                    </option>
+
                 </select>
+
             </div>
 
-            <button id="btn_checkout" onclick="processSale()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl text-sm shadow-lg shadow-brand-600/30 transition-all active:scale-95 flex justify-center items-center gap-2">
-                <i class="ph-bold ph-receipt"></i> Procesar Factura
+            <!-- BTN -->
+            <button id="btn_checkout"
+                onclick="processSale()"
+                class="floating-btn w-full bg-cyan-500 hover:bg-cyan-400 active:scale-[0.98] text-white rounded-2xl py-4 font-black text-sm flex items-center justify-center gap-2 transition-all">
+
+                <i
+                    class="ph-bold ph-check-circle text-xl">
+                </i>
+
+                Confirmar Venta
+
             </button>
+
         </div>
-    </div>
+
+    </aside>
+
 </div>
 
 <script>
     const getCSRFToken = () => document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
-    
-    // ESTADO DEL CARRITO
+
     let cart = [];
     const IVA_RATE = 0.15;
 
-    // =====================================
-    // NUEVO: SISTEMA DE AUTOGUARDADO (LOCALSTORAGE)
-    // =====================================
     function saveState() {
-        // Guarda los productos del carrito
         localStorage.setItem('bedoya_pos_cart', JSON.stringify(cart));
-        
-        // Guarda el cliente seleccionado si existe
+
         const custId = document.getElementById('selected_customer_id').value;
-        const custName = document.getElementById('lbl_customer_name').innerText;
-        const custCi = document.getElementById('lbl_customer_ci').innerText.replace('C.I: ', '');
-        
+
         if (custId) {
-            localStorage.setItem('bedoya_pos_customer', JSON.stringify({id: custId, name: custName, ci: custCi}));
+
+            localStorage.setItem('bedoya_pos_customer', JSON.stringify({
+                id: custId,
+                name: document.getElementById('lbl_customer_name').innerText,
+                phone: document.getElementById('selected_customer_raw_phone').value
+            }));
+
         } else {
+
             localStorage.removeItem('bedoya_pos_customer');
+
         }
     }
 
     function loadState() {
-        // Recuperar carrito
+
         const savedCart = localStorage.getItem('bedoya_pos_cart');
+
         if (savedCart) {
-            try { cart = JSON.parse(savedCart); } catch (e) { cart = []; }
-        }
-        
-        // Recuperar cliente
-        const savedCustomer = localStorage.getItem('bedoya_pos_customer');
-        if (savedCustomer) {
+
             try {
+
+                cart = JSON.parse(savedCart);
+
+            } catch (e) {
+
+                cart = [];
+
+            }
+        }
+
+        const savedCustomer = localStorage.getItem('bedoya_pos_customer');
+
+        if (savedCustomer) {
+
+            try {
+
                 const c = JSON.parse(savedCustomer);
-                selectCustomer(c.id, c.name, c.ci, false); // false para evitar loop de guardado
-            } catch (e) { }
+                selectCustomer(c.id, c.name, c.phone, false);
+
+            } catch (e) {}
+
         }
     }
 
-    // =====================================
-    // 1. BUSCADOR DE PRODUCTOS
-    // =====================================
     const productInput = document.getElementById('product_search');
     const productResults = document.getElementById('product_results');
 
-    productInput.addEventListener('input', debounce(async (e) => {
-        const query = e.target.value;
-        if(query.length < 2) return;
+    productInput.addEventListener('input',
+        debounce(async (e) => {
 
-        const res = await fetch(`/sales/api/search-products/?q=${query}`);
-        const data = await res.json();
-        
-        productResults.innerHTML = '';
-        if(data.products.length === 0) {
-            productResults.innerHTML = `<div class="col-span-full text-center text-gray-400 text-xs py-4">No se encontraron repuestos.</div>`;
-            return;
-        }
+            const query = e.target.value;
 
-        data.products.forEach(p => {
-            const stockColor = p.stock > 2 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
-            const html = `
-                <div onclick="addToCart(${p.id}, '${p.code}', '${p.name}', ${p.price}, ${p.stock})" 
-                     class="bg-white border border-gray-200 rounded-xl p-3 cursor-pointer hover:border-brand-500 hover:shadow-md transition-all active:scale-95 flex flex-col justify-between">
-                    <div>
-                        <span class="text-[10px] font-mono text-gray-400 block">${p.code}</span>
-                        <h4 class="text-xs font-bold text-gray-900 leading-tight mt-1 line-clamp-2">${p.name}</h4>
+            if (query.length < 2) return;
+
+            const res = await fetch(`/sales/api/search-products/?q=${query}`);
+            const data = await res.json();
+
+            productResults.innerHTML = '';
+
+            if (data.products.length === 0) {
+
+                productResults.innerHTML = `
+                    <div class="col-span-full text-center py-16">
+                        <i class="ph-bold ph-magnifying-glass text-5xl text-slate-300"></i>
+                        <p class="text-sm font-bold text-slate-500 mt-3">
+                            No se encontraron productos
+                        </p>
                     </div>
-                    <div class="flex justify-between items-end mt-3">
-                        <span class="text-sm font-black text-brand-600">$${p.price.toFixed(2)}</span>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${stockColor} border-current border-opacity-20">${p.stock} u.</span>
-                    </div>
-                </div>
-            `;
-            productResults.insertAdjacentHTML('beforeend', html);
-        });
-    }, 300));
+                `;
 
-    // =====================================
-    // 2. BUSCADOR DE CLIENTES
-    // =====================================
+                return;
+            }
+
+            data.products.forEach(p => {
+
+                const publicPrice = p.price * (1 + IVA_RATE);
+
+                const isLiquid = p.unit_type === 'ML';
+
+                const unitStr = isLiquid ? 'ml' : 'u';
+
+                const stockColor =
+                    p.stock > 0 ?
+                    'text-emerald-600 bg-emerald-50 border-emerald-100' :
+                    'text-red-600 bg-red-50 border-red-100';
+
+                const imgHtml = p.image ?
+                    `<img src="${p.image}" class="w-full h-full object-cover">` :
+                    `<i class="ph-bold ph-image text-4xl text-slate-300"></i>`;
+
+                const html = `
+                    <div
+                        onclick="addToCart(${p.id}, '${p.code}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, ${p.stock}, '${p.unit_type}')"
+                        class="product-card bg-white rounded-[1.8rem] overflow-hidden border border-slate-100 cursor-pointer shadow-sm active:scale-[0.98]">
+
+                        <div
+                            class="relative h-36 bg-slate-50 flex items-center justify-center overflow-hidden border-b border-slate-100">
+
+                            ${imgHtml}
+
+                            ${isLiquid ? `
+                                <div
+                                    class="absolute top-3 right-3 px-2 py-1 rounded-xl bg-blue-100 text-blue-700 text-[9px] font-black tracking-wide shadow-sm">
+                                    LÍQUIDO
+                                </div>
+                            ` : ''}
+
+                        </div>
+
+                        <div class="p-4 flex flex-col h-full">
+
+                            <span
+                                class="text-[10px] text-slate-400 font-mono mb-1">
+                                ${p.code}
+                            </span>
+
+                            <h3
+                                class="text-sm font-black text-slate-900 leading-tight line-clamp-2 min-h-[40px]">
+                                ${p.name}
+                            </h3>
+
+                            <div
+                                class="mt-4 flex items-end justify-between gap-3">
+
+                                <div>
+
+                                    <div
+                                        class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-black ${stockColor}">
+
+                                        <i class="ph-fill ph-package"></i>
+
+                                        ${p.stock} ${unitStr}
+
+                                    </div>
+
+                                    <div
+                                        class="text-xl font-black tracking-tight text-cyan-600 mt-2">
+
+                                        $${publicPrice.toFixed(2)}
+
+                                    </div>
+
+                                </div>
+
+                                <div
+                                    class="w-10 h-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center border border-cyan-100">
+
+                                    <i class="ph-bold ph-plus"></i>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                `;
+
+                productResults.insertAdjacentHTML('beforeend', html);
+
+            });
+
+        }, 300)
+    );
+
     const customerInput = document.getElementById('customer_search');
     const customerResults = document.getElementById('customer_results');
 
-    customerInput.addEventListener('input', debounce(async (e) => {
-        const query = e.target.value;
-        if(query.length < 3) { customerResults.classList.add('hidden'); return; }
+    customerInput.addEventListener('input',
+        debounce(async (e) => {
 
-        const res = await fetch(`/sales/api/search-customers/?q=${query}`);
-        const data = await res.json();
-        
-        customerResults.innerHTML = '';
-        if(data.customers.length === 0) {
-            // SUGERENCIA INCORPORADA: Link directo para registrar si no existe
-            customerResults.innerHTML = `
-                <div class="p-4 text-xs text-center border-b border-gray-50">
-                    <span class="text-gray-500 block mb-2">Cliente no registrado.</span>
-                    <a href="/customers/manage/" class="text-brand-600 font-bold hover:underline">Ir a Registrar Cliente &rarr;</a>
-                </div>`;
-        } else {
-            data.customers.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 text-xs';
-                div.innerHTML = `<span class="font-bold text-gray-900 block">${c.name}</span><span class="text-gray-400 font-mono">${c.cedula}</span>`;
-                div.onclick = () => selectCustomer(c.id, c.name, c.cedula);
-                customerResults.appendChild(div);
-            });
-        }
-        customerResults.classList.remove('hidden');
-    }, 300));
+            const query = e.target.value;
 
-    function selectCustomer(id, name, ci, autoSave = true) {
+            if (query.length < 3) {
+
+                customerResults.classList.add('hidden');
+                return;
+
+            }
+
+            const res = await fetch(`/sales/api/search-customers/?q=${query}`);
+            const data = await res.json();
+
+            customerResults.innerHTML = '';
+
+            if (data.customers.length === 0) {
+
+                customerResults.innerHTML = `
+                    <div class="p-5 text-center">
+                        <p class="text-sm font-semibold text-slate-500 mb-4">
+                            Cliente no encontrado
+                        </p>
+
+                        <a href="/customers/manage/"
+                            target="_blank"
+                            class="inline-flex items-center gap-2 bg-cyan-50 text-cyan-600 px-4 py-2 rounded-xl text-sm font-black">
+
+                            <i class="ph-bold ph-plus-circle"></i>
+
+                            Registrar Cliente
+
+                        </a>
+                    </div>
+                `;
+
+            } else {
+
+                data.customers.forEach(c => {
+
+                    const div = document.createElement('div');
+
+                    div.className =
+                        'p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-all';
+
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between">
+
+                            <div>
+
+                                <span class="block text-sm font-black text-slate-900">
+                                    ${c.name}
+                                </span>
+
+                                <span class="block text-[11px] text-slate-400 font-mono mt-1">
+                                    ${c.cedula || 'Consumidor Final'}
+                                </span>
+
+                            </div>
+
+                            <i class="ph-bold ph-arrow-right text-slate-300"></i>
+
+                        </div>
+                    `;
+
+                    div.onclick = () =>
+                        selectCustomer(c.id, c.name, c.phone || '');
+
+                    customerResults.appendChild(div);
+
+                });
+
+            }
+
+            customerResults.classList.remove('hidden');
+
+        }, 300)
+    );
+
+    function selectCustomer(id, name, phone, autoSave = true) {
+
         document.getElementById('selected_customer_id').value = id;
+
         document.getElementById('lbl_customer_name').innerText = name;
-        document.getElementById('lbl_customer_ci').innerText = `C.I: ${ci}`;
-        
-        document.getElementById('selected_customer_card').classList.remove('hidden');
+
+        document.getElementById('selected_customer_raw_phone').value = phone;
+
+        document.getElementById('lbl_customer_phone').innerHTML =
+            `<i class="ph-fill ph-whatsapp-logo text-green-500"></i> ${phone}`;
+
+        document.getElementById('selected_customer_card')
+            .classList.remove('hidden');
+
         customerInput.classList.add('hidden');
+
         customerResults.classList.add('hidden');
-        
-        if(autoSave) saveState();
+
+        if (autoSave) saveState();
+
     }
 
     function clearCustomer(autoSave = true) {
+
         document.getElementById('selected_customer_id').value = '';
-        document.getElementById('selected_customer_card').classList.add('hidden');
+
+        document.getElementById('selected_customer_raw_phone').value = '';
+
+        document.getElementById('selected_customer_card')
+            .classList.add('hidden');
+
         customerInput.value = '';
+
         customerInput.classList.remove('hidden');
-        
-        if(autoSave) saveState();
+
+        if (autoSave) saveState();
+
     }
 
-    // =====================================
-    // 3. LÓGICA DEL CARRITO
-    // =====================================
-    function addToCart(id, code, name, price, stock) {
-        if(stock <= 0) return Swal.fire('Sin Stock', 'Este producto está agotado.', 'error');
-        
-        const existing = cart.find(item => item.id === id);
-        if(existing) {
-            if(existing.quantity >= stock) return Swal.fire('Atención', 'Alcanzó el límite de stock disponible.', 'warning');
-            existing.quantity++;
+    function addToCart(id, code, name, base_price, stock, unit_type) {
+
+        if (stock <= 0)
+            return Swal.fire(
+                'Sin stock',
+                'No existe inventario disponible.',
+                'error'
+            );
+
+        const existing =
+            cart.find(item => item.id === id);
+
+        let defaultAdd =
+            unit_type === 'ML' ? 100 : 1;
+
+        if (existing) {
+
+            if (existing.quantity + defaultAdd > stock)
+                return Swal.fire(
+                    'Atención',
+                    'Límite máximo de stock alcanzado.',
+                    'warning'
+                );
+
+            existing.quantity += defaultAdd;
+
         } else {
-            cart.push({ id, code, name, price, quantity: 1, stock });
+
+            cart.push({
+                id,
+                code,
+                name,
+                price: base_price,
+                quantity: defaultAdd,
+                stock,
+                unit_type
+            });
+
         }
-        
+
         productInput.value = '';
+
         document.getElementById('product_results').innerHTML = '';
+
         productInput.focus();
-        
+
         renderCart();
-        saveState(); // Guardar al añadir
+
+        saveState();
+
     }
 
-    function updateQty(id, delta) {
+    function changeQuantity(id, newQty) {
+
         const item = cart.find(i => i.id === id);
-        if(!item) return;
-        
-        item.quantity += delta;
-        
-        if(item.quantity <= 0) cart = cart.filter(i => i.id !== id);
-        if(item.quantity > item.stock) item.quantity = item.stock;
-        
+
+        if (!item) return;
+
+        let qty = parseFloat(newQty);
+
+        if (isNaN(qty) || qty <= 0)
+            qty = item.unit_type === 'ML' ? 100 : 1;
+
+        if (qty > item.stock) {
+
+            qty = item.stock;
+
+            Swal.fire(
+                'Atención',
+                `Stock máximo: ${item.stock}`,
+                'warning'
+            );
+        }
+
+        item.quantity = qty;
+
         renderCart();
-        saveState(); // Guardar al modificar cantidad
+
+        saveState();
+
+    }
+
+    function removeFromCart(id) {
+
+        cart = cart.filter(i => i.id !== id);
+
+        renderCart();
+
+        saveState();
+
     }
 
     function renderCart() {
-        const container = document.getElementById('cart_items_container');
+
+        const container =
+            document.getElementById('cart_items_container');
+
         container.innerHTML = '';
-        
+
         let subtotal = 0;
 
-        if(cart.length === 0) {
-            container.innerHTML = `<div class="text-center text-gray-400 text-xs py-10">Carrito vacío.</div>`;
+        if (cart.length === 0) {
+
+            container.innerHTML = `
+                <div
+                    class="h-full flex flex-col items-center justify-center text-center py-16">
+
+                    <div
+                        class="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+
+                        <i
+                            class="ph-fill ph-shopping-cart text-5xl text-slate-300">
+                        </i>
+
+                    </div>
+
+                    <h3
+                        class="text-lg font-black text-slate-500">
+                        Carrito vacío
+                    </h3>
+
+                    <p
+                        class="text-sm text-slate-400 mt-2">
+                        Agregue productos para iniciar una venta.
+                    </p>
+
+                </div>
+            `;
         }
 
         cart.forEach(item => {
-            const lineTotal = item.price * item.quantity;
+
+            const lineTotal =
+                item.price * item.quantity;
+
             subtotal += lineTotal;
-            
+
+            const publicUnitPrice =
+                item.price * (1 + IVA_RATE);
+
+            const lineTotalPublic =
+                lineTotal * (1 + IVA_RATE);
+
+            const isLiquid =
+                item.unit_type === 'ML';
+
+            const unitLabel =
+                isLiquid ? 'ml' : 'u';
+
+            const step =
+                isLiquid ? '0.5' : '1';
+
             const html = `
-                <div class="flex justify-between items-center bg-white border border-gray-100 p-3 rounded-xl shadow-sm">
-                    <div class="flex-1 pr-3">
-                        <span class="text-[10px] text-gray-400 block">${item.code}</span>
-                        <span class="text-xs font-bold text-gray-900 block leading-tight">${item.name}</span>
-                        <span class="text-xs font-bold text-brand-600">$${item.price.toFixed(2)} c/u</span>
+                <div
+                    class="cart-item bg-slate-50 border border-slate-100 rounded-[1.6rem] p-4 relative">
+
+                    <button
+                        onclick="removeFromCart(${item.id})"
+                        class="absolute top-3 right-3 w-8 h-8 rounded-xl bg-white border border-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+
+                        <i class="ph-bold ph-x"></i>
+
+                    </button>
+
+                    <div class="pr-10">
+
+                        <span
+                            class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-50 text-cyan-700 text-[10px] font-black">
+
+                            ${item.code}
+
+                        </span>
+
+                        <h4
+                            class="text-sm font-black text-slate-900 mt-2 leading-tight">
+
+                            ${item.name}
+
+                        </h4>
+
+                        <span
+                            class="block text-[11px] text-slate-400 mt-1">
+
+                            $${publicUnitPrice.toFixed(2)} por ${unitLabel}
+
+                        </span>
+
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center bg-gray-50 rounded-lg border border-gray-200">
-                            <button onclick="updateQty(${item.id}, -1)" class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-minus"></i></button>
-                            <span class="w-6 text-center text-xs font-bold text-gray-900">${item.quantity}</span>
-                            <button onclick="updateQty(${item.id}, 1)" class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-brand-600 transition-colors"><i class="ph-bold ph-plus"></i></button>
+
+                    <div
+                        class="mt-4 bg-white rounded-2xl border border-slate-200 p-2 flex items-center justify-between">
+
+                        <div
+                            class="flex items-center gap-2 pl-2">
+
+                            <span
+                                class="text-[10px] uppercase font-black text-slate-400">
+                                Cant
+                            </span>
+
+                            <input
+                                type="number"
+                                step="${step}"
+                                min="0.01"
+                                max="${item.stock}"
+                                value="${item.quantity}"
+                                onchange="changeQuantity(${item.id}, this.value)"
+                                class="w-20 bg-transparent border-none outline-none text-center text-sm font-black text-slate-900">
+
+                            <span
+                                class="text-[10px] text-slate-400 font-bold">
+                                ${unitLabel}
+                            </span>
+
                         </div>
-                        <div class="w-16 text-right font-black text-gray-900 text-sm">$${lineTotal.toFixed(2)}</div>
+
+                        <div
+                            class="text-right pr-2">
+
+                            <span
+                                class="block text-lg font-black text-slate-900">
+
+                                $${lineTotalPublic.toFixed(2)}
+
+                            </span>
+
+                        </div>
+
                     </div>
+
                 </div>
             `;
+
             container.insertAdjacentHTML('beforeend', html);
+
         });
 
-        const iva = subtotal * IVA_RATE;
-        const total = subtotal + iva;
+        const iva =
+            subtotal * IVA_RATE;
 
-        document.getElementById('lbl_subtotal').innerText = `$${subtotal.toFixed(2)}`;
-        document.getElementById('lbl_iva').innerText = `$${iva.toFixed(2)}`;
-        document.getElementById('lbl_total').innerText = `$${total.toFixed(2)}`;
+        const total =
+            subtotal + iva;
+
+        document.getElementById('lbl_subtotal').innerText =
+            `$${subtotal.toFixed(2)}`;
+
+        document.getElementById('lbl_iva').innerText =
+            `$${iva.toFixed(2)}`;
+
+        document.getElementById('lbl_total').innerText =
+            `$${total.toFixed(2)}`;
+
     }
 
-    // =====================================
-    // 4. CHECKOUT (PROCESAR VENTA)
-    // =====================================
-    function processSale() {
-        const customerId = document.getElementById('selected_customer_id').value;
-        const paymentMethod = document.getElementById('payment_method').value;
-
-        if(!customerId) return Swal.fire('Falta Cliente', 'Por favor seleccione o busque un cliente.', 'warning');
-        if(cart.length === 0) return Swal.fire('Carrito Vacío', 'Agregue repuestos para facturar.', 'warning');
-
-        const btn = document.getElementById('btn_checkout');
-        btn.disabled = true;
-        btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Procesando...`;
-
-        const payload = {
-            customer_id: customerId,
-            payment_method: paymentMethod,
-            items: cart.map(i => ({ id: i.id, quantity: i.quantity }))
-        };
-
-        fetch('/sales/api/process/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json().then(data => ({ status: res.status, body: data })))
-        .then(res => {
-            if(res.status === 201) {
-                Swal.fire({
-                    title: '¡Venta Exitosa!',
-                    text: `Factura generada: ${res.body.invoice}`,
-                    icon: 'success',
-                    showCancelButton: true,
-                    confirmButtonColor: '#0d9488',
-                    cancelButtonColor: '#6b7280',
-                    confirmButtonText: '<i class="ph-bold ph-printer"></i> Imprimir Factura',
-                    cancelButtonText: 'Nueva Venta'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.open(`/sales/invoice/${res.body.invoice}/`, '_blank');
-                    }
-                    
-                    // Al completar la venta con éxito, LIMPIAMOS LA MEMORIA para el próximo cliente
-                    cart = [];
-                    clearCustomer(false); 
-                    localStorage.removeItem('bedoya_pos_cart');
-                    localStorage.removeItem('bedoya_pos_customer');
-                    
-                    renderCart();
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="ph-bold ph-receipt"></i> Procesar Factura`;
-                });
-            } else {
-                Swal.fire('Error', res.body.error, 'error');
-                btn.disabled = false;
-                btn.innerHTML = `<i class="ph-bold ph-receipt"></i> Procesar Factura`;
-            }
-        });
-    }
-
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => { clearTimeout(timeout); func(...args); };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-    // Inicializar: Leer memoria guardada y renderizar
     loadState();
     renderCart();
+
+    function debounce(func, wait) {
+
+        let timeout;
+
+        return function executedFunction(...args) {
+
+            const later = () => {
+
+                clearTimeout(timeout);
+
+                func(...args);
+
+            };
+
+            clearTimeout(timeout);
+
+            timeout =
+                setTimeout(later, wait);
+
+        };
+
+    }
 </script>
+
 {% endblock %}

@@ -1,20 +1,24 @@
-from django.views.generic import TemplateView
+from decimal import Decimal
+import uuid
+
 from django.contrib.auth.mixins import LoginRequiredMixin
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from django.db import transaction
 from django.db.models import Q
-from django.utils.timezone import now
-import uuid
 from django.shortcuts import get_object_or_404
+from django.utils.timezone import now
+from django.views.generic import TemplateView
+
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 # Importaciones de otras apps
 from inventory.models import Product, StockMovement
 from customers.models import Customer
-from cash_register.models import CashSession  # <-- IMPORTACIÓN CLAVE DE LA CAJA
-from .models import Sale, SaleDetail
+from cash_register.models import CashSession
 
+# Modelos de ventas
+from .models import Sale, SaleDetail
 # ==========================================
 # VISTA PRINCIPAL DEL PUNTO DE VENTA (UI)
 # ==========================================
@@ -38,9 +42,10 @@ class POSProductSearchAPI(APIView):
         products = Product.objects.filter(
             Q(code__iexact=query) | 
             Q(barcode__iexact=query) | 
-            Q(name__icontains=query),
+            Q(name__icontains=query) |
+            Q(description__icontains=query), # Buscamos también por descripción
             is_active=True
-        ).order_by('name')[:20]
+        ).order_by('name')[:24] # Traemos hasta 24 para llenar bien la pantalla
 
         results = []
         for p in products:
@@ -48,8 +53,11 @@ class POSProductSearchAPI(APIView):
                 "id": p.id,
                 "code": p.code,
                 "name": p.name,
+                "description": p.description or "Sin descripción adicional.",
                 "price": float(p.sale_price),
-                "stock": p.stock_actual
+                "stock": float(p.stock_actual),
+                "unit_type": p.unit_type, # 'U' o 'ML'
+                "image": p.image.url if p.image else None
             })
             
         return Response({"products": results}, status=status.HTTP_200_OK)
@@ -79,7 +87,6 @@ class POSCustomerSearchAPI(APIView):
 # ==========================================
 class ProcessSaleAPI(APIView):
     def post(self, request, *args, **kwargs):
-        # 1. VERIFICACIÓN CRÍTICA: ¿Tiene el vendedor una caja abierta?
         active_session = CashSession.objects.filter(user=request.user, is_open=True).first()
         
         if not active_session:
@@ -99,42 +106,40 @@ class ProcessSaleAPI(APIView):
         try:
             with transaction.atomic():
                 customer = Customer.objects.get(id=customer_id)
-                
-                # Generar número de factura único provisional
                 invoice_number = f"DOC-{now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
 
-                # 2. Crear Venta Cabecera (Enlazada a la caja abierta)
                 sale = Sale.objects.create(
                     invoice_number=invoice_number,
                     customer=customer,
                     seller=request.user,
                     payment_method=payment_method,
-                    cash_session=active_session,  # <--- VINCULACIÓN CON LA CAJA
+                    cash_session=active_session,
                     subtotal=0, iva=0, total=0
                 )
 
-                subtotal_calc = 0
+                subtotal_calc = Decimal('0.00')
                 
-                # 3. Procesar Detalles y Descontar Stock
                 for item in items:
-                    # select_for_update bloquea la fila para evitar ventas concurrentes que rompan el stock
                     product = Product.objects.select_for_update().get(id=item['id'])
-                    qty = int(item['quantity'])
+                    
+                    # CRÍTICO: Convertimos la cantidad a Decimal para soportar ml (Ej: 500.50)
+                    qty = Decimal(str(item['quantity']))
                     
                     if product.stock_actual < qty:
                         raise ValueError(f"Stock insuficiente para {product.name}. Disponible: {product.stock_actual}")
 
-                    # Descuento de inventario
+                    # Descuento exacto de inventario (Líquidos o Unidades)
                     product.stock_actual -= qty
                     product.save()
 
-                    # Registro de movimiento de salida
+                    # Movimiento de salida en Kardex
+                    unidad_str = "ml" if product.unit_type == 'ML' else "u"
                     StockMovement.objects.create(
                         product=product, movement_type='OUT', quantity=qty,
-                        description=f"Venta Factura: {invoice_number}", user=request.user
+                        description=f"Venta de {qty}{unidad_str} | Factura: {invoice_number}", user=request.user
                     )
 
-                    line_total = float(product.sale_price) * qty
+                    line_total = product.sale_price * qty
                     subtotal_calc += line_total
 
                     SaleDetail.objects.create(
@@ -142,8 +147,8 @@ class ProcessSaleAPI(APIView):
                         unit_price=product.sale_price, subtotal=line_total
                     )
 
-                # 4. Actualizar Totales de la Venta (IVA 15% - Ecuador)
-                iva_calc = subtotal_calc * 0.15
+                # Cálculos finales de la venta
+                iva_calc = subtotal_calc * Decimal('0.15')
                 total_calc = subtotal_calc + iva_calc
 
                 sale.subtotal = subtotal_calc
@@ -154,18 +159,15 @@ class ProcessSaleAPI(APIView):
             return Response({
                 "message": "Venta procesada con éxito",
                 "invoice": sale.invoice_number,
-                "total": sale.total
+                "total": float(sale.total)
             }, status=status.HTTP_201_CREATED)
 
         except ValueError as ve:
-            # Captura errores controlados (ej: falta de stock)
             return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
         except Customer.DoesNotExist:
             return Response({"error": "Cliente no válido."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # Captura cualquier otro error de base de datos
-            return Response({"error": f"Error interno al procesar la venta: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            return Response({"error": f"Error interno: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class InvoicePDFView(LoginRequiredMixin, TemplateView):
     template_name = 'sales/invoice_pdf.html'
 

@@ -37,8 +37,15 @@ class Sale(BaseModel):
 class SaleDetail(BaseModel):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='details', verbose_name="Venta")
     product = models.ForeignKey(Product, on_delete=models.PROTECT, verbose_name="Producto")
-    quantity = models.PositiveIntegerField(verbose_name="Cantidad")
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio Unitario")
+    
+    # Cambiado a decimal para soportar ventas de 500 ml, etc.
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Cantidad")
+    
+    # NUEVO: CAMPOS DE INMUTABILIDAD HISTÓRICA
+    historical_price = models.DecimalField(max_digits=12, decimal_places=4, default=0.00, verbose_name="Precio Venta Histórico")
+    historical_cost = models.DecimalField(max_digits=12, decimal_places=4, default=0.00, verbose_name="Costo Compra Histórico")
+    
+    unit_price = models.DecimalField(max_digits=12, decimal_places=4, verbose_name="Precio Unitario Aplicado")
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Subtotal")
 
     class Meta:
@@ -47,3 +54,11 @@ class SaleDetail(BaseModel):
 
     def __str__(self):
         return f"{self.quantity}x {self.product.name} (Venta {self.sale.invoice_number})"
+
+    def save(self, *args, **kwargs):
+        # Cuando se guarda por primera vez, el detalle toma una "fotografía" del costo y precio actual del producto.
+        # Así, si el administrador edita el producto mañana, esta factura seguirá mostrando la rentabilidad y precios originales.
+        if not self.pk:
+            self.historical_price = self.product.sale_price
+            self.historical_cost = self.product.purchase_price
+        super().save(*args, **kwargs)

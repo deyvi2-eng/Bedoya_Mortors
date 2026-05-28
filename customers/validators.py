@@ -1,6 +1,10 @@
 from django.core.exceptions import ValidationError
 
 def validate_ecuadorian_cedula(value):
+    # NUEVO: Si no hay valor (es opcional), dejamos pasar la validación
+    if not value:
+        return
+
     if len(value) != 10 or not value.isdigit():
         raise ValidationError("La cédula debe contener exactamente 10 dígitos numéricos.")
     

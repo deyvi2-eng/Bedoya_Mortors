@@ -1,602 +1,347 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="es" class="antialiased scroll-smooth selection:bg-brand-500 selection:text-white">
+<html lang="es" class="scroll-smooth">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
     <title>{% block title %}ERP | Bedoya Motors{% endblock %}</title>
 
     <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
 
-    <!-- GOOGLE FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-
-    <!-- TAILWIND -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-
                     fontFamily: {
                         sans: ['Inter', 'sans-serif']
                     },
-
                     colors: {
-
                         brand: {
-                            50: '#f0fdfa',
-                            100: '#ccfbf1',
-                            200: '#99f6e4',
-                            300: '#5eead4',
-                            400: '#2dd4bf',
-                            500: '#14b8a6',
-                            600: '#0d9488',
-                            700: '#0f766e',
-                            800: '#115e59',
-                            900: '#134e4a'
+                            50: '#ecfeff',
+                            100: '#cffafe',
+                            200: '#a5f3fc',
+                            300: '#67e8f9',
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                            800: '#155e75',
+                            900: '#164e63'
                         }
                     },
-
                     boxShadow: {
-
-                        subtle: '0 1px 2px rgba(0,0,0,0.04)',
-                        floating: '0 10px 40px rgba(15,23,42,0.06)',
-                        glow: '0 0 30px rgba(20,184,166,0.08)',
+                        soft: '0 10px 40px rgba(2,6,23,0.06)',
+                        glow: '0 0 30px rgba(6,182,212,0.12)',
+                        card: '0 8px 30px rgba(15,23,42,0.05)',
+                        floating: '0 -10px 40px rgba(15,23,42,0.08)'
                     }
                 }
             }
         }
     </script>
 
-    <!-- ICONOS -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
     <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
+            font-family: 'Inter', sans-serif;
             background:
-                radial-gradient(circle at top right,
-                    rgba(20, 184, 166, 0.04),
-                    transparent 25%),
+                radial-gradient(circle at top left, rgba(6, 182, 212, 0.06), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.05), transparent 30%),
                 #f8fafc;
+            overflow: hidden;
+            /* Soporte para altura dinámica en móviles modernos */
+            height: 100dvh; 
         }
 
-        /* SCROLL */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
         }
 
-        .no-scrollbar {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, .35);
+            border-radius: 999px;
         }
 
-        /* SIDEBAR */
         .sidebar {
-            background:
-                rgba(255, 255, 255, 0.92);
-
-            backdrop-filter: blur(18px);
-
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(24px);
             border-right: 1px solid rgba(226, 232, 240, 0.7);
+            box-shadow: 0 15px 40px rgba(15, 23, 42, 0.04);
         }
 
-        /* HEADER */
-        .glass-header {
-            background:
-                rgba(255, 255, 255, 0.82);
-
-            backdrop-filter: blur(16px);
-
+        .header-glass {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        /* MOBILE */
-        .glass-nav {
-            background:
-                rgba(255, 255, 255, 0.90);
-
-            backdrop-filter: blur(16px);
-
-            border-top: 1px solid rgba(226, 232, 240, 0.8);
-        }
-
-        /* LINKS */
-        .menu-link {
+        .nav-link {
             position: relative;
-
-            transition: all .22s ease;
-
-            border: 1px solid transparent;
+            transition: .25s ease;
+            overflow: hidden;
         }
 
-        .menu-link:hover {
-            background: white;
-
-            border-color: rgba(20, 184, 166, 0.12);
-
+        .nav-link:hover {
             transform: translateX(4px);
-
-            box-shadow:
-                0 10px 25px rgba(15, 23, 42, 0.04);
+            background: rgba(255, 255, 255, .95);
         }
 
-        .menu-link.active {
-            background:
-                linear-gradient(to right,
-                    rgba(20, 184, 166, 0.08),
-                    rgba(255, 255, 255, 1));
-
-            border-color:
-                rgba(20, 184, 166, 0.14);
-
-            box-shadow:
-                0 10px 30px rgba(15, 23, 42, 0.04);
+        .nav-link.active {
+            background: linear-gradient(to right, rgba(6, 182, 212, 0.12), rgba(255, 255, 255, 1));
+            border: 1px solid rgba(6, 182, 212, 0.12);
         }
 
-        /* BOTONES */
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 55%;
+            border-radius: 999px;
+            background: #06b6d4;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(226, 232, 240, 0.7);
+        }
+
+        .mobile-nav {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(25px);
+            border-top: 1px solid rgba(226, 232, 240, 0.7);
+            padding-bottom: env(safe-area-inset-bottom, 15px); /* Soporte barra inferior iPhone */
+        }
+
         .smooth {
-            transition: all .22s ease;
+            transition: .25s ease;
+        }
+
+        @media(max-width:768px) {
+            body { font-size: 13px; }
+            .sidebar { display: none; }
+            .main-padding {
+                padding-left: 14px !important;
+                padding-right: 14px !important;
+            }
         }
     </style>
 
     {% block extra_head %}{% endblock %}
-
 </head>
 
-<body class="h-screen flex overflow-hidden text-slate-800 font-sans">
+<body class="flex text-slate-800">
 
-    <!-- SIDEBAR -->
-    <aside
-        class="sidebar hidden md:flex w-[275px] flex-col justify-between shrink-0 shadow-subtle z-20">
-
+    <aside class="sidebar hidden md:flex w-[270px] shrink-0 flex-col justify-between z-30">
         <div class="flex flex-col h-full">
 
-            <!-- LOGO -->
-            <div
-                class="relative px-5 py-5 border-b border-slate-100 overflow-hidden">
-
-                <!-- EFECTO -->
-                <div
-                    class="absolute -right-10 -top-10 w-32 h-32 bg-brand-50 rounded-full blur-3xl opacity-70">
-                </div>
-
-                <div class="relative z-10 flex items-center gap-4">
-
-                    <!-- LOGO -->
-                    <div class="relative shrink-0">
-
-                        <!-- GLOW -->
-                        <div
-                            class="absolute inset-0 rounded-2xl bg-brand-400/10 blur-2xl scale-125">
+            <div class="px-5 py-5 border-b border-slate-100">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-cyan-400/20 blur-2xl rounded-full"></div>
+                        <div class="relative w-14 h-14 rounded-3xl bg-white border border-slate-200 shadow-soft flex items-center justify-center">
+                            <img src="{% static 'img/logo.png' %}" class="h-9 object-contain" alt="Logo">
                         </div>
-
-                        <!-- BOX -->
-                        <div
-                            class="relative w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-floating">
-
-                            <img src="{% static 'img/logo.png' %}"
-                                alt="Bedoya Motors"
-                                class="h-9 w-auto object-contain">
-
-                        </div>
-
                     </div>
-
-                    <!-- TEXT -->
-                    <div class="min-w-0">
-
-                        <h1
-                            class="text-[18px] font-black tracking-tight text-slate-900 leading-none">
-                            Bedoya Motors
-                        </h1>
-
-                        <div class="flex items-center gap-2 mt-1.5">
-
-                            <div
-                                class="w-4 h-[2px] bg-brand-400 rounded-full">
-                            </div>
-
-                            <p
-                                class="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-600">
-                                ERP SYSTEM
-                            </p>
-
-                        </div>
-
+                    <div>
+                        <h1 class="text-[20px] font-black tracking-tight text-slate-900">Bedoya Motors</h1>
+                        <p class="text-[10px] uppercase tracking-[0.25em] font-bold text-cyan-600 mt-1">ERP SYSTEM</p>
                     </div>
-
                 </div>
-
             </div>
 
-            <!-- MENU -->
-            <nav
-                class="flex-1 overflow-y-auto px-4 py-5 space-y-1.5 no-scrollbar">
+            <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-2">
+                {% if request.user.role == 'ADMIN' %}
+                <a href="/" class="nav-link active flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-cyan-50 border border-cyan-100 flex items-center justify-center">
+                        <i class="ph-fill ph-squares-four text-cyan-600 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Dashboard</p>
+                        <span class="text-[11px] text-slate-400">Panel principal</span>
+                    </div>
+                </a>
+                {% endif %}
 
-                <!-- TITLE -->
-                <div class="px-3 pb-2">
+                <a href="/sales/pos/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                        <i class="ph-fill ph-shopping-cart text-emerald-600 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Punto de Venta</p>
+                        <span class="text-[11px] text-slate-400">Gestión comercial</span>
+                    </div>
+                </a>
 
-                    <p
-                        class="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
-                        Principal
-                    </p>
+                <a href="/cash/dashboard/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center">
+                        <i class="ph-fill ph-wallet text-orange-500 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Caja y Finanzas</p>
+                        <span class="text-[11px] text-slate-400">Flujo monetario</span>
+                    </div>
+                </a>
 
+                {% if request.user.role == 'ADMIN' %}
+                <a href="/inventory/manage/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center">
+                        <i class="ph-fill ph-package text-violet-600 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Inventario</p>
+                        <span class="text-[11px] text-slate-400">Productos y stock</span>
+                    </div>
+                </a>
+                {% endif %}
+
+                <a href="/customers/manage/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center">
+                        <i class="ph-fill ph-users text-pink-600 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Clientes</p>
+                        <span class="text-[11px] text-slate-400">Gestión de clientes</span>
+                    </div>
+                </a>
+
+                {% if request.user.role == 'ADMIN' %}
+                <div class="pt-6 mt-6 border-t border-slate-100">
+                    <p class="px-3 text-[10px] uppercase tracking-[0.28em] text-slate-400 font-black">Administración</p>
                 </div>
-
-                {% if request.user.role == 'ADMIN' %}
-                <a href="/"
-                    class="menu-link active flex items-center gap-3 px-3 py-3 rounded-2xl text-slate-700">
-
-                    <div
-                        class="w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center shrink-0">
-
-                        <i
-                            class="ph-fill ph-squares-four text-[19px] text-brand-600">
-                        </i>
-
+                
+                <a href="{% url 'inventory:settings' %}" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                        <i class="ph-fill ph-sliders text-blue-600 text-[20px]"></i>
                     </div>
+                    <div>
+                        <p class="text-sm font-bold">Configuración</p>
+                        <span class="text-[11px] text-slate-400">Ajustes generales</span>
+                    </div>
+                </a>
 
-                    <span class="text-[14px] font-semibold">
-                        Dashboard
-                    </span>
-
+                <a href="/audits/logs/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center">
+                        <i class="ph-fill ph-shield-check text-rose-600 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Auditoría</p>
+                        <span class="text-[11px] text-slate-400">Actividad del sistema</span>
+                    </div>
                 </a>
                 {% endif %}
-
-                <a href="/sales/pos/"
-                    class="menu-link flex items-center gap-3 px-3 py-3 rounded-2xl text-slate-700">
-
-                    <div
-                        class="w-10 h-10 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center shrink-0">
-
-                        <i
-                            class="ph-fill ph-shopping-cart text-[19px] text-cyan-600">
-                        </i>
-
-                    </div>
-
-                    <span class="text-[14px] font-semibold">
-                        Punto de Venta
-                    </span>
-
-                </a>
-
-                <a href="/cash/dashboard/"
-                    class="menu-link flex items-center gap-3 px-3 py-3 rounded-2xl text-slate-700">
-
-                    <div
-                        class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
-
-                        <i
-                            class="ph-fill ph-wallet text-[19px] text-emerald-600">
-                        </i>
-
-                    </div>
-
-                    <span class="text-[14px] font-semibold">
-                        Caja y Finanzas
-                    </span>
-
-                </a>
-
-                {% if request.user.role == 'ADMIN' %}
-                <a href="/inventory/manage/"
-                    class="menu-link flex items-center gap-3 px-3 py-3 rounded-2xl text-slate-700">
-
-                    <div
-                        class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
-
-                        <i
-                            class="ph-fill ph-package text-[19px] text-orange-500">
-                        </i>
-
-                    </div>
-
-                    <span class="text-[14px] font-semibold">
-                        Inventario
-                    </span>
-
-                </a>
-                {% endif %}
-
-                <a href="/customers/manage/"
-                    class="menu-link flex items-center gap-3 px-3 py-3 rounded-2xl text-slate-700">
-
-                    <div
-                        class="w-10 h-10 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center shrink-0">
-
-                        <i
-                            class="ph-fill ph-users text-[19px] text-violet-600">
-                        </i>
-
-                    </div>
-
-                    <span class="text-[14px] font-semibold">
-                        Clientes
-                    </span>
-
-                </a>
-
-                {% if request.user.role == 'ADMIN' %}
-
-                <!-- ADMIN -->
-                <div
-                    class="mt-7 pt-5 border-t border-slate-100 px-3">
-
-                    <p
-                        class="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
-                        Administración
-                    </p>
-
-                </div>
-
-                <a href="{% url 'inventory:settings' %}"
-                    class="menu-link flex items-center gap-3 px-3 py-3 rounded-2xl text-slate-700">
-
-                    <div
-                        class="w-10 h-10 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center shrink-0">
-
-                        <i
-                            class="ph-fill ph-sliders text-[19px] text-pink-600">
-                        </i>
-
-                    </div>
-
-                    <span class="text-[14px] font-semibold">
-                        Configuración
-                    </span>
-
-                </a>
-
-                <a href="/audits/logs/"
-                    class="menu-link flex items-center gap-3 px-3 py-3 rounded-2xl text-slate-700">
-
-                    <div
-                        class="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
-
-                        <i
-                            class="ph-fill ph-shield-check text-[19px] text-red-500">
-                        </i>
-
-                    </div>
-
-                    <span class="text-[14px] font-semibold">
-                        Auditoría
-                    </span>
-
-                </a>
-
-                <a href="/accounts/manage/"
-                    class="menu-link flex items-center gap-3 px-3 py-3 rounded-2xl text-slate-700">
-
-                    <div
-                        class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-
-                        <i
-                            class="ph-fill ph-identification-card text-[19px] text-indigo-600">
-                        </i>
-
-                    </div>
-
-                    <span class="text-[14px] font-semibold">
-                        Personal
-                    </span>
-
-                </a>
-
-                {% endif %}
-
             </nav>
 
-            <!-- USER -->
-            <div
-                class="p-3 border-t border-slate-100 bg-white/60 shrink-0">
-
-                <div
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-white smooth">
-
-                    <!-- AVATAR -->
-                    <div
-                        class="w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 text-brand-700 flex items-center justify-center font-black text-sm shrink-0">
-
+            <div class="p-4 border-t border-slate-100">
+                <div class="glass-card rounded-3xl px-4 py-3 flex items-center gap-3 shadow-card">
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-700 font-black">
                         {{ request.user.first_name|first|default:"U" }}
-
                     </div>
-
-                    <!-- INFO -->
                     <div class="flex-1 min-w-0">
-
-                        <p
-                            class="text-[13px] font-semibold text-slate-800 truncate">
-                            {{ request.user.get_full_name|default:"Administrador" }}
-                        </p>
-
-                        <p
-                            class="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
-                            {{ request.user.get_role_display|default:"Gerencia" }}
-                        </p>
-
+                        <p class="text-sm font-bold truncate">{{ request.user.get_full_name|default:"Administrador" }}</p>
+                        <p class="text-[10px] uppercase tracking-wide text-slate-400 mt-1">{{ request.user.get_role_display|default:"Gerencia" }}</p>
                     </div>
-
-                    <!-- SETTINGS -->
-                    <button
-                        class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-brand-600 smooth">
-
-                        <i class="ph ph-gear-six text-[18px]"></i>
-
-                    </button>
-
+                    <a href="/accounts/logout/" class="w-10 h-10 rounded-2xl bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-100 flex items-center justify-center text-slate-400 hover:text-red-500 smooth">
+                        <i class="ph ph-sign-out text-[18px]"></i>
+                    </a>
                 </div>
-
             </div>
-
         </div>
-
     </aside>
 
-    <!-- CONTENT -->
-    <div
-        class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
+    <div class="flex-1 flex flex-col overflow-hidden min-w-0 h-[100dvh]">
 
-        <!-- HEADER -->
-        <header
-            class="glass-header h-16 md:h-20 flex items-center justify-between px-4 md:px-8 shrink-0 sticky top-0 z-10">
-
-            <!-- MOBILE -->
+        <header class="header-glass h-[74px] md:h-20 px-4 md:px-8 flex items-center justify-between sticky top-0 z-20 shrink-0">
             <div class="flex items-center gap-3 md:hidden">
-
-                <img src="{% static 'img/logo.png' %}"
-                    alt="Logo"
-                    class="h-8 w-auto object-contain">
-
-                <div>
-
-                    <h2
-                        class="text-[15px] font-black text-slate-900 leading-none">
-                        Bedoya Motors
-                    </h2>
-
-                    <span
-                        class="text-[9px] font-bold uppercase tracking-widest text-brand-600">
-                        ERP Mobile
-                    </span>
-
+                <div class="w-11 h-11 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-soft">
+                    <img src="{% static 'img/logo.png' %}" class="h-6 object-contain" alt="Logo">
                 </div>
-
+                <div>
+                    <h2 class="text-sm font-black text-slate-900">Bedoya Motors</h2>
+                    <span class="text-[9px] uppercase tracking-[0.22em] text-cyan-600 font-bold">ERP MOBILE</span>
+                </div>
             </div>
 
-            <!-- DESKTOP -->
             <div class="hidden md:block">
-
-                <h2
-                    class="text-[24px] font-black tracking-tight text-slate-900">
-                    {% block header_title %}Panel Administrativo{% endblock %}
-                </h2>
-
-                <p
-                    class="text-xs text-slate-400 font-medium mt-0.5">
-                    Gestión empresarial
-                </p>
-
+                <h2 class="text-[28px] font-black tracking-tight text-slate-900">{% block header_title %}Panel Administrativo{% endblock %}</h2>
+                <p class="text-xs text-slate-400 font-medium mt-1">Gestión empresarial inteligente</p>
             </div>
 
-            <!-- ACTIONS -->
-            <div class="flex items-center gap-2 md:gap-4">
-
-                <!-- NOTI -->
-                <button
-                    class="relative w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-100 smooth">
-
+            <div class="flex items-center gap-3">
+                <button class="relative w-11 h-11 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-soft hover:border-cyan-100 hover:text-cyan-600 smooth">
                     <i class="ph ph-bell text-[20px]"></i>
-
-                    <span
-                        class="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border-2 border-white">
-                    </span>
-
+                    <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border-2 border-white"></span>
                 </button>
-
-                <!-- LOGOUT -->
-                <a href="/accounts/logout/"
-                    class="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold hover:bg-red-50 hover:text-red-600 smooth">
-
-                    <i class="ph-bold ph-sign-out"></i>
-
-                    Salir
-
-                </a>
-
+                <div class="hidden md:flex items-center gap-3 glass-card px-4 py-2 rounded-2xl shadow-card">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-700 font-bold">
+                        {{ request.user.first_name|first|default:"U" }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold leading-none">{{ request.user.first_name|default:"Usuario" }}</p>
+                        <span class="text-[11px] text-slate-400">Sesión activa</span>
+                    </div>
+                </div>
             </div>
-
         </header>
 
-        <!-- MAIN -->
-        <main
-            class="flex-1 overflow-y-auto p-4 md:p-8 pb-28 md:pb-8">
-
-            <div class="max-w-7xl mx-auto w-full">
-
+        <main class="flex-1 overflow-y-auto px-4 md:px-8 py-5 md:py-8 pb-32 md:pb-8 main-padding relative z-10">
+            <div class="max-w-[1600px] mx-auto">
                 {% block content %}{% endblock %}
-
             </div>
-
         </main>
 
-        <!-- MOBILE NAV -->
-        <nav
-            class="md:hidden glass-nav absolute bottom-0 w-full flex justify-between px-2 pb-[env(safe-area-inset-bottom)] rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
+        <nav class="mobile-nav md:hidden fixed bottom-0 left-0 right-0 z-40 rounded-t-[2rem] px-3 pt-2 shadow-floating">
+            <div class="flex items-end justify-between gap-1 relative">
+                
+                {% if request.user.role == 'ADMIN' %}
+                <a href="/" class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-cyan-600 smooth">
+                    <i class="ph-fill ph-house text-[21px]"></i>
+                    <span class="text-[8px] font-black mt-1">Inicio</span>
+                </a>
+                {% endif %}
 
-            {% if request.user.role == 'ADMIN' %}
-            <a href="/"
-                class="flex-1 flex flex-col items-center justify-center py-3.5 text-slate-400 hover:text-brand-600 smooth">
-
-                <i class="ph-fill ph-house text-[24px]"></i>
-
-                <span class="text-[9px] font-bold mt-1">
-                    Inicio
-                </span>
-
-            </a>
-            {% endif %}
-
-            <a href="/sales/pos/"
-                class="flex-1 flex flex-col items-center justify-center py-3.5 text-slate-400 hover:text-brand-600 smooth">
-
-                <i class="ph-fill ph-shopping-cart text-[24px]"></i>
-
-                <span class="text-[9px] font-bold mt-1">
-                    Ventas
-                </span>
-
-            </a>
-
-            <!-- CENTER -->
-            <div class="relative -top-5">
-
-                <a href="/cash/dashboard/"
-                    class="flex items-center justify-center w-14 h-14 rounded-full bg-brand-600 text-white shadow-lg shadow-brand-500/30 hover:bg-brand-500 smooth">
-
-                    <i class="ph-fill ph-wallet text-[26px]"></i>
-
+                <a href="/sales/pos/" class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-cyan-600 smooth">
+                    <i class="ph-fill ph-shopping-cart text-[21px]"></i>
+                    <span class="text-[8px] font-black mt-1">Ventas</span>
                 </a>
 
+                <div class="relative -top-5">
+                    <a href="/cash/dashboard/" class="w-16 h-16 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-[0_15px_40px_rgba(6,182,212,0.4)] border-[6px] border-white active:scale-95 transition-transform">
+                        <i class="ph-fill ph-wallet text-[26px]"></i>
+                    </a>
+                </div>
+
+                {% if request.user.role == 'ADMIN' %}
+                <a href="/inventory/manage/" class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-cyan-600 smooth">
+                    <i class="ph-fill ph-package text-[21px]"></i>
+                    <span class="text-[8px] font-black mt-1">Stock</span>
+                </a>
+
+                <a href="{% url 'inventory:settings' %}" class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-cyan-600 smooth">
+                    <i class="ph-fill ph-sliders text-[21px]"></i>
+                    <span class="text-[8px] font-black mt-1">Ajustes</span>
+                </a>
+                {% endif %}
+
             </div>
-
-            {% if request.user.role == 'ADMIN' %}
-            <a href="/inventory/manage/"
-                class="flex-1 flex flex-col items-center justify-center py-3.5 text-slate-400 hover:text-brand-600 smooth">
-
-                <i class="ph-fill ph-package text-[24px]"></i>
-
-                <span class="text-[9px] font-bold mt-1">
-                    Stock
-                </span>
-
-            </a>
-
-            <a href="{% url 'inventory:settings' %}"
-                class="flex-1 flex flex-col items-center justify-center py-3.5 text-slate-400 hover:text-brand-600 smooth">
-
-                <i class="ph-fill ph-sliders text-[24px]"></i>
-
-                <span class="text-[9px] font-bold mt-1">
-                    Ajustes
-                </span>
-
-            </a>
-            {% endif %}
-
         </nav>
-
     </div>
-
 </body>
-
 </html>

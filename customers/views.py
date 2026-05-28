@@ -21,24 +21,28 @@ class CustomerCreateAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        # Ambos roles (Admin y Vendedor) pueden crear clientes
         try:
             data = request.data
             
-            # Crear instancia en memoria para ejecutar validadores (Cédula)
+            # CRÍTICO: Si la cédula viene vacía, la convertimos en None para evitar el choque de unique=True
+            cedula_input = data.get('cedula', '').strip()
+            if not cedula_input:
+                cedula_input = None
+
+            # Crear instancia
             customer = Customer(
-                cedula=data.get('cedula'),
+                cedula=cedula_input,
                 first_name=data.get('first_name'),
                 last_name=data.get('last_name'),
                 phone=data.get('phone'),
                 whatsapp=data.get('whatsapp', ''),
                 email=data.get('email', ''),
-                address=data.get('address'),
-                city=data.get('city'),
+                address=data.get('address', ''),
+                city=data.get('city', ''),
                 observations=data.get('observations', '')
             )
             
-            # Ejecuta clean() para disparar 'validate_ecuadorian_cedula'
+            # Ejecuta clean() para disparar validadores
             customer.full_clean() 
             customer.save()
 
@@ -48,13 +52,11 @@ class CustomerCreateAPI(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
-            # Captura el error específico del validador de cédula
             error_msg = list(e.message_dict.values())[0][0] if hasattr(e, 'message_dict') else str(e.messages[0])
             return Response({"error": error_msg}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # Captura errores de unicidad (Cédula duplicada)
             if 'unique constraint' in str(e).lower() or 'unique' in str(e).lower():
-                return Response({"error": "Ya existe un cliente con esta cédula."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Ya existe un cliente con esta cédula registrada."}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CustomerToggleAPI(APIView):

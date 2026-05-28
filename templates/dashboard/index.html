@@ -2,101 +2,139 @@
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto space-y-8">
+<div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
     
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-        <h2 class="text-base font-bold text-gray-900">Filtro de Rendimiento</h2>
-        <form id="date-filter-form" class="flex items-center gap-3 w-full md:w-auto" method="GET">
-            <input type="date" name="start_date" class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 text-gray-600" value="{{ request.GET.start_date|default:start_date }}">
-            <span class="text-gray-400">hasta</span>
-            <input type="date" name="end_date" class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 text-gray-600" value="{{ request.GET.end_date|default:end_date }}">
-            <button type="submit" class="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-colors">Filtrar</button>
-            <button type="button" onclick="exportFilteredExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2">
-                <i class="ph-bold ph-file-xls"></i> Exportar
-            </button>
+    <div class="bg-white p-3 md:p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <h2 class="text-sm md:text-base font-black text-gray-900 flex items-center gap-2">
+            <i class="ph-fill ph-funnel text-brand-500 text-lg"></i> Filtros de Rendimiento
+        </h2>
+        
+        <form id="date-filter-form" class="grid grid-cols-2 sm:flex items-center gap-2 w-full md:w-auto" method="GET">
+            <div class="col-span-1 relative">
+                <i class="ph-bold ph-calendar-blank absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                <input type="date" name="start_date" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-2 py-2 md:py-2.5 text-[11px] md:text-sm outline-none focus:ring-2 focus:ring-brand-500 text-gray-700 font-medium" value="{{ request.GET.start_date|default:start_date }}">
+            </div>
+            
+            <div class="hidden sm:block text-gray-300 font-bold text-xs">-</div>
+            
+            <div class="col-span-1 relative">
+                <i class="ph-bold ph-calendar-blank absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                <input type="date" name="end_date" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-2 py-2 md:py-2.5 text-[11px] md:text-sm outline-none focus:ring-2 focus:ring-brand-500 text-gray-700 font-medium" value="{{ request.GET.end_date|default:end_date }}">
+            </div>
+            
+            <div class="col-span-2 sm:col-auto flex gap-2 mt-1 sm:mt-0">
+                <button type="submit" class="flex-1 sm:flex-none bg-gray-900 hover:bg-black text-white px-4 py-2 md:py-2.5 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5">
+                    <i class="ph-bold ph-magnifying-glass"></i> Filtrar
+                </button>
+                <button type="button" onclick="exportFilteredExcel()" class="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 md:py-2.5 rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-1.5">
+                    <i class="ph-bold ph-microsoft-excel-logo"></i> Excel
+                </button>
+            </div>
         </form>
     </div>
     
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
         
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div class="flex justify-between items-start mb-4">
-                <span class="text-sm font-medium text-gray-500">Ingresos del Período</span>
-                <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
-                    <i class="ph-bold ph-currency-dollar text-xl"></i>
+        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-green-200 hover:shadow-md transition-all group relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full blur-2xl group-hover:bg-green-100 transition-colors"></div>
+            <div class="relative">
+                <div class="flex justify-between items-start mb-2 md:mb-4">
+                    <span class="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Ingresos</span>
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-green-50 text-green-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                        <i class="ph-bold ph-currency-dollar text-base md:text-xl"></i>
+                    </div>
                 </div>
+                <h3 class="text-xl md:text-3xl font-black text-gray-900 tracking-tight">${{ ingresos_hoy|floatformat:2 }}</h3>
             </div>
-            <h3 class="text-3xl font-bold text-gray-900">${{ ingresos_hoy|floatformat:2 }}</h3>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div class="flex justify-between items-start mb-4">
-                <span class="text-sm font-medium text-gray-500">Operaciones</span>
-                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <i class="ph-bold ph-receipt text-xl"></i>
+        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all group relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full blur-2xl group-hover:bg-blue-100 transition-colors"></div>
+            <div class="relative">
+                <div class="flex justify-between items-start mb-2 md:mb-4">
+                    <span class="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Ventas</span>
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                        <i class="ph-bold ph-receipt text-base md:text-xl"></i>
+                    </div>
                 </div>
+                <h3 class="text-xl md:text-3xl font-black text-gray-900 tracking-tight">{{ operaciones_hoy }}</h3>
             </div>
-            <h3 class="text-3xl font-bold text-gray-900">{{ operaciones_hoy }}</h3>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div class="flex justify-between items-start mb-4">
-                <span class="text-sm font-medium text-gray-500">Clientes Activos</span>
-                <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                    <i class="ph-bold ph-users text-xl"></i>
+        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-purple-200 hover:shadow-md transition-all group relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-50 rounded-full blur-2xl group-hover:bg-purple-100 transition-colors"></div>
+            <div class="relative">
+                <div class="flex justify-between items-start mb-2 md:mb-4">
+                    <span class="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Clientes</span>
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                        <i class="ph-bold ph-users text-base md:text-xl"></i>
+                    </div>
                 </div>
+                <h3 class="text-xl md:text-3xl font-black text-gray-900 tracking-tight">{{ total_clientes }}</h3>
             </div>
-            <h3 class="text-3xl font-bold text-gray-900">{{ total_clientes }}</h3>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-red-100 hover:shadow-md transition-shadow relative overflow-hidden">
-            <div class="absolute right-0 top-0 w-2 h-full bg-red-500"></div>
-            <div class="flex justify-between items-start mb-4">
-                <span class="text-sm font-medium text-red-600">Stock Crítico</span>
-                <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
-                    <i class="ph-bold ph-warning text-xl"></i>
+        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-red-100 hover:border-red-300 hover:shadow-md transition-all group relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-1.5 h-full bg-red-500"></div>
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-red-50 rounded-full blur-2xl group-hover:bg-red-100 transition-colors"></div>
+            <div class="relative">
+                <div class="flex justify-between items-start mb-2 md:mb-4">
+                    <span class="text-[10px] md:text-xs font-black text-red-500 uppercase tracking-widest">Stock Crítico</span>
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                        <i class="ph-bold ph-warning-circle text-base md:text-xl"></i>
+                    </div>
                 </div>
+                <h3 class="text-xl md:text-3xl font-black text-gray-900 tracking-tight">{{ stock_critico }}</h3>
             </div>
-            <h3 class="text-3xl font-bold text-gray-900">{{ stock_critico }}</h3>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-5">
         
-        <div class="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <h4 class="text-lg font-semibold text-gray-900 mb-6">Rendimiento de Ventas (Rango seleccionado)</h4>
-            <div class="relative h-72 w-full">
+        <div class="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+            <div class="flex items-center gap-2 mb-4 md:mb-6">
+                <i class="ph-fill ph-trend-up text-brand-500 text-lg"></i>
+                <h4 class="text-xs md:text-sm font-black text-gray-900 uppercase tracking-widest">Curva de Rendimiento</h4>
+            </div>
+            <div class="relative flex-1 min-h-[220px] md:min-h-[300px] w-full">
                 <canvas id="salesChart"></canvas>
             </div>
         </div>
 
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-            <div class="flex justify-between items-center mb-6">
-                <h4 class="text-lg font-semibold text-gray-900">Últimas Transacciones</h4>
-                <a href="/sales/pos/" class="text-sm font-medium text-brand-600 hover:text-brand-800 transition-colors">Ir a Caja &rarr;</a>
+        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[300px] lg:h-auto">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-50">
+                <h4 class="text-xs md:text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                    <i class="ph-fill ph-clock-counter-clockwise text-brand-500 text-lg"></i> Actividad
+                </h4>
+                <a href="/sales/pos/" class="text-[10px] font-black uppercase tracking-wider text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1.5 rounded-lg transition-colors">POS &rarr;</a>
             </div>
-            <div class="flex-1 overflow-y-auto">
-                <ul class="space-y-3">
+            
+            <div class="flex-1 overflow-y-auto no-scrollbar pr-1">
+                <ul class="space-y-2.5">
                     {% for sale in recent_sales %}
-                    <li class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors border border-gray-100">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 shadow-sm">
-                                <i class="ph-fill ph-check-circle text-green-500 text-lg"></i>
+                    <li class="flex items-center justify-between p-2.5 md:p-3 bg-gray-50/80 hover:bg-gray-100 rounded-xl transition-colors border border-gray-100/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white flex items-center justify-center text-gray-600 shadow-sm shrink-0">
+                                <i class="ph-fill ph-check-circle text-green-500 text-base md:text-lg"></i>
                             </div>
-                            <div>
-                                <p class="text-sm font-bold text-gray-900">{{ sale.customer.first_name }} {{ sale.customer.last_name }}</p>
-                                <p class="text-xs text-gray-500">{{ sale.invoice_number }} • {{ sale.created_at|date:"H:i" }}</p>
+                            <div class="min-w-0">
+                                <p class="text-[11px] md:text-xs font-black text-gray-900 truncate w-32 md:w-40">{{ sale.customer.first_name }} {{ sale.customer.last_name }}</p>
+                                <p class="text-[9px] md:text-[10px] text-gray-500 font-mono mt-0.5">{{ sale.invoice_number }} • {{ sale.created_at|date:"H:i" }}</p>
                             </div>
                         </div>
-                        <span class="text-sm font-bold text-gray-900">${{ sale.total|floatformat:2 }}</span>
+                        <span class="text-xs md:text-sm font-black text-brand-600">${{ sale.total|floatformat:2 }}</span>
                     </li>
                     {% empty %}
-                    <li class="text-sm text-gray-500 text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                        <i class="ph ph-receipt text-3xl mb-2 text-gray-400 block"></i>
-                        Aún no hay ventas registradas.
+                    <li class="text-xs text-gray-400 text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 flex flex-col items-center">
+                        <i class="ph-bold ph-receipt text-3xl mb-2 text-gray-300"></i>
+                        Sin transacciones recientes.
                     </li>
                     {% endfor %}
                 </ul>
@@ -110,8 +148,8 @@
         const ctx = document.getElementById('salesChart').getContext('2d');
         
         let gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(13, 148, 136, 0.3)');
-        gradient.addColorStop(1, 'rgba(13, 148, 136, 0.0)');
+        gradient.addColorStop(0, 'rgba(6, 182, 212, 0.35)'); // Tailwind cyan-500 adaptado
+        gradient.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
 
         new Chart(ctx, {
             type: 'line',
@@ -120,11 +158,11 @@
                 datasets: [{
                     label: 'Ingresos',
                     data: {{ chart_data|safe }},
-                    borderColor: '#0d9488', 
+                    borderColor: '#06b6d4', 
                     backgroundColor: gradient,
                     borderWidth: 3,
                     pointBackgroundColor: '#ffffff',
-                    pointBorderColor: '#0d9488',
+                    pointBorderColor: '#06b6d4',
                     pointBorderWidth: 2,
                     pointRadius: 4,
                     pointHoverRadius: 6,
@@ -138,9 +176,9 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#1f2937',
+                        backgroundColor: '#0f172a',
                         padding: 12,
-                        titleFont: { family: 'Inter', size: 13 },
+                        titleFont: { family: 'Inter', size: 12 },
                         bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
                         displayColors: false,
                         callbacks: {
@@ -152,24 +190,22 @@
                     y: {
                         beginAtZero: true,
                         border: { display: false },
-                        grid: { color: '#f3f4f6', drawBorder: false },
-                        ticks: { font: { family: 'Inter' }, color: '#9ca3af' }
+                        grid: { color: '#f8fafc', drawBorder: false },
+                        ticks: { font: { family: 'Inter', size: 10 }, color: '#94a3b8' }
                     },
                     x: {
                         border: { display: false },
                         grid: { display: false },
-                        ticks: { font: { family: 'Inter' }, color: '#9ca3af' }
+                        ticks: { font: { family: 'Inter', size: 10 }, color: '#94a3b8', maxRotation: 45, minRotation: 45 }
                     }
                 }
             }
         });
     });
 
-    // NUEVA FUNCION PARA EXPORTAR EXCEL CON FILTROS
     function exportFilteredExcel() {
         const form = document.getElementById('date-filter-form');
         const params = new URLSearchParams(new FormData(form)).toString();
-        // Redirección directa a la URL de reportes configurada previamente
         window.location.href = `/reports/export/sales/excel/?${params}`;
     }
 </script>

@@ -302,10 +302,30 @@ class ProductUpdateAPI(APIView):
             return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
         
         product = get_object_or_404(Product, pk=pk)
-        # Actualizamos los campos necesarios
+        
+        # Actualización Avanzada de todos los campos permitidos
         product.name = request.data.get('name', product.name)
+        product.description = request.data.get('description', product.description)
+        
+        category_id = request.data.get('category_id')
+        if category_id:
+            product.category_id = category_id
+            
+        supplier_id = request.data.get('supplier_id')
+        if supplier_id:
+            product.supplier_id = supplier_id
+            
+        product.brand = request.data.get('brand', product.brand)
+        product.unit_type = request.data.get('unit_type', product.unit_type)
+        product.model_compatibility = request.data.get('model_compatibility', product.model_compatibility)
+        product.location = request.data.get('location', product.location)
+        
         product.purchase_price = request.data.get('purchase_price', product.purchase_price)
         product.sale_price = request.data.get('sale_price', product.sale_price)
+        
+        product.stock_minimo = request.data.get('stock_minimo', product.stock_minimo)
+        product.stock_critico = request.data.get('stock_critico', product.stock_critico)
+        
         product.save()
         return Response({"message": "Producto actualizado correctamente."})
 
