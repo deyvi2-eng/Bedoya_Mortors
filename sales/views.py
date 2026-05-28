@@ -120,32 +120,50 @@ class ProcessSaleAPI(APIView):
                 subtotal_calc = Decimal('0.00')
                 
                 for item in items:
-                    product = Product.objects.select_for_update().get(id=item['id'])
-                    
-                    # CRÍTICO: Convertimos la cantidad a Decimal para soportar ml (Ej: 500.50)
-                    qty = Decimal(str(item['quantity']))
-                    
-                    if product.stock_actual < qty:
-                        raise ValueError(f"Stock insuficiente para {product.name}. Disponible: {product.stock_actual}")
+                    qty = Decimal(str(item.get('quantity', 1)))
+                    is_service = item.get('is_service', False)
 
-                    # Descuento exacto de inventario (Líquidos o Unidades)
-                    product.stock_actual -= qty
-                    product.save()
+                    if is_service:
+                        # LOGICA PARA MANO DE OBRA (SERVICIOS)
+                        desc = item.get('name', 'Mano de obra')
+                        unit_price = Decimal(str(item.get('price', 0)))
+                        line_total = unit_price * qty
+                        subtotal_calc += line_total
 
-                    # Movimiento de salida en Kardex
-                    unidad_str = "ml" if product.unit_type == 'ML' else "u"
-                    StockMovement.objects.create(
-                        product=product, movement_type='OUT', quantity=qty,
-                        description=f"Venta de {qty}{unidad_str} | Factura: {invoice_number}", user=request.user
-                    )
+                        SaleDetail.objects.create(
+                            sale=sale, 
+                            product=None, 
+                            is_service=True,
+                            service_description=desc, 
+                            quantity=qty,
+                            unit_price=unit_price, 
+                            subtotal=line_total
+                        )
+                    else:
+                        # LOGICA NORMAL PARA PRODUCTOS E INVENTARIO
+                        product = Product.objects.select_for_update().get(id=item['id'])
+                        
+                        if product.stock_actual < qty:
+                            raise ValueError(f"Stock insuficiente para {product.name}. Disponible: {product.stock_actual}")
 
-                    line_total = product.sale_price * qty
-                    subtotal_calc += line_total
+                        # Descuento exacto de inventario (Líquidos o Unidades)
+                        product.stock_actual -= qty
+                        product.save()
 
-                    SaleDetail.objects.create(
-                        sale=sale, product=product, quantity=qty,
-                        unit_price=product.sale_price, subtotal=line_total
-                    )
+                        # Movimiento de salida en Kardex
+                        unidad_str = "ml" if product.unit_type == 'ML' else "u"
+                        StockMovement.objects.create(
+                            product=product, movement_type='OUT', quantity=qty,
+                            description=f"Venta de {qty}{unidad_str} | Factura: {invoice_number}", user=request.user
+                        )
+
+                        line_total = product.sale_price * qty
+                        subtotal_calc += line_total
+
+                        SaleDetail.objects.create(
+                            sale=sale, product=product, quantity=qty,
+                            unit_price=product.sale_price, subtotal=line_total
+                        )
 
                 # Cálculos finales de la venta
                 iva_calc = subtotal_calc * Decimal('0.15')
@@ -168,6 +186,7 @@ class ProcessSaleAPI(APIView):
             return Response({"error": "Cliente no válido."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": f"Error interno: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class InvoicePDFView(LoginRequiredMixin, TemplateView):
     template_name = 'sales/invoice_pdf.html'
 

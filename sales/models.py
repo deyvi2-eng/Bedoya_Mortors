@@ -36,12 +36,16 @@ class Sale(BaseModel):
 
 class SaleDetail(BaseModel):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='details', verbose_name="Venta")
-    product = models.ForeignKey(Product, on_delete=models.PROTECT, verbose_name="Producto")
     
-    # Cambiado a decimal para soportar ventas de 500 ml, etc.
+    # MODIFICADO: product ahora puede ser nulo para permitir la Mano de Obra
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Producto")
+    
+    # NUEVO: Campos para Mano de Obra
+    is_service = models.BooleanField(default=False, verbose_name="Es Mano de Obra")
+    service_description = models.CharField(max_length=255, null=True, blank=True, verbose_name="Descripción del Servicio")
+    
     quantity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Cantidad")
     
-    # NUEVO: CAMPOS DE INMUTABILIDAD HISTÓRICA
     historical_price = models.DecimalField(max_digits=12, decimal_places=4, default=0.00, verbose_name="Precio Venta Histórico")
     historical_cost = models.DecimalField(max_digits=12, decimal_places=4, default=0.00, verbose_name="Costo Compra Histórico")
     
@@ -53,12 +57,13 @@ class SaleDetail(BaseModel):
         verbose_name_plural = "Detalles de Venta"
 
     def __str__(self):
+        if self.is_service:
+            return f"{self.quantity}x {self.service_description} (Venta {self.sale.invoice_number})"
         return f"{self.quantity}x {self.product.name} (Venta {self.sale.invoice_number})"
 
     def save(self, *args, **kwargs):
-        # Cuando se guarda por primera vez, el detalle toma una "fotografía" del costo y precio actual del producto.
-        # Así, si el administrador edita el producto mañana, esta factura seguirá mostrando la rentabilidad y precios originales.
-        if not self.pk:
+        # MODIFICADO: Solo tomar la foto de los precios si existe un producto físico
+        if not self.pk and self.product:
             self.historical_price = self.product.sale_price
             self.historical_cost = self.product.purchase_price
         super().save(*args, **kwargs)

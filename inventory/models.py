@@ -2,6 +2,12 @@ from django.db import models, transaction
 from core.models import BaseModel
 from accounts.models import User
 
+# Librerías para compresión de imágenes
+from PIL import Image
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
+import sys
+
 # ==========================================
 # CATEGORÍAS
 # ==========================================
@@ -87,7 +93,39 @@ class Product(BaseModel):
         return 0.0
 
     def save(self, *args, **kwargs):
-        # Generación automática de código estrictamente si el producto es nuevo y no tiene código
+        # 1. OPTIMIZACIÓN EXTREMA: Compresión automática de imágenes
+        # El getattr previene que la compresión se ejecute cada vez que haces un update del registro
+        if self.image and not getattr(self, '_image_compressed', False):
+            try:
+                img = Image.open(self.image)
+                
+                # Convertir a RGB (soluciona error de compresión si suben un PNG transparente)
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                    
+                # Redimensionar a un tamaño ideal para celulares y web
+                img.thumbnail((800, 800), Image.Resampling.LANCZOS)
+                
+                output = BytesIO()
+                # Guardar como JPEG con calidad optimizada
+                img.save(output, format='JPEG', quality=70)
+                output.seek(0)
+                
+                # Reemplazar la imagen pesada por la optimizada en la memoria de Django
+                self.image = InMemoryUploadedFile(
+                    output, 
+                    'ImageField', 
+                    f"{self.image.name.split('.')[0]}.jpg", 
+                    'image/jpeg', 
+                    sys.getsizeof(output), 
+                    None
+                )
+                self._image_compressed = True
+            except Exception as e:
+                # Si falla (ej. archivo corrupto), continúa el guardado de forma normal
+                print(f"Error comprimiendo imagen: {e}")
+
+        # 2. Generación automática de código estrictamente si el producto es nuevo y no tiene código
         if not self.code:
             with transaction.atomic():
                 # select_for_update bloquea las filas concurrentes hasta que termine la transacción

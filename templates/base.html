@@ -15,7 +15,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
-
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <script>
@@ -43,7 +42,8 @@
                         soft: '0 10px 40px rgba(2,6,23,0.06)',
                         glow: '0 0 30px rgba(6,182,212,0.12)',
                         card: '0 8px 30px rgba(15,23,42,0.05)',
-                        floating: '0 -10px 40px rgba(15,23,42,0.08)'
+                        floating: '0 -10px 40px rgba(15,23,42,0.08)',
+                        modal: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
                     }
                 }
             }
@@ -62,8 +62,9 @@
                 radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.05), transparent 30%),
                 #f8fafc;
             overflow: hidden;
-            /* Soporte para altura dinámica en móviles modernos */
+            /* Soporte avanzado para móviles (evita el salto con el teclado) */
             height: 100dvh; 
+            overscroll-behavior-y: none;
         }
 
         ::-webkit-scrollbar {
@@ -124,10 +125,10 @@
         }
 
         .mobile-nav {
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(25px);
             border-top: 1px solid rgba(226, 232, 240, 0.7);
-            padding-bottom: env(safe-area-inset-bottom, 15px); /* Soporte barra inferior iPhone */
+            padding-bottom: env(safe-area-inset-bottom, 15px); 
         }
 
         .smooth {
@@ -151,7 +152,6 @@
 
     <aside class="sidebar hidden md:flex w-[270px] shrink-0 flex-col justify-between z-30">
         <div class="flex flex-col h-full">
-
             <div class="px-5 py-5 border-b border-slate-100">
                 <div class="flex items-center gap-4">
                     <div class="relative">
@@ -301,7 +301,7 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto px-4 md:px-8 py-5 md:py-8 pb-32 md:pb-8 main-padding relative z-10">
+        <main class="flex-1 overflow-y-auto px-4 md:px-8 py-5 md:py-8 pb-[100px] md:pb-8 main-padding relative z-10">
             <div class="max-w-[1600px] mx-auto">
                 {% block content %}{% endblock %}
             </div>
@@ -334,7 +334,7 @@
                     <span class="text-[8px] font-black mt-1">Stock</span>
                 </a>
 
-                <a href="{% url 'inventory:settings' %}" class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-cyan-600 smooth">
+                <a href="{% url 'inventory:settings' %}" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl text-slate-400 hover:text-cyan-600 smooth flex-1 flex-col py-2" style="background: none; border: none;">
                     <i class="ph-fill ph-sliders text-[21px]"></i>
                     <span class="text-[8px] font-black mt-1">Ajustes</span>
                 </a>
@@ -343,5 +343,8 @@
             </div>
         </nav>
     </div>
+
+    {% block modals %}{% endblock %}
+
 </body>
 </html>

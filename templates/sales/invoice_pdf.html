@@ -61,7 +61,7 @@
             border-radius: 4px;
         }
 
-        /* Tabla de Productos */
+        /* Tabla de Productos/Servicios */
         .items-table {
             width: 100%;
             border-collapse: collapse;
@@ -132,12 +132,12 @@
     <table class="info-table">
         <tr>
             <td style="padding-right: 10px;">
-                <div class="section-title">Datos:</div>
+                <div class="section-title">Datos del Cliente:</div>
                 <div class="box">
                     <div style="font-size: 13px; font-weight: bold; color: #111827; margin-bottom: 4px;">{{ customer.first_name }} {{ customer.last_name }}</div>
                     <div><strong>CI/RUC:</strong> {{ customer.cedula }}</div>
                     <div><strong>Teléfono:</strong> {{ customer.phone }}</div>
-                    <div><strong>Dirección:</strong> {{ customer.address }}, {{ customer.city }}</div>
+                    <div><strong>Dirección:</strong> {{ customer.address|default:"N/A" }}, {{ customer.city|default:"N/A" }}</div>
                 </div>
             </td>
             <td style="padding-left: 10px;">
@@ -145,7 +145,7 @@
                 <div class="box">
                     <div><strong>Atendido por:</strong> {{ sale.seller.get_full_name }}</div>
                     <div><strong>Método de Pago:</strong> {{ sale.get_payment_method_display }}</div>
-                    <div><strong>Estado de Transacción:</strong> {% if sale.is_voided %}<span style="color: red;">ANULADA</span>{% else %}PROCESADA{% endif %}</div>
+                    <div><strong>Estado:</strong> {% if sale.is_voided %}<span style="color: red; font-weight: bold;">ANULADA</span>{% else %}PROCESADA{% endif %}</div>
                 </div>
             </td>
         </tr>
@@ -155,7 +155,7 @@
         <thead>
             <tr>
                 <th style="width: 15%;">CÓDIGO</th>
-                <th style="width: 40%;">DESCRIPCIÓN DEL REPUESTO</th>
+                <th style="width: 40%;">DESCRIPCIÓN</th>
                 <th style="width: 15%;" class="text-center">CANTIDAD</th>
                 <th style="width: 15%;" class="text-right">P. UNITARIO</th>
                 <th style="width: 15%;" class="text-right">SUBTOTAL</th>
@@ -164,11 +164,17 @@
         <tbody>
             {% for item in details %}
             <tr>
-                <td style="font-weight: bold; color: #111827;">{{ item.product.code }}</td>
-                <td>{{ item.product.name }}</td>
+                {% if item.is_service %}
+                    <td style="font-weight: bold; color: #7e22ce;">SERV</td>
+                    <td style="font-style: italic; color: #374151;">Mano de Obra: {{ item.service_description }}</td>
+                {% else %}
+                    <td style="font-weight: bold; color: #111827;">{{ item.product.code }}</td>
+                    <td>{{ item.product.name }}</td>
+                {% endif %}
+                
                 <td class="text-center">{{ item.quantity }}</td>
-                <td class="text-right">${{ item.unit_price }}</td>
-                <td class="text-right font-bold">${{ item.subtotal }}</td>
+                <td class="text-right">${{ item.unit_price|floatformat:2 }}</td>
+                <td class="text-right font-bold">${{ item.subtotal|floatformat:2 }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -177,27 +183,27 @@
     <div class="totals-wrapper">
         <table class="totals-table">
             <tr>
-                <td>Subtotal Venta:</td>
-                <td class="text-right">${{ sale.subtotal }}</td>
+                <td>Subtotal:</td>
+                <td class="text-right">${{ sale.subtotal|floatformat:2 }}</td>
             </tr>
             <tr>
-                <td>Descuento Aplicado:</td>
-                <td class="text-right">${{ sale.discount }}</td>
+                <td>Descuento:</td>
+                <td class="text-right">${{ sale.discount|floatformat:2 }}</td>
             </tr>
             <tr>
                 <td style="border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">Impuesto IVA (15%):</td>
-                <td class="text-right" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">${{ sale.iva }}</td>
+                <td class="text-right" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">${{ sale.iva|floatformat:2 }}</td>
             </tr>
             <tr class="total-row">
                 <td style="padding: 10px;">TOTAL A PAGAR:</td>
-                <td class="text-right" style="padding: 10px;">${{ sale.total }}</td>
+                <td class="text-right" style="padding: 10px;">${{ sale.total|floatformat:2 }}</td>
             </tr>
         </table>
     </div>
 
     <div style="clear: both;"></div>
     <div class="footer">
-        <strong>Bedoya Motors</strong> agradece su preferencia. Los productos eléctricos no tienen devolución.<br>
+        <strong>Bedoya Motors</strong> agradece su preferencia. Los componentes eléctricos y trabajos de mano de obra no tienen devolución.<br>
         Documento generado automáticamente por el ERP Bedoya Motors.
     </div>
 
