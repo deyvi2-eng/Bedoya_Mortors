@@ -10,6 +10,8 @@ from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.db.models import Q
+from decimal import Decimal, InvalidOperation
+
 
 from .models import Product, Category, Supplier, StockMovement
 
@@ -128,24 +130,34 @@ class AddStockAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        if request.user.role != 'ADMIN':
+        if getattr(request.user, 'role', '') != 'ADMIN':
             return Response({"error": "Acceso denegado. Solo el administrador puede modificar el stock."}, status=status.HTTP_403_FORBIDDEN)
 
         product_id = request.data.get('product_id')
-        quantity = request.data.get('quantity')
+        quantity_raw = request.data.get('quantity')
         invoice_ref = request.data.get('invoice_ref', 'Sin referencia')
 
+        # 1. LIMPIEZA EXTREMA DEL NÚMERO
         try:
-            quantity = float(quantity)
-            if quantity <= 0:
-                return Response({"error": "Cantidad inválida."}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            return Response({"error": "La cantidad debe ser numérica."}, status=status.HTTP_400_BAD_REQUEST)
+            # Reemplaza comas por puntos por si el usuario teclea "1000,50"
+            quantity_str = str(quantity_raw).strip().replace(',', '.')
+            quantity = Decimal(quantity_str)
+            
+            if quantity <= Decimal('0.00'):
+                return Response({"error": "La cantidad a ingresar debe ser mayor a 0."}, status=status.HTTP_400_BAD_REQUEST)
+        except (InvalidOperation, TypeError, ValueError):
+            return Response({"error": "La cantidad debe ser numérica exacta (ej. 1000 o 1000.50)."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # 2. PROCESO DE GUARDADO
         try:
             with transaction.atomic():
                 product = Product.objects.select_for_update().get(id=product_id)
-                product.stock_actual += quantity
+                
+                # SOLUCIÓN AL BUG DE SQLITE: Forzamos el stock viejo a Decimal antes de sumar
+                stock_actual_db = Decimal(str(product.stock_actual))
+                
+                # Suma matemática perfecta
+                product.stock_actual = stock_actual_db + quantity
                 product.save()
 
                 StockMovement.objects.create(
@@ -161,7 +173,8 @@ class AddStockAPI(APIView):
         except Product.DoesNotExist:
             return Response({"error": "Producto no encontrado."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": "Ocurrió un error al procesar el ingreso."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Ahora, si falla, el cartel rojo te dirá EXACTAMENTE qué código de Python falló
+            return Response({"error": f"Error técnico: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
 
 # ==========================================
 # API: DESACTIVAR/ACTIVAR PRODUCTO (SOLO ADMIN)
