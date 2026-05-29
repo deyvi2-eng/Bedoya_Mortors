@@ -1,7 +1,8 @@
 from decimal import Decimal
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+# Se añaden Case, When y Value para la condicional en base de datos
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField, Case, When, Value
 from django.db.models.functions import TruncDate
 from django.utils.timezone import now
 from datetime import datetime, time, timedelta
@@ -54,8 +55,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         if is_admin:
             # 1. Efectivo Físico Seguro
-            # Se suma el fondo de las cajas abiertas y TODA venta en efectivo del día,
-            # independientemente de si la venta se vinculó a la sesión o no.
+            # Se suma el fondo de las cajas abiertas y TODA venta en efectivo del día
             cajas_abiertas = CashSession.objects.filter(is_open=True)
             fondo_inicial = cajas_abiertas.aggregate(Sum('opening_balance'))['opening_balance__sum'] or Decimal('0.00')
             
@@ -71,20 +71,39 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             productos_en_stock = Product.objects.filter(stock_actual__gt=0)
 
             # 2. Capital Stock (Costo * Cantidad Física)
+            # Evalúa si es ML (Líquido) para dividir entre 1000, caso contrario multiplica normal
             capital = productos_en_stock.aggregate(
-                total=Sum(ExpressionWrapper(
-                    F('stock_actual') * F('purchase_price'),
-                    output_field=DecimalField()
-                ))
+                total=Sum(
+                    Case(
+                        When(unit_type='ML', then=ExpressionWrapper(
+                            (F('stock_actual') / Value(Decimal('1000.00'))) * F('purchase_price'),
+                            output_field=DecimalField()
+                        )),
+                        default=ExpressionWrapper(
+                            F('stock_actual') * F('purchase_price'),
+                            output_field=DecimalField()
+                        ),
+                        output_field=DecimalField()
+                    )
+                )
             )['total'] or Decimal('0.00')
             context['capital_invertido'] = capital
 
             # 3. Total Público (Precio Venta * Cantidad Física)
             publico = productos_en_stock.aggregate(
-                total=Sum(ExpressionWrapper(
-                    F('stock_actual') * F('sale_price'),
-                    output_field=DecimalField()
-                ))
+                total=Sum(
+                    Case(
+                        When(unit_type='ML', then=ExpressionWrapper(
+                            (F('stock_actual') / Value(Decimal('1000.00'))) * F('sale_price'),
+                            output_field=DecimalField()
+                        )),
+                        default=ExpressionWrapper(
+                            F('stock_actual') * F('sale_price'),
+                            output_field=DecimalField()
+                        ),
+                        output_field=DecimalField()
+                    )
+                )
             )['total'] or Decimal('0.00')
             context['valor_publico'] = publico
 

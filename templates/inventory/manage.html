@@ -69,8 +69,10 @@
                 <tbody id="tableBody" class="divide-y divide-gray-50 text-sm text-gray-700">
                     {% for p in products %}
                     <tr class="product-row hover:bg-gray-50/50 transition-colors" data-name="{{ p.code|lower }} {{ p.name|lower }} {{ p.description|lower }}" data-category="{{ p.category.name }}">
-                        <td class="px-6 py-3.5 flex items-center gap-3.5">
-                            <div class="w-11 h-11 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center shrink-0 shadow-sm relative">
+                        
+                        <td onclick="openViewModal('{{ p.code }}', '{{ p.name|escapejs }}', '{{ p.description|escapejs }}', '{{ p.category.name|escapejs }}', '{{ p.brand|default:''|escapejs }}', '{{ p.purchase_price }}', '{{ p.sale_price }}', '{{ p.stock_actual }}', '{{ p.unit_type }}', '{% if p.image %}{{ p.image.url }}{% endif %}')" 
+                            class="px-6 py-3.5 flex items-center gap-3.5 cursor-pointer group hover:bg-gray-100/50 rounded-l-lg transition-colors" title="Clic para ver detalles">
+                            <div class="w-11 h-11 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center shrink-0 shadow-sm relative group-hover:shadow-md transition-shadow">
                                 {% if p.image %}
                                     <img src="{{ p.image.url }}" alt="Repuesto" class="w-full h-full object-cover" loading="lazy">
                                 {% else %}
@@ -79,11 +81,14 @@
                                 {% if p.unit_type == 'ML' %}
                                     <div class="absolute bottom-0 right-0 bg-blue-500 text-white text-[8px] font-bold px-1 rounded-tl shadow-sm">Líq</div>
                                 {% endif %}
+                                <div class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center">
+                                    <i class="ph-bold ph-eye text-white"></i>
+                                </div>
                             </div>
                             <div class="min-w-0">
-                                <span class="text-xs font-bold text-gray-900 block leading-none mb-1">{{ p.code }}</span>
-                                <span class="text-xs text-gray-700 font-medium block truncate w-48">{{ p.name }}</span>
-                                <span class="text-[10px] text-gray-400 block truncate w-48 mt-0.5" title="{{ p.description|default:'' }}">{{ p.description|default:"Sin descripción" }}</span>
+                                <span class="text-xs font-bold text-gray-900 block leading-none mb-1 group-hover:text-brand-600 transition-colors">{{ p.code }}</span>
+                                <span class="text-xs text-gray-700 font-medium block truncate w-40 md:w-48">{{ p.name }}</span>
+                                <span class="text-[10px] text-gray-400 block truncate w-40 md:w-48 mt-0.5">{{ p.description|default:"Sin descripción" }}</span>
                             </div>
                         </td>
                         <td class="px-6 py-3.5">
@@ -165,6 +170,67 @@
 {% endblock %}
 
 {% block modals %}
+
+<div id="modal-view-product" class="fixed inset-0 z-[70] hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-4">
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md border border-gray-100 flex flex-col max-h-[90vh] overflow-hidden transform transition-all">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
+            <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                <i class="ph-fill ph-info text-brand-500 text-lg"></i> Detalle del Producto
+            </h3>
+            <button onclick="toggleModal('modal-view-product')" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 transition-colors">
+                <i class="ph-bold ph-x text-sm"></i>
+            </button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto no-scrollbar space-y-5">
+            <div class="w-full h-48 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden shadow-inner p-2 relative">
+                <img id="view_img" src="" class="w-full h-full object-contain mix-blend-multiply hidden" alt="Foto Repuesto">
+                <i id="view_no_img" class="ph ph-image text-5xl text-gray-300"></i>
+                <div id="view_type_badge" class="absolute bottom-3 right-3 bg-blue-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm hidden uppercase tracking-widest">Líquido</div>
+            </div>
+
+            <div class="text-center pb-4 border-b border-gray-100">
+                <span id="view_code" class="text-[11px] font-mono font-black tracking-widest text-brand-600 block mb-1"></span>
+                <h4 id="view_name" class="text-xl font-black text-gray-900 leading-tight"></h4>
+            </div>
+
+            <div class="space-y-4">
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <span class="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">Descripción Técnica</span>
+                    <p id="view_desc" class="text-sm text-gray-700 font-medium"></p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
+                        <span class="block text-[9px] uppercase font-black tracking-widest text-gray-400">Categoría</span>
+                        <p id="view_cat" class="text-sm text-gray-800 font-bold truncate"></p>
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
+                        <span class="block text-[9px] uppercase font-black tracking-widest text-gray-400">Marca</span>
+                        <p id="view_brand" class="text-sm text-gray-800 font-bold truncate"></p>
+                    </div>
+                    
+                    {% if request.user.role == 'ADMIN' %}
+                    <div class="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
+                        <span class="block text-[9px] uppercase font-black tracking-widest text-gray-400">Costo Compra</span>
+                        <p id="view_cost" class="text-sm text-gray-500 font-bold"></p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="bg-white border border-brand-100 bg-brand-50/30 rounded-xl p-3 shadow-sm {% if request.user.role != 'ADMIN' %}col-span-2{% endif %}">
+                        <span class="block text-[9px] uppercase font-black tracking-widest text-brand-500">Precio Público</span>
+                        <p id="view_sale" class="text-lg text-brand-700 font-black"></p>
+                    </div>
+                </div>
+
+                <div class="text-center pt-4">
+                    <span class="block text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">Stock Disponible en Bodega</span>
+                    <span id="view_stock" class="text-3xl font-black text-gray-900 block bg-gray-100 py-3 rounded-2xl border border-gray-200 border-dashed"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div id="modal-edit" class="fixed inset-0 z-[60] hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full p-0 md:p-4 flex items-end md:items-center justify-center">
     <div class="relative bg-white md:rounded-2xl text-left shadow-2xl transform transition-all w-full md:max-w-2xl border border-gray-100 flex flex-col max-h-[90vh] rounded-t-[2rem]">
         <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center shrink-0 sticky top-0 z-10 md:rounded-t-2xl rounded-t-[2rem]">
@@ -476,18 +542,52 @@
     }
 
     // ==========================================
+    // NUEVA FUNCIÓN: ABRIR VISTA DETALLADA
+    // ==========================================
+    function openViewModal(code, name, desc, cat, brand, cost, sale, stock, unitType, image) {
+        document.getElementById('view_code').innerText = code;
+        document.getElementById('view_name').innerText = name;
+        document.getElementById('view_desc').innerText = desc || 'Sin descripción detallada.';
+        document.getElementById('view_cat').innerText = cat;
+        document.getElementById('view_brand').innerText = brand || 'Genérico';
+        
+        if(document.getElementById('view_cost')) {
+            document.getElementById('view_cost').innerText = '$' + parseFloat(cost).toFixed(2);
+        }
+        document.getElementById('view_sale').innerText = '$' + parseFloat(sale).toFixed(2);
+        
+        const unit = unitType === 'ML' ? 'ml' : 'u.';
+        document.getElementById('view_stock').innerText = stock + ' ' + unit;
+        
+        if (unitType === 'ML') {
+            document.getElementById('view_type_badge').classList.remove('hidden');
+        } else {
+            document.getElementById('view_type_badge').classList.add('hidden');
+        }
+        
+        if (image) {
+            document.getElementById('view_img').src = image;
+            document.getElementById('view_img').classList.remove('hidden');
+            document.getElementById('view_no_img').classList.add('hidden');
+        } else {
+            document.getElementById('view_img').classList.add('hidden');
+            document.getElementById('view_no_img').classList.remove('hidden');
+        }
+        
+        toggleModal('modal-view-product');
+    }
+
+    // ==========================================
     // SISTEMA DE BÚSQUEDA Y PAGINACIÓN (SERVER-SIDE)
     // ==========================================
     const searchInput = document.getElementById('searchInput');
     const categoryFilter = document.getElementById('categoryFilter');
     const perPageSelect = document.getElementById('perPageSelect');
     
-    // Rellenar los inputs con los valores actuales al recargar
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.has('q')) searchInput.value = urlParams.get('q');
     if(urlParams.has('category')) categoryFilter.value = urlParams.get('category');
 
-    // Función unificada que envía todo al servidor
     function executeSearch() {
         const q = searchInput.value;
         const cat = categoryFilter.value;
@@ -500,11 +600,8 @@
     });
     
     categoryFilter.addEventListener('change', executeSearch);
-    
-    // NUEVO: Al cambiar el selector (Ej: Ver Todos), recarga la tabla automáticamente
     perPageSelect.addEventListener('change', executeSearch);
 
-    // Controles de Paginación
     const btnPrevPage = document.getElementById('btnPrevPage');
     const btnNextPage = document.getElementById('btnNextPage');
     
@@ -520,7 +617,6 @@
         btnNextPage.disabled = true;
     {% endif %}
 
-    // Texto informativo dinámico
     document.getElementById('pageInfo').innerText = "Página {{ products.number }} de {{ products.paginator.num_pages }} (Total: {{ products.paginator.count }} repuestos)";
     
     // ==========================================
@@ -713,7 +809,6 @@
         toggleModal('modal-stock');
     }
 
-    // Auto-Cálculo de Frascos a Mililitros
     const calcBottles = document.getElementById('calc_bottles');
     const calcMl = document.getElementById('calc_ml');
     const stockQty = document.getElementById('stock_quantity');
