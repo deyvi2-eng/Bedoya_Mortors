@@ -19,6 +19,7 @@ from cash_register.models import CashSession
 
 # Modelos de ventas
 from .models import Sale, SaleDetail
+
 # ==========================================
 # VISTA PRINCIPAL DEL PUNTO DE VENTA (UI)
 # ==========================================
@@ -43,9 +44,9 @@ class POSProductSearchAPI(APIView):
             Q(code__iexact=query) | 
             Q(barcode__iexact=query) | 
             Q(name__icontains=query) |
-            Q(description__icontains=query), # Buscamos también por descripción
+            Q(description__icontains=query),
             is_active=True
-        ).order_by('name')[:24] # Traemos hasta 24 para llenar bien la pantalla
+        ).order_by('name')[:24]
 
         results = []
         for p in products:
@@ -56,7 +57,7 @@ class POSProductSearchAPI(APIView):
                 "description": p.description or "Sin descripción adicional.",
                 "price": float(p.sale_price),
                 "stock": float(p.stock_actual),
-                "unit_type": p.unit_type, # 'U' o 'ML'
+                "unit_type": p.unit_type,
                 "image": p.image.url if p.image else None
             })
             
@@ -141,12 +142,26 @@ class ProcessSaleAPI(APIView):
                         )
                     else:
                         # LOGICA NORMAL PARA PRODUCTOS E INVENTARIO
-                        product = Product.objects.select_for_update().get(id=item['id'])
+                        product_id = item.get('id')
+                        if not product_id:
+                            raise ValueError(f"Falta el ID del producto '{item.get('name')}'.")
+
+                        # Extracción segura, evita que 'product' asuma un valor nulo sin control
+                        product = Product.objects.select_for_update().filter(id=product_id).first()
                         
+                        if product is None:
+                            raise ValueError(f"El repuesto '{item.get('name')}' ya no existe en el sistema.")
+
                         if product.stock_actual < qty:
                             raise ValueError(f"Stock insuficiente para {product.name}. Disponible: {product.stock_actual}")
 
-                        # Descuento exacto de inventario (Líquidos o Unidades)
+                        # Integración de ajuste exacto para líquidos
+                        if product.unit_type == 'ML':
+                            precio_unitario_real = product.sale_price / Decimal('1000.00')
+                        else:
+                            precio_unitario_real = product.sale_price
+
+                        # Descuento exacto de inventario
                         product.stock_actual -= qty
                         product.save()
 
@@ -157,19 +172,16 @@ class ProcessSaleAPI(APIView):
                             description=f"Venta de {qty}{unidad_str} | Factura: {invoice_number}", user=request.user
                         )
 
-                        # ===== CORRECCIÓN CRÍTICA DE LÍQUIDOS =====
-                        # Si es líquido, sacamos el precio por cada mililitro dividiendo para 1000
-                        if product.unit_type == 'ML':
-                            precio_unitario_real = product.sale_price / Decimal('1000.00')
-                        else:
-                            precio_unitario_real = product.sale_price
-
                         line_total = precio_unitario_real * qty
                         subtotal_calc += line_total
 
                         SaleDetail.objects.create(
-                            sale=sale, product=product, quantity=qty,
-                            unit_price=precio_unitario_real, subtotal=line_total
+                            sale=sale, 
+                            product=product, 
+                            is_service=False,
+                            quantity=qty,
+                            unit_price=precio_unitario_real, 
+                            subtotal=line_total
                         )
 
                 # Cálculos finales de la venta
@@ -200,21 +212,18 @@ class InvoicePDFView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, invoice_number, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Obtener la venta y sus detalles
         sale = get_object_or_404(Sale, invoice_number=invoice_number)
         
         context['sale'] = sale
         context['customer'] = sale.customer
         context['details'] = SaleDetail.objects.filter(sale=sale)
         
-        # Datos estáticos de la empresa (se pueden mover a un modelo en el futuro)
         context['company'] = {
             "name": "BEDOYA MOTORS",
-            "ruc": "17XXXXXXXX001",
             "address": "Sangolquí",
             "city": "Pichincha, Ecuador",
-            "phone": "099 999 9999",
-            "email": "contacto@bedoyamotors.com"
+            "phone": "0964016581",
+            "email": "mateobedoyaa89@gmail.com"
         }
         
         return context
