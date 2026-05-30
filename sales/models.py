@@ -13,10 +13,25 @@ class Sale(BaseModel):
         ('CARD', 'Tarjeta'),
         ('MIXED', 'Mixto'),
     ]
+    
+    STATUS_CHOICES = [
+        ('PROFORMA', 'Proforma'),
+        ('DRAFT', 'Borrador (Pre-Factura)'),
+        ('INVOICED', 'Facturado'),
+        ('VOIDED', 'Anulado')
+    ]
+
     cash_session = models.ForeignKey(CashSession, on_delete=models.PROTECT, related_name='sales', verbose_name="Sesión de Caja", null=True)
-    invoice_number = models.CharField(max_length=20, unique=True, verbose_name="Número de Factura")
-    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, verbose_name="Cliente")
+    invoice_number = models.CharField(max_length=20, unique=True, verbose_name="Número de Documento")
+    
+    # Cliente opcional para permitir facturación rápida (Consumidor Final)
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Cliente")
     seller = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Vendedor")
+    
+    # Nuevos campos integrados para el ciclo de vida y cobranza
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PROFORMA', verbose_name="Estado")
+    valid_until = models.DateField(null=True, blank=True, verbose_name="Válido hasta (Proforma)")
+    balance_due = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Saldo Pendiente")
     
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     iva = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -27,12 +42,24 @@ class Sale(BaseModel):
     is_voided = models.BooleanField(default=False, verbose_name="Anulada")
 
     class Meta:
-        verbose_name = "Venta"
-        verbose_name_plural = "Ventas"
+        verbose_name = "Venta / Proforma"
+        verbose_name_plural = "Ventas y Proformas"
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Factura {self.invoice_number} - {self.customer.first_name} {self.customer.last_name}"
+        doc_type = dict(self.STATUS_CHOICES).get(self.status, 'Documento')
+        # Prevención de error si la factura no tiene cliente asignado
+        customer_name = f"{self.customer.first_name} {self.customer.last_name}" if self.customer else "Consumidor Final"
+        return f"{doc_type} {self.invoice_number} - {customer_name}"
+
+    def convert_to_invoice(self):
+        """Transición de estado del documento a facturado."""
+        if self.status in ['PROFORMA', 'DRAFT']:
+            self.status = 'INVOICED'
+            # Inicializa el saldo pendiente en caso de permitir pagos fraccionados o a crédito
+            self.balance_due = self.total
+            self.save()
+
 
 class SaleDetail(BaseModel):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='details', verbose_name="Venta")
@@ -58,8 +85,10 @@ class SaleDetail(BaseModel):
 
     def __str__(self):
         if self.is_service:
-            return f"{self.quantity}x {self.service_description} (Venta {self.sale.invoice_number})"
-        return f"{self.quantity}x {self.product.name} (Venta {self.sale.invoice_number})"
+            return f"{self.quantity}x {self.service_description} (Doc {self.sale.invoice_number})"
+        
+        product_name = self.product.name if self.product else 'Servicio'
+        return f"{self.quantity}x {product_name} (Doc {self.sale.invoice_number})"
 
     def save(self, *args, **kwargs):
         # MODIFICADO: Tomar la foto de precios calculando correctamente si es líquido
@@ -72,3 +101,32 @@ class SaleDetail(BaseModel):
                 self.historical_price = self.product.sale_price
                 self.historical_cost = self.product.purchase_price
         super().save(*args, **kwargs)
+
+
+class Payment(BaseModel):
+    """
+    Modelo diseñado para registrar pagos parciales y facilitar la conciliación.
+    """
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='payments', verbose_name="Factura Relacionada")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto Abonado")
+    method = models.CharField(max_length=20, choices=Sale.PAYMENT_CHOICES, default='TRANSFER', verbose_name="Método de Pago")
+    reference_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="Número de Comprobante / Referencia")
+    payment_date = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Pago")
+    is_verified = models.BooleanField(default=False, verbose_name="Pago Verificado")
+    
+    class Meta:
+        verbose_name = "Abono / Pago"
+        verbose_name_plural = "Abonos y Pagos"
+        ordering = ['-payment_date']
+
+    def __str__(self):
+        return f"Abono de ${self.amount} a Factura {self.sale.invoice_number}"
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # Al registrar un pago nuevo, el saldo pendiente de la venta disminuye automáticamente
+        if is_new:
+            self.sale.balance_due -= self.amount
+            self.sale.save()

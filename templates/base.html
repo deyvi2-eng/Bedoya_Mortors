@@ -42,7 +42,7 @@
                         soft: '0 10px 40px rgba(2,6,23,0.06)',
                         glow: '0 0 30px rgba(6,182,212,0.12)',
                         card: '0 8px 30px rgba(15,23,42,0.05)',
-                        floating: '0 -10px 40px rgba(15,23,42,0.08)',
+                        floating: '0 20px 40px -10px rgba(15,23,42,0.15)',
                         modal: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
                     }
                 }
@@ -62,20 +62,12 @@
                 radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.05), transparent 30%),
                 #f8fafc;
             overflow: hidden;
-            /* Soporte avanzado para móviles (evita el salto con el teclado) */
             height: 100dvh; 
             overscroll-behavior-y: none;
         }
 
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(148, 163, 184, .35);
-            border-radius: 999px;
-        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, .35); border-radius: 999px; }
 
         .sidebar {
             background: rgba(255, 255, 255, 0.78);
@@ -90,65 +82,106 @@
             border-bottom: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        .nav-link {
-            position: relative;
-            transition: .25s ease;
-            overflow: hidden;
-        }
-
-        .nav-link:hover {
-            transform: translateX(4px);
-            background: rgba(255, 255, 255, .95);
-        }
-
-        .nav-link.active {
-            background: linear-gradient(to right, rgba(6, 182, 212, 0.12), rgba(255, 255, 255, 1));
-            border: 1px solid rgba(6, 182, 212, 0.12);
-        }
-
+        .nav-link { position: relative; transition: .25s ease; overflow: hidden; }
+        .nav-link:hover { transform: translateX(4px); background: rgba(255, 255, 255, .95); }
+        .nav-link.active { background: linear-gradient(to right, rgba(6, 182, 212, 0.12), rgba(255, 255, 255, 1)); border: 1px solid rgba(6, 182, 212, 0.12); }
         .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 55%;
-            border-radius: 999px;
-            background: #06b6d4;
+            content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            width: 4px; height: 55%; border-radius: 999px; background: #06b6d4;
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: blur(18px);
-            border: 1px solid rgba(226, 232, 240, 0.7);
-        }
+        .glass-card { background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(18px); border: 1px solid rgba(226, 232, 240, 0.7); }
 
-        .mobile-nav {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(25px);
-            border-top: 1px solid rgba(226, 232, 240, 0.7);
-            padding-bottom: env(safe-area-inset-bottom, 15px); 
-        }
-
-        .smooth {
-            transition: .25s ease;
-        }
+        .smooth { transition: .3s cubic-bezier(0.4, 0, 0.2, 1); }
 
         @media(max-width:768px) {
             body { font-size: 13px; }
-            .sidebar { display: none; }
-            .main-padding {
-                padding-left: 14px !important;
-                padding-right: 14px !important;
-            }
+            .main-padding { padding-left: 14px !important; padding-right: 14px !important; }
         }
     </style>
 
     {% block extra_head %}{% endblock %}
 </head>
 
-<body class="flex text-slate-800">
+<body class="flex text-slate-800 relative">
+
+    <div id="mobile-menu-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] opacity-0 pointer-events-none transition-opacity duration-300 md:hidden"></div>
+    
+    <div id="mobile-menu-drawer" class="fixed top-0 left-0 bottom-0 w-[280px] bg-white z-[70] transform -translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-2xl flex flex-col md:hidden">
+        <div class="px-5 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center">
+                    <img src="{% static 'img/logo.png' %}" class="h-6 object-contain" alt="Logo">
+                </div>
+                <div>
+                    <h1 class="text-[16px] font-black tracking-tight text-slate-900 leading-none">Bedoya Motors</h1>
+                    <p class="text-[9px] uppercase tracking-[0.2em] font-bold text-cyan-600 mt-1">Menú Principal</p>
+                </div>
+            </div>
+            <button onclick="toggleMobileMenu()" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-200 text-slate-500 hover:bg-slate-300 transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-2">
+            {% if request.user.role == 'ADMIN' %}
+            <a href="/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-2xl border border-transparent">
+                <div class="w-10 h-10 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center"><i class="ph-fill ph-squares-four text-cyan-600 text-lg"></i></div>
+                <div><p class="text-sm font-bold">Dashboard</p><span class="text-[10px] text-slate-400 block">Panel principal</span></div>
+            </a>
+            {% endif %}
+
+            <a href="/sales/pos/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-2xl border border-transparent">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center"><i class="ph-fill ph-shopping-cart text-emerald-600 text-lg"></i></div>
+                <div><p class="text-sm font-bold">Punto de Venta</p><span class="text-[10px] text-slate-400 block">Caja rápida</span></div>
+            </a>
+
+            <a href="{% url 'sales:proforma_list' %}" class="nav-link flex items-center gap-3 px-3 py-3 rounded-2xl border border-transparent">
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center"><i class="ph-fill ph-file-text text-indigo-600 text-lg"></i></div>
+                <div><p class="text-sm font-bold">Proformas</p><span class="text-[10px] text-slate-400 block">Cotizaciones</span></div>
+            </a>
+
+            <a href="/cash/dashboard/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-2xl border border-transparent">
+                <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center"><i class="ph-fill ph-wallet text-orange-500 text-lg"></i></div>
+                <div><p class="text-sm font-bold">Caja y Finanzas</p><span class="text-[10px] text-slate-400 block">Apertura y cierre</span></div>
+            </a>
+
+            {% if request.user.role == 'ADMIN' %}
+            <a href="/inventory/manage/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-2xl border border-transparent">
+                <div class="w-10 h-10 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center"><i class="ph-fill ph-package text-violet-600 text-lg"></i></div>
+                <div><p class="text-sm font-bold">Inventario</p><span class="text-[10px] text-slate-400 block">Stock y productos</span></div>
+            </a>
+            {% endif %}
+
+            <a href="/customers/manage/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-2xl border border-transparent">
+                <div class="w-10 h-10 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center"><i class="ph-fill ph-users text-pink-600 text-lg"></i></div>
+                <div><p class="text-sm font-bold">Clientes</p><span class="text-[10px] text-slate-400 block">Directorio</span></div>
+            </a>
+
+            {% if request.user.role == 'ADMIN' %}
+            <div class="pt-4 mt-4 border-t border-slate-100">
+                <p class="px-3 text-[9px] uppercase tracking-widest text-slate-400 font-black mb-2">Administración</p>
+            </div>
+            
+            <a href="{% url 'inventory:settings' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-transparent">
+                <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center"><i class="ph-fill ph-sliders text-blue-600"></i></div>
+                <p class="text-xs font-bold text-slate-700">Configuración</p>
+            </a>
+
+            <a href="/audits/logs/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-transparent">
+                <div class="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center"><i class="ph-fill ph-shield-check text-rose-600"></i></div>
+                <p class="text-xs font-bold text-slate-700">Auditoría</p>
+            </a>
+            {% endif %}
+        </nav>
+
+        <div class="p-4 border-t border-slate-100 bg-slate-50">
+            <a href="/accounts/logout/" class="w-full bg-slate-900 text-white rounded-xl py-3 flex items-center justify-center gap-2 text-sm font-bold shadow-sm active:scale-95 transition-transform">
+                <i class="ph-bold ph-sign-out"></i> Cerrar Sesión
+            </a>
+        </div>
+    </div>
+
 
     <aside class="sidebar hidden md:flex w-[270px] shrink-0 flex-col justify-between z-30">
         <div class="flex flex-col h-full">
@@ -190,6 +223,16 @@
                     </div>
                 </a>
 
+                <a href="{% url 'sales:proforma_list' %}" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                        <i class="ph-fill ph-file-text text-indigo-600 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Proformas</p>
+                        <span class="text-[11px] text-slate-400">Cotizaciones activas</span>
+                    </div>
+                </a>
+
                 <a href="/cash/dashboard/" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
                     <div class="w-11 h-11 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center">
                         <i class="ph-fill ph-wallet text-orange-500 text-[20px]"></i>
@@ -218,7 +261,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-bold">Clientes</p>
-                        <span class="text-[11px] text-slate-400">Gestión de clientes</span>
+                        <span class="text-[11px] text-slate-400">Directorio web</span>
                     </div>
                 </a>
 
@@ -285,7 +328,7 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <button class="relative w-11 h-11 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-soft hover:border-cyan-100 hover:text-cyan-600 smooth">
+                <button class="relative w-11 h-11 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-soft hover:border-cyan-100 hover:text-cyan-600 smooth hidden sm:flex">
                     <i class="ph ph-bell text-[20px]"></i>
                     <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border-2 border-white"></span>
                 </button>
@@ -307,42 +350,61 @@
             </div>
         </main>
 
-        <nav class="mobile-nav md:hidden fixed bottom-0 left-0 right-0 z-40 rounded-t-[2rem] px-3 pt-2 shadow-floating">
-            <div class="flex items-end justify-between gap-1 relative">
-                
-                {% if request.user.role == 'ADMIN' %}
-                <a href="/" class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-cyan-600 smooth">
-                    <i class="ph-fill ph-house text-[21px]"></i>
-                    <span class="text-[8px] font-black mt-1">Inicio</span>
+        <nav class="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-floating border border-white/60 px-2 py-2 flex items-center justify-between transition-all">
+            
+            {% if request.user.role == 'ADMIN' %}
+            <a href="/" class="flex-1 flex flex-col items-center py-1 text-slate-400 hover:text-cyan-600 smooth active:scale-95">
+                <i class="ph-fill ph-house text-[22px]"></i>
+                <span class="text-[9px] font-black mt-1">Inicio</span>
+            </a>
+            {% else %}
+            <a href="/customers/manage/" class="flex-1 flex flex-col items-center py-1 text-slate-400 hover:text-cyan-600 smooth active:scale-95">
+                <i class="ph-fill ph-users text-[22px]"></i>
+                <span class="text-[9px] font-black mt-1">Clientes</span>
+            </a>
+            {% endif %}
+
+            <a href="/sales/pos/" class="flex-1 flex flex-col items-center py-1 text-slate-400 hover:text-emerald-500 smooth active:scale-95">
+                <i class="ph-fill ph-shopping-cart text-[22px]"></i>
+                <span class="text-[9px] font-black mt-1">Ventas</span>
+            </a>
+
+            <div class="relative px-2">
+                <a href="/cash/dashboard/" class="relative -top-6 flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-600 to-cyan-400 text-white shadow-[0_10px_25px_rgba(6,182,212,0.4)] border-4 border-white/80 active:scale-95 transition-transform">
+                    <i class="ph-fill ph-wallet text-[28px]"></i>
                 </a>
-                {% endif %}
-
-                <a href="/sales/pos/" class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-cyan-600 smooth">
-                    <i class="ph-fill ph-shopping-cart text-[21px]"></i>
-                    <span class="text-[8px] font-black mt-1">Ventas</span>
-                </a>
-
-                <div class="relative -top-5">
-                    <a href="/cash/dashboard/" class="w-16 h-16 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-[0_15px_40px_rgba(6,182,212,0.4)] border-[6px] border-white active:scale-95 transition-transform">
-                        <i class="ph-fill ph-wallet text-[26px]"></i>
-                    </a>
-                </div>
-
-                {% if request.user.role == 'ADMIN' %}
-                <a href="/inventory/manage/" class="flex-1 flex flex-col items-center py-2 text-slate-400 hover:text-cyan-600 smooth">
-                    <i class="ph-fill ph-package text-[21px]"></i>
-                    <span class="text-[8px] font-black mt-1">Stock</span>
-                </a>
-
-                <a href="{% url 'inventory:settings' %}" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl text-slate-400 hover:text-cyan-600 smooth flex-1 flex-col py-2" style="background: none; border: none;">
-                    <i class="ph-fill ph-sliders text-[21px]"></i>
-                    <span class="text-[8px] font-black mt-1">Ajustes</span>
-                </a>
-                {% endif %}
-
             </div>
+
+            <a href="{% url 'sales:proforma_list' %}" class="flex-1 flex flex-col items-center py-1 text-slate-400 hover:text-indigo-500 smooth active:scale-95">
+                <i class="ph-fill ph-file-text text-[22px]"></i>
+                <span class="text-[9px] font-black mt-1">Proformas</span>
+            </a>
+
+            <button onclick="toggleMobileMenu()" class="flex-1 flex flex-col items-center py-1 text-slate-400 hover:text-slate-800 smooth active:scale-95">
+                <i class="ph-bold ph-list text-[22px]"></i>
+                <span class="text-[9px] font-black mt-1">Menú</span>
+            </button>
+            
         </nav>
     </div>
+
+    <script>
+        function toggleMobileMenu() {
+            const overlay = document.getElementById('mobile-menu-overlay');
+            const drawer = document.getElementById('mobile-menu-drawer');
+            const body = document.body;
+
+            if (drawer.classList.contains('-translate-x-full')) {
+                // Abrir menú
+                overlay.classList.remove('opacity-0', 'pointer-events-none');
+                drawer.classList.remove('-translate-x-full');
+            } else {
+                // Cerrar menú
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+                drawer.classList.add('-translate-x-full');
+            }
+        }
+    </script>
 
     {% block modals %}{% endblock %}
 

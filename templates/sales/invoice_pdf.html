@@ -1,151 +1,216 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Factura {{ sale.invoice_number }}</title>
+    <title>
+        {% if sale.status == 'PROFORMA' %}Proforma
+        {% elif sale.status == 'DRAFT' %}Borrador
+        {% else %}Factura{% endif %} {{ sale.invoice_number }}
+    </title>
     <style>
-        /* Configuraciones específicas para xhtml2pdf */
+        /* ========================================================
+           CONFIGURACIÓN BASE PARA XHTML2PDF
+           ======================================================== */
         @page {
-            size: a4 portrait;
-            margin: 1.5cm 1.5cm 2cm 1.5cm;
+            size: A4 portrait;
+            margin: 1.5cm; 
         }
+        
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 11px;
-            color: #374151;
+            font-size: 13px; /* Aumentado la fuente base */
+            color: #1e293b;
             line-height: 1.4;
         }
-        /* Encabezado */
-        .header-table {
-            width: 100%;
-            border-bottom: 2px solid #0d9488;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        .company-name {
-            font-size: 26px;
-            color: #0d9488;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .invoice-title {
-            font-size: 22px;
-            font-weight: bold;
-            color: #111827;
-            text-align: right;
-            margin-bottom: 5px;
-        }
+
+        table { width: 100%; border-collapse: collapse; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .font-bold { font-weight: bold; }
+
+        /* Paleta Premium */
+        .color-dark { color: #0f172a; } 
+        .color-primary { color: #0891b2; } 
         
-        /* Información de Facturación */
-        .info-table {
-            width: 100%;
-            margin-bottom: 25px;
-        }
-        .info-table td {
-            vertical-align: top;
-            width: 50%;
-        }
-        .section-title {
-            font-size: 10px;
-            font-weight: bold;
-            color: #9ca3af;
-            text-transform: uppercase;
+        /* ========================================================
+           1. CABECERA
+           ======================================================== */
+        .header-container { padding-bottom: 25px; border-bottom: 2px solid #e2e8f0; margin-bottom: 25px;}
+        .logo { max-height: 100px; width: auto; margin-bottom: 12px; }
+        
+        .company-name { font-size: 24px; font-weight: bold; color: #0f172a; letter-spacing: 0.5px; }
+        .company-meta { font-size: 12px; color: #475569; line-height: 1.6; margin-top: 5px; }
+        
+        .doc-type { font-size: 26px; font-weight: bold; color: #0891b2; text-transform: uppercase; letter-spacing: 1px; }
+        .doc-number { font-size: 16px; font-weight: bold; color: #0f172a; margin-top: 5px; }
+        
+        .badge { 
+            padding: 5px 10px; font-size: 11px; font-weight: bold; 
+            text-transform: uppercase; display: inline-block; border-radius: 4px; 
             margin-bottom: 8px;
         }
-        .box {
-            background-color: #f9fafb;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-        }
+        .badge-proforma { background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+        .badge-factura { background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
 
-        /* Tabla de Productos/Servicios */
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 25px;
-        }
+        /* ========================================================
+           2. BLOQUE DE INFORMACIÓN (MÁS GRANDE Y LEGIBLE)
+           ======================================================== */
+        .info-section { margin-bottom: 35px; }
+        .info-column { padding: 15px; background-color: #f8fafc; border-left: 4px solid #0891b2; }
+        .info-title { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; }
+        
+        .info-data { width: 100%; }
+        .info-data td { padding: 4px 0; font-size: 13px; color: #0f172a; vertical-align: top; }
+        .info-label { width: 90px; color: #64748b; font-size: 12px; }
+
+        /* ========================================================
+           3. TABLA DE DETALLES DE COMPRA (LETRAS Y NÚMEROS GRANDES)
+           ======================================================== */
+        .items-table { margin-bottom: 30px; }
         .items-table th {
-            background-color: #f3f4f6;
-            color: #4b5563;
+            background-color: #0f172a; 
+            color: #ffffff;
+            font-size: 11px;
             font-weight: bold;
-            text-align: left;
-            padding: 10px;
-            border-bottom: 2px solid #d1d5db;
+            padding: 12px 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .items-table td {
-            padding: 10px;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 14px 10px; /* Más espacio para respirar */
+            border-bottom: 1px solid #cbd5e1;
+            font-size: 13px; /* LETRA DE PRODUCTOS MÁS GRANDE */
+            color: #1e293b;
             vertical-align: middle;
         }
+        .items-table tr:nth-child(even) { background-color: #f1f5f9; }
         
-        /* Totales */
-        .totals-wrapper {
-            width: 100%;
-        }
-        .totals-table {
-            width: 40%;
-            float: right;
-            border-collapse: collapse;
-        }
-        .totals-table td {
-            padding: 8px;
-        }
-        .total-row td {
-            font-size: 14px;
-            font-weight: bold;
-            background-color: #0d9488;
-            color: #ffffff;
-        }
+        .col-code { font-size: 11px; color: #64748b; font-family: monospace; }
+        .col-price { color: #334155; font-size: 14px; } /* Números más grandes */
+        .col-total { font-weight: bold; color: #0f172a; font-size: 14px; }
+        .col-total-iva { font-weight: bold; color: #0891b2; font-size: 14px; } 
 
-        /* Pie de página */
+        /* ========================================================
+           4. SECCIÓN DE TOTALES 
+           ======================================================== */
+        .bottom-section { width: 100%; margin-top: 20px; }
+        
+        .terms-container { padding-right: 40px; font-size: 10px; color: #64748b; line-height: 1.4; text-align: justify; }
+        .terms-title { font-weight: bold; color: #475569; text-transform: uppercase; margin-bottom: 5px; font-size: 11px; }
+        
+        .totals-table { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; }
+        .totals-table td { padding: 10px 15px; font-size: 13px; color: #1e293b; border-bottom: 1px solid #e2e8f0; }
+        .totals-table .totals-label { text-align: right; width: 55%; font-weight: bold; color: #64748b; }
+        
+        .row-total { background-color: #0f172a; }
+        .row-total td { 
+            color: #ffffff; 
+            font-size: 18px; /* TOTAL GIGANTE Y CLARO */
+            font-weight: bold; 
+            padding: 15px; 
+            border: none;
+        }
+        
+        .row-balance td { color: #dc2626; font-weight: bold; font-size: 14px; padding-top: 12px; border: none; background-color: #fee2e2; }
+
+        /* Footer */
         .footer {
             text-align: center;
-            font-size: 9px;
-            color: #9ca3af;
-            margin-top: 40px;
-            padding-top: 15px;
-            border-top: 1px solid #e5e7eb;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 50px;
         }
     </style>
 </head>
 <body>
 
-    <table class="header-table">
+    <table class="header-container">
         <tr>
-            <td style="width: 60%;">
+            <td style="width: 55%; vertical-align: bottom;">
+                <img src="{% static 'img/logo.png' %}" class="logo" alt="Bedoya Motors">
                 <div class="company-name">{{ company.name }}</div>
-                <div><strong>RUC:</strong> {{ company.ruc }}</div>
-                <div>{{ company.address }} - {{ company.city }}</div>
-                <div>{{ company.phone }} | {{ company.email }}</div>
+                <div class="company-meta">
+                    Telf:</strong> {{ company.phone }}<br>
+                    {{ company.address }} - {{ company.city }}<br>
+                    {{ company.email }}
+                </div>
             </td>
-            <td style="width: 40%;" class="text-right">
-                <div class="invoice-title">DETALLE DE COMPRA</div>
-                <div style="font-size: 14px; color: #ef4444; font-weight: bold;">Nº {{ sale.invoice_number }}</div>
-                <div style="margin-top: 5px;"><strong>Fecha de Emisión:</strong> <br> {{ sale.created_at|date:"d M Y - H:i" }}</div>
+            
+            <td style="width: 45%; vertical-align: bottom;" class="text-right">
+                <div style="margin-bottom: 10px;">
+                    {% if sale.status == 'PROFORMA' %}
+                        <div class="badge badge-proforma">Documento Informativo</div>
+                        <div class="doc-type" style="color: #d97706;">PROFORMA</div>
+                    {% elif sale.status == 'DRAFT' %}
+                        <div class="badge" style="background-color: #e2e8f0; color: #475569;">Transacción Abierta</div>
+                        <div class="doc-type" style="color: #475569;">BORRADOR</div>
+                    {% else %}
+                        <div class="badge badge-factura">Comprobante Válido</div>
+                        <div class="doc-type">FACTURA</div>
+                    {% endif %}
+                </div>
+                
+                <div class="doc-number">Documento Nº: <span style="color: #0891b2;">{{ sale.invoice_number }}</span></div>
+                <div class="company-meta" style="margin-top: 8px;">
+                    <strong>Fecha Emisión:</strong> {{ sale.created_at|date:"d M Y - H:i" }}
+                    {% if sale.status == 'PROFORMA' and sale.valid_until %}
+                        <br><strong style="color: #d97706;">Válido hasta:</strong> {{ sale.valid_until|date:"d M Y" }}
+                    {% endif %}
+                </div>
             </td>
         </tr>
     </table>
 
-    <table class="info-table">
+    <table class="info-section">
         <tr>
-            <td style="padding-right: 10px;">
-                <div class="section-title">Datos del Cliente:</div>
-                <div class="box">
-                    <div style="font-size: 13px; font-weight: bold; color: #111827; margin-bottom: 4px;">{{ customer.first_name }} {{ customer.last_name }}</div>
-                    <div><strong>CI/RUC:</strong> {{ customer.cedula }}</div>
-                    <div><strong>Teléfono:</strong> {{ customer.phone }}</div>
-                    <div><strong>Dirección:</strong> {{ customer.address|default:"N/A" }}, {{ customer.city|default:"N/A" }}</div>
+            <td style="width: 50%; padding-right: 15px;">
+                <div class="info-column">
+                    <div class="info-title">Facturar A</div>
+                    <table class="info-data">
+                        {% if customer %}
+                            <tr>
+                                <td colspan="2" class="font-bold" style="font-size: 15px; color: #0f172a; padding-bottom: 6px;">
+                                    {{ customer.first_name }} {{ customer.last_name }}
+                                </td>
+                            </tr>
+                            <tr><td class="info-label">RUC / CI:</td><td class="font-bold">{{ customer.cedula }}</td></tr>
+                            <tr><td class="info-label">Teléfono:</td><td>{{ customer.phone|default:"-" }}</td></tr>
+                            <tr><td class="info-label">Dirección:</td><td>{{ customer.address|default:"-" }}</td></tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="2" class="font-bold" style="font-size: 15px; color: #0f172a; padding-bottom: 6px;">
+                                    CONSUMIDOR FINAL
+                                </td>
+                            </tr>
+                            <tr><td class="info-label">RUC / CI:</td><td class="font-bold">9999999999999</td></tr>
+                            <tr><td class="info-label">Teléfono:</td><td>-</td></tr>
+                            <tr><td class="info-label">Dirección:</td><td>-</td></tr>
+                        {% endif %}
+                    </table>
                 </div>
             </td>
-            <td style="padding-left: 10px;">
-                <div class="section-title">Detalles de la Operación:</div>
-                <div class="box">
-                    <div><strong>Atendido por:</strong> {{ sale.seller.get_full_name }}</div>
-                    <div><strong>Método de Pago:</strong> {{ sale.get_payment_method_display }}</div>
-                    <div><strong>Estado:</strong> {% if sale.is_voided %}<span style="color: red; font-weight: bold;">ANULADA</span>{% else %}PROCESADA{% endif %}</div>
+            
+            <td style="width: 50%; padding-left: 15px;">
+                <div class="info-column" style="border-left-color: #94a3b8;">
+                    <div class="info-title">Datos de Operación</div>
+                    <table class="info-data">
+                        <tr><td class="info-label">Atendido por:</td><td class="font-bold">{{ sale.seller.get_full_name|default:"Administrador" }}</td></tr>
+                        <tr><td class="info-label">Método Pago:</td><td class="font-bold">{{ sale.get_payment_method_display }}</td></tr>
+                        <tr>
+                            <td class="info-label">Estado Doc:</td>
+                            <td class="font-bold">
+                                {% if sale.is_voided %}
+                                    <span style="color: #dc2626;">ANULADA</span>
+                                {% elif sale.status == 'PROFORMA' %}
+                                    <span style="color: #d97706;">PENDIENTE</span>
+                                {% else %}
+                                    <span style="color: #059669;">PROCESADA</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
                 </div>
             </td>
         </tr>
@@ -154,57 +219,83 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 15%;">CÓDIGO</th>
-                <th style="width: 40%;">DESCRIPCIÓN</th>
-                <th style="width: 15%;" class="text-center">CANTIDAD</th>
-                <th style="width: 15%;" class="text-right">P. UNITARIO</th>
-                <th style="width: 15%;" class="text-right">SUBTOTAL</th>
+                <th class="text-left" style="width: 40%;">DESCRIPCIÓN DEL ARTÍCULO</th>
+                <th class="text-right" style="width: 15%;">P. UNIT<br>(S/IVA)</th>
+                <th class="text-center" style="width: 12%;">CANT.</th>
+                <th class="text-right" style="width: 16%;">SUBTOTAL<br>(S/IVA)</th>
+                <th class="text-right" style="width: 17%; background-color: #0891b2;">TOTAL<br>(C/IVA)</th>
             </tr>
         </thead>
         <tbody>
             {% for item in details %}
             <tr>
-                {% if item.is_service %}
-                    <td style="font-weight: bold; color: #7e22ce;">SERV</td>
-                    <td style="font-style: italic; color: #374151;">Mano de Obra: {{ item.service_description }}</td>
-                {% else %}
-                    <td style="font-weight: bold; color: #111827;">{{ item.product.code }}</td>
-                    <td>{{ item.product.name }}</td>
-                {% endif %}
-                
-                <td class="text-center">{{ item.quantity }}</td>
-                <td class="text-right">${{ item.unit_price|floatformat:2 }}</td>
-                <td class="text-right font-bold">${{ item.subtotal|floatformat:2 }}</td>
+                <td class="text-left">
+                    {% if item.is_service %}
+                        <span class="col-code">[SERV]</span> <span class="font-bold" style="font-size: 14px;">{{ item.service_description }}</span>
+                    {% else %}
+                        <span class="col-code">[{{ item.product.code }}]</span> <span class="font-bold" style="font-size: 14px;">{{ item.product.name }}</span>
+                    {% endif %}
+                </td>
+                <td class="text-right col-price">${{ item.unit_price|floatformat:2 }}</td>
+                <td class="text-center font-bold" style="font-size: 14px;">{{ item.quantity }}</td>
+                <td class="text-right col-total">${{ item.subtotal|floatformat:2 }}</td>
+                <td class="text-right col-total-iva">${{ item.subtotal_iva|floatformat:2 }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <div class="totals-wrapper">
-        <table class="totals-table">
-            <tr>
-                <td>Subtotal:</td>
-                <td class="text-right">${{ sale.subtotal|floatformat:2 }}</td>
-            </tr>
-            <tr>
-                <td>Descuento:</td>
-                <td class="text-right">${{ sale.discount|floatformat:2 }}</td>
-            </tr>
-            <tr>
-                <td style="border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">Impuesto IVA (15%):</td>
-                <td class="text-right" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">${{ sale.iva|floatformat:2 }}</td>
-            </tr>
-            <tr class="total-row">
-                <td style="padding: 10px;">TOTAL A PAGAR:</td>
-                <td class="text-right" style="padding: 10px;">${{ sale.total|floatformat:2 }}</td>
-            </tr>
-        </table>
-    </div>
+    <table class="bottom-section">
+        <tr>
+            <td style="width: 55%; vertical-align: top;" class="terms-container">
+                <div class="terms-title">Notas Importantes</div>
+                1. Todo repuesto eléctrico y trabajos de mano de obra no están sujetos a cambios, devoluciones ni garantías.<br>
+                
+                {% if sale.status == 'PROFORMA' %}
+                    <br>
+                    <span style="color: #d97706; font-weight: bold; font-size: 11px;">
+                        * Esta proforma es únicamente referencial y los precios pueden variar. No tiene validez fiscal.
+                    </span>
+                {% endif %}
+            </td>
+            
+            <td style="width: 45%; vertical-align: top;">
+                <table class="totals-table">
+                    <tr>
+                        <td class="totals-label">Subtotal 0%:</td>
+                        <td class="text-right font-bold">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td class="totals-label">Subtotal 15%:</td>
+                        <td class="text-right font-bold">${{ sale.subtotal|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td class="totals-label">Descuento:</td>
+                        <td class="text-right font-bold">${{ sale.discount|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td class="totals-label" style="color: #0891b2;">I.V.A (15%):</td>
+                        <td class="text-right font-bold" style="color: #0891b2;">${{ sale.iva|floatformat:2 }}</td>
+                    </tr>
+                    
+                    <tr class="row-total">
+                        <td class="text-right" style="border-radius: 6px 0 0 6px;">TOTAL A PAGAR:</td>
+                        <td class="text-right" style="border-radius: 0 6px 6px 0;">${{ sale.total|floatformat:2 }}</td>
+                    </tr>
+                    
+                    {% if sale.status == 'INVOICED' and sale.balance_due > 0 %}
+                    <tr class="row-balance">
+                        <td class="totals-label" style="color: #dc2626;">SALDO PENDIENTE:</td>
+                        <td class="text-right">${{ sale.balance_due|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
 
-    <div style="clear: both;"></div>
     <div class="footer">
-        <strong>Bedoya Motors</strong> agradece su preferencia. Los componentes eléctricos y trabajos de mano de obra no tienen devolución.<br>
-        Documento generado automáticamente por el ERP Bedoya Motors.
+        Bedoya Motors | Impreso el {% now "d/m/Y" %} a las {% now "H:i" %}
     </div>
 
 </body>

@@ -5,8 +5,9 @@ from .views import (
     ProductCreateAPI, 
     AddStockAPI, 
     ProductToggleAPI,
-    ProductUpdateAPI,  # Importación añadida para edición
-    ProductDeleteAPI,  # Importación añadida para eliminación
+    ProductDetailAPI,  # <--- IMPORTACIÓN AÑADIDA PARA LEER EL PRODUCTO
+    ProductUpdateAPI,  # Importación para edición (Soporta Fotos)
+    ProductDeleteAPI,  # Importación para eliminación
     
     # Kardex y Movimientos
     StockMovementLogView,
@@ -38,8 +39,13 @@ urlpatterns = [
     path('api/product/add-stock/', AddStockAPI.as_view(), name='api-product-add-stock'),
     path('api/product/toggle/<int:product_id>/', ProductToggleAPI.as_view(), name='api-product-toggle'),
     
-    # Endpoints de Edición y Eliminación de productos
-    path('api/product/update/<int:pk>/', ProductUpdateAPI.as_view(), name='api-product-update'),
+    # ==========================================
+    # NUEVOS ENDPOINTS: Lectura, Edición y Eliminación
+    # ==========================================
+    # Esta ruta es vital para cargar la foto en el Modal
+    path('api/products/<int:pk>/', ProductDetailAPI.as_view(), name='api-product-detail'),
+    # Esta ruta procesa los cambios de texto y la nueva imagen
+    path('api/products/update/<int:pk>/', ProductUpdateAPI.as_view(), name='api-product-update'), 
     path('api/product/delete/<int:pk>/', ProductDeleteAPI.as_view(), name='api-product-delete'),
     
     # API para ver el Kardex específico de un producto en el Modal

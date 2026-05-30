@@ -173,7 +173,7 @@ class AddStockAPI(APIView):
         except Product.DoesNotExist:
             return Response({"error": "Producto no encontrado."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            # Ahora, si falla, el cartel rojo te dirá EXACTAMENTE qué código de Python falló
+            # Ahora, si falla, el cartel rojo indicará EXACTAMENTE qué código de Python falló
             return Response({"error": f"Error técnico: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
 
 # ==========================================
@@ -349,37 +349,47 @@ class SupplierToggleAPI(APIView):
 # ==========================================
 class ProductUpdateAPI(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser) # Permitir subida de archivos
 
     def post(self, request, pk, *args, **kwargs):
         if request.user.role != 'ADMIN':
             return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
         
-        product = get_object_or_404(Product, pk=pk)
-        
-        product.name = request.data.get('name', product.name)
-        product.description = request.data.get('description', product.description)
-        
-        category_id = request.data.get('category_id')
-        if category_id:
-            product.category_id = category_id
+        try:
+            product = get_object_or_404(Product, pk=pk)
             
-        supplier_id = request.data.get('supplier_id')
-        if supplier_id:
-            product.supplier_id = supplier_id
+            # Actualización de datos de texto
+            product.name = request.data.get('name', product.name)
+            product.description = request.data.get('description', product.description)
             
-        product.brand = request.data.get('brand', product.brand)
-        product.unit_type = request.data.get('unit_type', product.unit_type)
-        product.model_compatibility = request.data.get('model_compatibility', product.model_compatibility)
-        product.location = request.data.get('location', product.location)
-        
-        product.purchase_price = request.data.get('purchase_price', product.purchase_price)
-        product.sale_price = request.data.get('sale_price', product.sale_price)
-        
-        product.stock_minimo = request.data.get('stock_minimo', product.stock_minimo)
-        product.stock_critico = request.data.get('stock_critico', product.stock_critico)
-        
-        product.save()
-        return Response({"message": "Producto actualizado correctamente."})
+            category_id = request.data.get('category_id')
+            if category_id:
+                product.category_id = category_id
+                
+            supplier_id = request.data.get('supplier_id')
+            if supplier_id:
+                product.supplier_id = supplier_id
+                
+            product.brand = request.data.get('brand', product.brand)
+            product.unit_type = request.data.get('unit_type', product.unit_type)
+            product.model_compatibility = request.data.get('model_compatibility', product.model_compatibility)
+            product.location = request.data.get('location', product.location)
+            
+            product.purchase_price = request.data.get('purchase_price', product.purchase_price)
+            product.sale_price = request.data.get('sale_price', product.sale_price)
+            
+            product.stock_minimo = request.data.get('stock_minimo', product.stock_minimo)
+            product.stock_critico = request.data.get('stock_critico', product.stock_critico)
+            
+            # Si el usuario subió una nueva imagen, se reemplaza la existente
+            if 'image' in request.FILES:
+                product.image = request.FILES['image']
+            
+            product.save()
+            return Response({"message": "Producto y fotografía actualizados correctamente."}, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({"error": f"Error al actualizar: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 class ProductDeleteAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -391,3 +401,25 @@ class ProductDeleteAPI(APIView):
         product = get_object_or_404(Product, pk=pk)
         product.delete()
         return Response({"message": "Producto eliminado permanentemente."})
+    
+# Añadir al final de inventory/views.py
+class ProductDetailAPI(APIView):
+    """API para obtener los detalles de un solo producto para el modal de edición."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, *args, **kwargs):
+        product = get_object_or_404(Product, pk=pk)
+        data = {
+            "id": product.id,
+            "code": product.code,
+            "name": product.name,
+            "description": product.description,
+            "purchase_price": float(product.purchase_price),
+            "sale_price": float(product.sale_price),
+            "stock_actual": float(product.stock_actual),
+            "unit_type": product.unit_type,
+            "image_url": product.image.url if product.image else None,
+            "category_id": product.category_id,
+            "supplier_id": product.supplier_id
+        }
+        return Response(data, status=status.HTTP_200_OK)
