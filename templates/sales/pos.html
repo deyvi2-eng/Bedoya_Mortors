@@ -548,7 +548,7 @@
     }
 
     // ==========================================
-    // PROCESAMIENTO Y ELIMINACIÓN DE DOCUMENTOS
+    // PROCESAMIENTO DE DOCUMENTOS
     // ==========================================
     async function processDocument(docStatus) {
         if (cart.length === 0) return Swal.fire('Atención', 'Carrito vacío', 'warning');
@@ -573,7 +573,16 @@
 
             if (res.ok) {
                 clearAll(false);
-                Swal.fire({ title: '¡Éxito!', text: 'Doc: ' + data.invoice, icon: 'success', confirmButtonText: 'Ver PDF', confirmButtonColor: '#0f172a' }).then(() => window.open('/sales/invoice/' + data.invoice + '/pdf/', '_blank'));
+                // CORRECCIÓN AQUÍ: Se eliminó el '/pdf/' de la URL para que coincida con urls.py
+                Swal.fire({ 
+                    title: '¡Éxito!', 
+                    text: 'Doc: ' + data.invoice, 
+                    icon: 'success', 
+                    confirmButtonText: 'Ver PDF', 
+                    confirmButtonColor: '#0f172a' 
+                }).then(() => {
+                    window.open('/sales/invoice/' + data.invoice + '/', '_blank');
+                });
             } else { Swal.fire('Error', data.error, 'error'); }
         } catch (error) { Swal.fire('Error', 'Problema de red', 'error'); }
     }

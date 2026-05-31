@@ -48,4 +48,5 @@ urlpatterns = [
     path('cash/', include('cash_register.urls')),
     path('customers/', include('customers.urls')),
     path('audits/', include('audits.urls')),
+    path('reports/', include('reports.urls')),
 ]

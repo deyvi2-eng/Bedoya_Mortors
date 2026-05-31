@@ -19,7 +19,7 @@
         
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 13px; /* Aumentado la fuente base */
+            font-size: 13px;
             color: #1e293b;
             line-height: 1.4;
         }
@@ -30,13 +30,10 @@
         .text-left { text-align: left; }
         .font-bold { font-weight: bold; }
 
-        /* Paleta Premium */
         .color-dark { color: #0f172a; } 
         .color-primary { color: #0891b2; } 
         
-        /* ========================================================
-           1. CABECERA
-           ======================================================== */
+        /* CABECERA */
         .header-container { padding-bottom: 25px; border-bottom: 2px solid #e2e8f0; margin-bottom: 25px;}
         .logo { max-height: 100px; width: auto; margin-bottom: 12px; }
         
@@ -54,9 +51,7 @@
         .badge-proforma { background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
         .badge-factura { background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
 
-        /* ========================================================
-           2. BLOQUE DE INFORMACIÓN (MÁS GRANDE Y LEGIBLE)
-           ======================================================== */
+        /* BLOQUE DE INFORMACIÓN */
         .info-section { margin-bottom: 35px; }
         .info-column { padding: 15px; background-color: #f8fafc; border-left: 4px solid #0891b2; }
         .info-title { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; }
@@ -65,9 +60,7 @@
         .info-data td { padding: 4px 0; font-size: 13px; color: #0f172a; vertical-align: top; }
         .info-label { width: 90px; color: #64748b; font-size: 12px; }
 
-        /* ========================================================
-           3. TABLA DE DETALLES DE COMPRA (LETRAS Y NÚMEROS GRANDES)
-           ======================================================== */
+        /* TABLA DE DETALLES */
         .items-table { margin-bottom: 30px; }
         .items-table th {
             background-color: #0f172a; 
@@ -79,22 +72,20 @@
             letter-spacing: 0.5px;
         }
         .items-table td {
-            padding: 14px 10px; /* Más espacio para respirar */
+            padding: 14px 10px;
             border-bottom: 1px solid #cbd5e1;
-            font-size: 13px; /* LETRA DE PRODUCTOS MÁS GRANDE */
+            font-size: 13px;
             color: #1e293b;
             vertical-align: middle;
         }
         .items-table tr:nth-child(even) { background-color: #f1f5f9; }
         
         .col-code { font-size: 11px; color: #64748b; font-family: monospace; }
-        .col-price { color: #334155; font-size: 14px; } /* Números más grandes */
+        .col-price { color: #334155; font-size: 14px; }
         .col-total { font-weight: bold; color: #0f172a; font-size: 14px; }
         .col-total-iva { font-weight: bold; color: #0891b2; font-size: 14px; } 
 
-        /* ========================================================
-           4. SECCIÓN DE TOTALES 
-           ======================================================== */
+        /* SECCIÓN DE TOTALES */
         .bottom-section { width: 100%; margin-top: 20px; }
         
         .terms-container { padding-right: 40px; font-size: 10px; color: #64748b; line-height: 1.4; text-align: justify; }
@@ -107,13 +98,11 @@
         .row-total { background-color: #0f172a; }
         .row-total td { 
             color: #ffffff; 
-            font-size: 18px; /* TOTAL GIGANTE Y CLARO */
+            font-size: 18px; 
             font-weight: bold; 
             padding: 15px; 
             border: none;
         }
-        
-        .row-balance td { color: #dc2626; font-weight: bold; font-size: 14px; padding-top: 12px; border: none; background-color: #fee2e2; }
 
         /* Footer */
         .footer {
@@ -132,7 +121,7 @@
                 <img src="{% static 'img/logo.png' %}" class="logo" alt="Bedoya Motors">
                 <div class="company-name">{{ company.name }}</div>
                 <div class="company-meta">
-                    Telf:</strong> {{ company.phone }}<br>
+                    <strong>Telf:</strong> {{ company.phone }}<br>
                     {{ company.address }} - {{ company.city }}<br>
                     {{ company.email }}
                 </div>
@@ -282,13 +271,6 @@
                         <td class="text-right" style="border-radius: 6px 0 0 6px;">TOTAL A PAGAR:</td>
                         <td class="text-right" style="border-radius: 0 6px 6px 0;">${{ sale.total|floatformat:2 }}</td>
                     </tr>
-                    
-                    {% if sale.status == 'INVOICED' and sale.balance_due > 0 %}
-                    <tr class="row-balance">
-                        <td class="totals-label" style="color: #dc2626;">SALDO PENDIENTE:</td>
-                        <td class="text-right">${{ sale.balance_due|floatformat:2 }}</td>
-                    </tr>
-                    {% endif %}
                 </table>
             </td>
         </tr>

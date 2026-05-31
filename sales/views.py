@@ -275,7 +275,8 @@ class ProcessSaleAPI(APIView):
                 sale.total = total_calc
                 
                 if doc_status == 'INVOICED':
-                    sale.balance_due = total_calc 
+                    # Corrección: El saldo pendiente siempre se registra en 0.00
+                    sale.balance_due = Decimal('0.00')
 
                 sale.save()
 
