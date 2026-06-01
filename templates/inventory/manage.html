@@ -169,7 +169,9 @@
         </div>
     </div>
 </div>
-{% endblock %} {% block modals %}
+{% endblock %} 
+
+{% block modals %}
 <div id="modal-view-product" class="fixed inset-0 z-[70] hidden bg-gray-900/60 backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-4">
     <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md border border-gray-100 flex flex-col max-h-[90vh] overflow-hidden transform transition-all">
         <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
@@ -434,6 +436,12 @@
             
             <form id="form-stock" class="space-y-5">
                 <input type="hidden" id="stock_product_id">
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Ref. Factura / Origen (Opcional)</label>
+                    <input type="text" id="stock_invoice" placeholder="Ej: FAC-001, Ajuste manual..." class="w-full bg-white border border-gray-200 text-gray-900 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition-all mb-1">
+                </div>
+
                 <div id="liquid_calculator" class="hidden bg-blue-50/50 border border-blue-100 rounded-2xl p-5 mb-4 shadow-sm">
                     <p class="text-xs font-black text-blue-600 uppercase mb-3 flex items-center gap-2">
                         <i class="ph-bold ph-calculator text-lg"></i> Calculadora Envases
@@ -514,7 +522,12 @@
 
     function toggleModal(id) {
         const modal = document.getElementById(id);
-        modal.classList.contains('hidden') ? modal.classList.remove('hidden') : modal.classList.add('hidden');
+        // Evitamos error si el modal no existe (como el de categoría o proveedor que no están en este archivo)
+        if (modal) {
+            modal.classList.contains('hidden') ? modal.classList.remove('hidden') : modal.classList.add('hidden');
+        } else {
+            console.warn("Modal no encontrado: " + id);
+        }
     }
 
     // ==========================================
@@ -777,7 +790,7 @@
     });
 
     // ==========================================
-    // INGRESO DE STOCK Y KARDEX
+    // INGRESO DE STOCK Y KARDEX (CORREGIDOS)
     // ==========================================
     function openStockModal(id, code, name, unitType) {
         document.getElementById('stock_product_id').value = id;
@@ -785,7 +798,11 @@
         document.getElementById('lbl-stock-name').innerText = name;
         
         document.getElementById('stock_quantity').value = '';
-        document.getElementById('stock_invoice').value = '';
+        
+        // CORRECCIÓN: Ahora se valida que el input de factura exista antes de limpiarlo
+        const invoiceInput = document.getElementById('stock_invoice');
+        if (invoiceInput) invoiceInput.value = '';
+        
         document.getElementById('calc_bottles').value = '';
         document.getElementById('calc_ml').value = '';
 
@@ -818,7 +835,10 @@
     document.getElementById('btn-save-stock').addEventListener('click', function() {
         const prodId = document.getElementById('stock_product_id').value;
         const qty = document.getElementById('stock_quantity').value;
-        const invoice = document.getElementById('stock_invoice').value;
+        
+        // CORRECCIÓN: Ahora se obtiene correctamente el valor de la factura
+        const invoiceInput = document.getElementById('stock_invoice');
+        const invoice = invoiceInput ? invoiceInput.value : '';
 
         if(!qty || parseFloat(qty) <= 0) return Swal.fire('Atención', 'Ingrese una cantidad válida mayor a cero.', 'warning');
 
@@ -857,8 +877,10 @@
         
         document.getElementById('kardex_code').innerText = data.product.code;
         document.getElementById('kardex_name').innerText = data.product.name;
-        document.getElementById('kardex_cat').innerText = data.product.category;
-        document.getElementById('kardex_sup').innerText = data.product.supplier;
+        
+        // CORRECCIÓN: Se envuelven en 'if' para evitar el quiebre si estos elementos no se usan en el diseño
+        if(document.getElementById('kardex_cat')) document.getElementById('kardex_cat').innerText = data.product.category;
+        if(document.getElementById('kardex_sup')) document.getElementById('kardex_sup').innerText = data.product.supplier;
         
         const stockDisplay = data.product.unit_type === 'ML' ? `${data.product.stock} ml` : `${data.product.stock} u.`;
         document.getElementById('kardex_stock').innerText = stockDisplay;
