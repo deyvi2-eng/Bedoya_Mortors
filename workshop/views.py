@@ -3,7 +3,10 @@ from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
 from django.http import HttpResponse
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
+
+# Importación para generar PDF sin dependencias del sistema (Ideal para Render)
+from xhtml2pdf import pisa
 
 # Modelos del Módulo Taller
 from .models import ServiceOrder, ServiceMedia, ServiceItem
@@ -38,13 +41,11 @@ def workshop_dashboard(request):
 def create_intake(request):
     """Crea una nueva orden de recepción de vehículo"""
     
-    # Definimos la matriz aquí de forma elegante
-    checklist_items = [
-        ('espejo', 'Espejos'), ('rines', 'Rines'), ('asiento', 'Asiento'),
-        ('pintura', 'Pintura'), ('bateria', 'Batería'), ('direccionales', 'Direccionales'),
-        ('faro', 'Faro Principal'), ('filtro_aire', 'Filtro de Aire'), ('stop', 'Stop'),
-        ('tapon_radiador', 'Tapón Radiador'), ('posapies', 'Posapies'),
-        ('tanque', 'Tanque'), ('maniguetas', 'Maniguetas'), ('llaves', 'Llaves')
+    # ⚠️ LISTA ACTUALIZADA CON LOS NOMBRES EXACTOS DEL NUEVO HTML DE INGRESO
+    checklist_keys = [
+        'espejos', 'pito', 'placa', 'tapa-gas', 'templadores', 'timon', 'velocimetro', 'pintura', 'faros',
+        'botones', 'carburador', 'estribos', 'filtro-gas', 'perneria', 'switch', 'bateria',
+        'acc-pato', 'alarma', 'baul', 'fusiblera', 'herramientas', 'inox', 'medidor-aceite', 'radiador'
     ]
 
     if request.method == 'POST':
@@ -52,29 +53,49 @@ def create_intake(request):
         signature_data = request.POST.get('signature_base64')
         media_files = request.FILES.getlist('media_uploads')
         
-        # Capturamos el mapa de daños (que ahora son 3 vistas) y el nuevo inventario detallado
-        damage_map_data = request.POST.get('damage_map_data', '{}')
-        detailed_inventory = request.POST.get('detailed_inventory_data', '[]')
+        # Capturamos el mapa de daños
+        damage_map_data = request.POST.get('damage_map_data', '[]')
         
+        # ⚠️ CAPTURAR LAS NUEVAS OBSERVACIONES DE INVENTARIO
+        inventory_obs = request.POST.get('inventory_observations', '')
+        
+        # Capturamos toda la matriz B/M iterando sobre la nueva lista
         condition_data = {}
-        for key, label in checklist_items:
-            condition_data[key] = request.POST.get(f'chk_{key}', '')
+        for key in checklist_keys:
+            val = request.POST.get(f'chk_{key}')
+            if val: # Solo guardamos si marcó B o M
+                condition_data[key] = val
 
         if form.is_valid():
             service_order = form.save(commit=False)
+            
+            # Si el usuario llenó observaciones de inventario, lo concatenamos a las generales
+            if inventory_obs:
+                if service_order.observations:
+                    service_order.observations += f"\nObs. Inventario Extra: {inventory_obs}"
+                else:
+                    service_order.observations = f"Obs. Inventario Extra: {inventory_obs}"
+
+            # Manejo de los checkbox del cliente (Llaves, casco, matrícula)
+            service_order.left_keys = request.POST.get('left_keys') == 'on'
+            service_order.left_helmet = request.POST.get('left_helmet') == 'on'
+            service_order.left_registration = request.POST.get('left_registration') == 'on'
+            
+            # Asignamos el JSON del checklist
+            service_order.condition_checklist = condition_data
+            
+            # Guardamos los datos JSON del mapa visual
+            import json
+            service_order.damage_map_data = json.loads(damage_map_data)
+            
+            # Asignamos la firma
             if signature_data:
                 service_order.client_signature_base64 = signature_data
                 
-            service_order.condition_checklist = condition_data
-            
-            # Guardamos los nuevos datos JSON
-            import json
-            service_order.damage_map_data = json.loads(damage_map_data)
-            service_order.detailed_inventory = json.loads(detailed_inventory)
-            
             service_order.status = 'pending'
             service_order.save()
             
+            # Guardamos la evidencia multimedia
             for file in media_files:
                 is_video = file.content_type.startswith('video/')
                 ServiceMedia.objects.create(service_order=service_order, media_file=file, is_video=is_video)
@@ -87,39 +108,70 @@ def create_intake(request):
         form = ServiceOrderForm()
 
     return render(request, 'workshop/intake_form.html', {
-        'form': form,
-        'checklist_items': checklist_items
+        'form': form
     })
 
 
 def generate_entry_pdf(request, order_id):
-    import weasyprint
-    """Genera el PDF de ingreso con la evidencia fotográfica y legal"""
-    # Traemos la orden
+    """Genera el PDF de ingreso usando xhtml2pdf (100% Python, compatible con Render)"""
     order = get_object_or_404(ServiceOrder, id=order_id)
-    
-    # Filtramos las fotos de la orden (ignoramos videos para impresión)
     photos = order.media_files.filter(is_video=False)
 
-    # Contexto para el HTML
+    # 1. Extraemos el diccionario (Si está vacío, usamos uno nuevo {})
+    chk = order.condition_checklist or {}
+    
+    # 2. Preparamos las listas exactas para las 3 columnas del PDF (Etiqueta, Valor)
+    exterior = [
+        ('Espejos', chk.get('espejos', 'NA')),
+        ('Pito', chk.get('pito', 'NA')),
+        ('Placa', chk.get('placa', 'NA')),
+        ('Tapa Gasolina', chk.get('tapa-gas', 'NA')),
+        ('Templadores', chk.get('templadores', 'NA')),
+        ('Timón', chk.get('timon', 'NA')),
+        ('Velocímetro', chk.get('velocimetro', 'NA')),
+        ('Pintura/Asiento', chk.get('pintura', 'NA')),
+        ('Faros/Stops', chk.get('faros', 'NA')),
+    ]
+    interior = [
+        ('Botones/Mandos', chk.get('botones', 'NA')),
+        ('Carburador', chk.get('carburador', 'NA')),
+        ('Estribos', chk.get('estribos', 'NA')),
+        ('Filtro Gasolina', chk.get('filtro-gas', 'NA')),
+        ('Pernería', chk.get('perneria', 'NA')),
+        ('Switch/Llaves', chk.get('switch', 'NA')),
+        ('Batería', chk.get('bateria', 'NA')),
+    ]
+    accesorios = [
+        ('Acc Pato', chk.get('acc-pato', 'NA')),
+        ('Alarma', chk.get('alarma', 'NA')),
+        ('Baúl/Maletero', chk.get('baul', 'NA')),
+        ('Fusiblera', chk.get('fusiblera', 'NA')),
+        ('Herramientas', chk.get('herramientas', 'NA')),
+        ('Lujos Inox', chk.get('inox', 'NA')),
+        ('Medidor Aceite', chk.get('medidor-aceite', 'NA')),
+        ('Tapa Radiador', chk.get('radiador', 'NA')),
+    ]
+
+    # 3. Mandamos las listas ya procesadas al contexto
     context = {
         'order': order,
         'photos': photos,
+        'request': request,
+        'exterior': exterior,
+        'interior': interior,
+        'accesorios': accesorios,
     }
     
-    # Renderizamos el HTML como un string
-    html_string = render_to_string('workshop/intake_pdf.html', context, request=request)
+    template = get_template('workshop/intake_pdf.html')
+    html_string = template.render(context)
     
-    # Convertimos a PDF (base_url es crucial para que carguen los logos y fotos)
-    pdf_file = weasyprint.HTML(
-        string=html_string, 
-        base_url=request.build_absolute_uri()
-    ).write_pdf()
-    
-    # Configuramos la respuesta HTTP
-    response = HttpResponse(pdf_file, content_type='application/pdf')
-    # Usamos 'inline' para que se vea en el navegador. Cambia a 'attachment' para forzar descarga.
+    response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="Ingreso_{order.license_plate}_{order.id}.pdf"'
+    
+    pisa_status = pisa.CreatePDF(html_string, dest=response)
+    
+    if pisa_status.err:
+        return HttpResponse(f"Tuvimos un error al generar el PDF de la orden {order.id}")
     
     return response
 

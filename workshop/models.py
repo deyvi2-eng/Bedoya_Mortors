@@ -27,7 +27,8 @@ class ServiceOrder(models.Model):
     arrived_by_crane = models.BooleanField(default=False, verbose_name="Ingreso en Grúa")
     
     # Trabajo, Observaciones y Nuevos Campos (Los que causaban el error)
-    work_to_do = models.TextField(verbose_name="Trabajo a Realizar")
+    # Cámbialo a esto:
+    work_to_do = models.TextField(verbose_name="Trabajo a Realizar", default="", blank=True)
     observations = models.TextField(blank=True, null=True, verbose_name="Observaciones Técnicas Generales")
     customer_observation = models.TextField(blank=True, null=True, verbose_name="Observación y Peticiones del Cliente")
     
