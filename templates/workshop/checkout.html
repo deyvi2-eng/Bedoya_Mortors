@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
+    
+    <!-- Encabezado -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+        <div>
+            <h2 class="text-lg font-black text-gray-800 flex items-center gap-2">
+                <i class="ph-bold ph-receipt text-brand-500"></i> Liquidación de Orden #{{ order.id|stringformat:"05d" }}
+            </h2>
+            <p class="text-xs text-gray-500 font-medium mt-1">
+                Vehículo: <span class="text-gray-800 font-bold">{{ order.license_plate|upper }}</span> | 
+                Cliente: <span class="text-gray-800 font-bold">{{ order.customer.first_name }} {{ order.customer.last_name }}</span>
+            </p>
+        </div>
+        <a href="{% url 'workshop:workshop_dashboard' %}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold transition-colors">
+            Volver al Tablero
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
+        <!-- COLUMNA IZQUIERDA: Formularios de Ingreso -->
+        <div class="lg:col-span-7 space-y-4">
+            
+            <!-- Agregar Repuesto Físico -->
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3"><i class="ph-bold ph-package"></i> Añadir Repuesto</h3>
+                <form method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    {% csrf_token %}
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Producto en Bodega</label>
+                        <select name="product_id" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-brand-500 text-gray-700" required>
+                            <option value="">-- Seleccionar Repuesto --</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}">{{ product.name }} (Stock: {{ product.stock }} | ${{ product.sale_price }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cantidad</label>
+                        <input type="number" name="quantity" min="1" value="1" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-brand-500 text-gray-700" required>
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors">
+                            + Agregar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Agregar Mano de Obra / Servicio -->
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3"><i class="ph-bold ph-wrench"></i> Añadir Mano de Obra</h3>
+                <form method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    {% csrf_token %}
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Descripción del Servicio</label>
+                        <input type="text" name="description" placeholder="Ej: Cambio de aceite, ABC completo..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-brand-500 text-gray-700" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Costo ($)</label>
+                        <input type="number" step="0.01" name="price" placeholder="0.00" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-brand-500 text-gray-700" required>
+                        <input type="hidden" name="quantity" value="1">
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors">
+                            + Agregar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Resumen y Facturación -->
+        <div class="lg:col-span-5">
+            <div class="bg-gray-900 p-5 rounded-xl shadow-lg flex flex-col h-full relative overflow-hidden">
+                <!-- Efecto visual de fondo -->
+                <div class="absolute -right-10 -top-10 w-32 h-32 bg-gray-800 rounded-full opacity-50"></div>
+                
+                <h3 class="text-sm font-black text-white mb-4 relative z-10 border-b border-gray-700 pb-2">Detalle a Facturar</h3>
+                
+                <!-- Lista de Ítems -->
+                <div class="flex-1 overflow-y-auto mb-4 relative z-10 space-y-2">
+                    {% for item in items %}
+                    <div class="flex justify-between items-center bg-gray-800 p-2 rounded-lg border border-gray-700">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-gray-200 truncate">
+                                {% if item.product %}<span class="text-brand-400">📦</span>{% else %}<span class="text-emerald-400">🔧</span>{% endif %} 
+                                {{ item.description }}
+                            </p>
+                            <p class="text-[10px] text-gray-400 font-mono mt-0.5">{{ item.quantity }} x ${{ item.price }}</p>
+                        </div>
+                        <span class="text-sm font-black text-white ml-2">${{ item.get_subtotal|floatformat:2 }}</span>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-gray-500 text-xs py-4">
+                        Aún no se han agregado repuestos ni servicios.
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Matemáticas Financieras -->
+                <div class="border-t border-gray-700 pt-3 space-y-2 relative z-10">
+                    <div class="flex justify-between text-xs font-bold text-gray-400">
+                        <span>Subtotal Servicios/Repuestos:</span>
+                        <span>${{ total_items|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between text-xs font-bold text-red-400">
+                        <span>Abono Inicial (Anticipo):</span>
+                        <span>- ${{ order.deposit_amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-700">
+                        <span class="text-sm font-bold text-white uppercase tracking-widest">Total a Pagar:</span>
+                        <span class="text-xl font-black text-brand-400">${{ balance_due|floatformat:2 }}</span>
+                    </div>
+                </div>
+
+                <!-- Botón Maestro -->
+                <div class="mt-5 relative z-10">
+                    <a href="{% url 'workshop:finalize_service_order' order.id %}" onclick="return confirm('¿Está seguro de facturar esta orden y entregar el vehículo? Esta acción descontará inventario.');" class="block w-full bg-brand-500 hover:bg-brand-600 text-white text-center px-4 py-3 rounded-lg text-sm font-black transition-colors shadow-md">
+                        🧾 Facturar y Entregar Vehículo
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

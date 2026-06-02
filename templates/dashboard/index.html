@@ -11,6 +11,7 @@
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
     
+    <!-- Filtros -->
     <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <h2 class="text-sm font-bold text-gray-800 flex items-center gap-2 px-2">
             <i class="ph-bold ph-funnel text-brand-500"></i> Filtros
@@ -35,6 +36,7 @@
         </form>
     </div>
     
+    <!-- KPIs Principales -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
@@ -77,6 +79,7 @@
         </div>
     </div>
 
+    <!-- Resumen Financiero -->
     {% if is_admin %}
     <div class="mt-6 mb-2 px-1 flex items-center gap-2">
         <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-1 w-full">Resumen Financiero</h2>
@@ -125,7 +128,71 @@
     </div>
     {% endif %}
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-2">
+    <!-- NUEVO: MÓDULOS OPERATIVOS -->
+    <div class="mt-8 mb-2 px-1 flex items-center gap-2">
+        <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-1 w-full">Módulos Operativos</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- 1. Módulo de Taller (Nuevo) -->
+        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-orange-50 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
+            
+            <div class="flex items-center justify-between mb-3 relative z-10">
+                <div class="w-10 h-10 rounded-lg bg-orange-100 border border-orange-200 text-orange-600 flex items-center justify-center shadow-sm">
+                    <i class="ph-bold ph-wrench text-xl"></i>
+                </div>
+                <span class="bg-gray-900 text-white text-[9px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">Nuevo</span>
+            </div>
+            
+            <h3 class="text-base font-black text-gray-800 mb-1 relative z-10">Taller y Recepción</h3>
+            <p class="text-xs text-gray-500 mb-5 flex-grow relative z-10">Recepción de motos, diagnósticos, control de estados y facturación.</p>
+            
+            <div class="flex gap-2 mt-auto relative z-10">
+                <a href="{% url 'workshop:workshop_dashboard' %}" class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200 text-center px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1">
+                    <i class="ph-bold ph-kanban"></i> Tablero
+                </a>
+                <a href="{% url 'workshop:create_intake' %}" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white shadow-sm text-center px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1">
+                    <i class="ph-bold ph-plus"></i> Ingreso
+                </a>
+            </div>
+        </div>
+        
+        <!-- 2. Módulo POS -->
+        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center shadow-sm">
+                    <i class="ph-bold ph-storefront text-xl"></i>
+                </div>
+            </div>
+            <h3 class="text-base font-black text-gray-800 mb-1">Punto de Venta</h3>
+            <p class="text-xs text-gray-500 mb-5 flex-grow">Apertura de caja, venta directa de repuestos y comprobantes.</p>
+            <div class="flex gap-2 mt-auto">
+                <a href="/sales/pos/" class="w-full bg-brand-500 hover:bg-brand-600 text-white shadow-sm text-center px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1">
+                    <i class="ph-bold ph-shopping-cart"></i> Abrir POS
+                </a>
+            </div>
+        </div>
+        
+        <!-- 3. Módulo Inventario -->
+        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm">
+                    <i class="ph-bold ph-package text-xl"></i>
+                </div>
+            </div>
+            <h3 class="text-base font-black text-gray-800 mb-1">Bodega e Inventario</h3>
+            <p class="text-xs text-gray-500 mb-5 flex-grow">Gestión de stock, productos, movimientos y compras.</p>
+            <div class="flex gap-2 mt-auto">
+                <a href="/inventory/manage/" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm text-center px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1">
+                    <i class="ph-bold ph-list-magnifying-glass"></i> Administrar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas y Actividad Reciente -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-4">
         <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
             <div class="flex items-center gap-2 mb-4">
                 <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Curva de Rendimiento</h4>

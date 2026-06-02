@@ -1,0 +1,587 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    /* TEMA CLARO CORPORATIVO BEDOYA MOTORS */
+    body { -webkit-tap-highlight-color: transparent; background-color: #f8fafc; color: #000000; }
+    
+    /* Inputs Premium */
+    .form-control, .form-select {
+        width: 100%; background-color: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 0.75rem;
+        padding: 0.875rem 1rem; font-size: 0.95rem; color: #000000; outline: none; transition: all 0.3s ease;
+    }
+    textarea.form-control { min-height: 120px; font-size: 0.95rem; line-height: 1.5; resize: vertical; color: #000000; }
+    .form-control:focus, .form-select:focus { border-color: #dc2626; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15); }
+    .form-control.is-invalid { border-color: #ef4444; background-color: #fef2f2; }
+    .form-control::placeholder { color: #64748b; font-weight: 500; }
+
+    /* Select2 */
+    .select2-container--default .select2-selection--single { background-color: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 0.75rem; height: 50px; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 48px; color: #000000; font-size: 0.95rem; font-weight: 700; padding-left: 1rem; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 48px; }
+    
+    /* Pizarra Firma */
+    .signature-pad-container { background: #fff; border: 2px dashed #94a3b8; border-radius: 0.875rem; overflow: hidden; }
+    canvas#signature-pad { width: 100%; height: 200px; touch-action: none; cursor: crosshair; }
+
+    /* Matriz B/M */
+    .bm-radio { display: none; }
+    .bm-label {
+        display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; 
+        border-radius: 8px; border: 1.5px solid #cbd5e1; background: #f1f5f9; color: #000000; font-weight: 900; font-size: 14px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .bm-label:hover { background: #e2e8f0; }
+    .bm-radio[value="B"]:checked + .bm-label { background: #6ee7b7; border-color: #10b981; color: #000000; box-shadow: 0 3px 5px rgba(16, 185, 129, 0.3); }
+    .bm-radio[value="M"]:checked + .bm-label { background: #fca5a5; border-color: #ef4444; color: #000000; box-shadow: 0 3px 5px rgba(239, 68, 68, 0.3); }
+
+    /* Slider Gasolina */
+    .fuel-slider-container { padding: 10px 0; }
+    input[type=range].fuel-slider { -webkit-appearance: none; width: 100%; background: transparent; margin: 10px 0; }
+    input[type=range].fuel-slider::-webkit-slider-runnable-track { width: 100%; height: 14px; cursor: pointer; background: #e2e8f0; border-radius: 10px; }
+    input[type=range].fuel-slider::-webkit-slider-thumb { height: 28px; width: 28px; border-radius: 50%; background: #dc2626; cursor: pointer; -webkit-appearance: none; margin-top: -7px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 3px solid white; transition: transform 0.2s; }
+    input[type=range].fuel-slider::-webkit-slider-thumb:hover { transform: scale(1.1); }
+
+    /* Tarjetas Generales */
+    .erp-card { background: #ffffff; border-radius: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.05); padding: 1.5rem; margin-bottom: 1.5rem; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .erp-card:hover { box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.08); }
+    
+    /* Alertas y Checkboxes */
+    .error-toast { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #fca5a5; border: 2px solid #ef4444; color: #000000; padding: 12px 24px; border-radius: 30px; font-weight: 900; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(220, 38, 38, 0.2); font-size: 14px;}
+    .custom-checkbox { width: 1.5rem; height: 1.5rem; border-radius: 0.375rem; border: 2px solid #cbd5e1; appearance: none; background: white; cursor: pointer; transition: all 0.2s; position: relative;}
+    .custom-checkbox:checked { background-color: #fca5a5; border-color: #ef4444; }
+    .custom-checkbox:checked::after { content: '✓'; color: #000000; position: absolute; font-weight: 900; font-size: 16px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+    /* Galería Scroll Horizontal (Mejorado para fotos más grandes) */
+    .photo-scroller { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.75rem; scroll-behavior: smooth; }
+    .photo-scroller::-webkit-scrollbar { height: 8px; }
+    .photo-scroller::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 10px; }
+</style>
+
+<!-- Mensaje de Error Flotante -->
+<div id="errorToast" class="error-toast flex items-center gap-2">
+    <i class="ph-bold ph-warning-circle text-xl text-red-600"></i> <span id="errorMsg">Completa los campos obligatorios.</span>
+</div>
+
+<!-- ======================================================= -->
+<!-- MODAL DE GALERÍA FLOTANTE COMPACTA Y ESTRUCTURADA -->
+<!-- ======================================================= -->
+<div id="mediaModal" class="fixed inset-0 bg-black/60 z-[10000] hidden items-center justify-center p-4 transition-opacity duration-300 opacity-0 backdrop-blur-sm">
+    
+    <!-- Contenedor Blanco (Compacto) -->
+    <div class="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl relative overflow-hidden" id="modalBox">
+        
+        <!-- Cabecera -->
+        <div class="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50 shrink-0">
+            <h3 class="font-black text-base text-black flex items-center gap-2">
+                <i class="ph-bold ph-image text-red-600 text-xl"></i> Evidencia
+            </h3>
+            <button type="button" id="closeModal" class="text-gray-500 hover:text-white bg-gray-200 hover:bg-red-600 rounded-full w-8 h-8 flex items-center justify-center transition-colors shadow-sm">
+                <i class="ph-bold ph-x text-lg"></i>
+            </button>
+        </div>
+        
+        <!-- Área de la Foto -->
+        <div class="w-full bg-gray-100 flex items-center justify-center relative shrink-0" style="height: 35vh; min-height: 250px;">
+            <button type="button" id="prevMedia" class="absolute left-2 z-10 bg-white border border-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-black shadow-md hover:bg-gray-200 transition-all">
+                <i class="ph-bold ph-caret-left text-xl"></i>
+            </button>
+            
+            <div id="modalViewer" class="w-full h-full flex items-center justify-center p-2 overflow-hidden">
+                <!-- Imagen/Video inyectado -->
+            </div>
+            
+            <button type="button" id="nextMedia" class="absolute right-2 z-10 bg-white border border-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-black shadow-md hover:bg-gray-200 transition-all">
+                <i class="ph-bold ph-caret-right text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Área de Comentarios -->
+        <div class="p-4 bg-white border-t border-gray-200 flex flex-col gap-2 shrink-0">
+            <label class="text-xs font-black text-gray-800 uppercase">Detalle o Comentario de esta foto:</label>
+            <textarea id="mediaCommentInput" rows="2" class="form-control !min-h-[70px] text-sm" placeholder="Ej: Rayón profundo en la tapa lateral derecha..."></textarea>
+            <div class="flex justify-between items-center mt-1">
+                <div class="text-gray-500 font-black text-[10px] tracking-widest" id="mediaCounter">1 / X</div>
+                <button type="button" id="removeMediaBtn" class="text-xs font-black text-red-600 hover:text-red-800 uppercase tracking-widest transition">Borrar Foto</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ======================================================= -->
+
+<div class="max-w-4xl mx-auto pb-24 pt-4 px-3 sm:px-0">
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+        <div class="flex items-center gap-4 w-full sm:w-auto">
+            <a href="{% url 'workshop:workshop_dashboard' %}" class="w-12 h-12 rounded-xl bg-gray-100 border border-gray-300 flex items-center justify-center text-black shadow-sm hover:bg-gray-200 transition shrink-0"><i class="ph-bold ph-arrow-left text-2xl"></i></a>
+            <div>
+                <h2 class="text-2xl font-black text-black tracking-tight">Recepción Técnica</h2>
+                <p class="text-xs font-black text-gray-700 uppercase tracking-widest">Orden de Ingreso</p>
+            </div>
+        </div>
+        <img src="{% static 'img/logo.png' %}" alt="Bedoya Motors" class="h-14 object-contain">
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="intakeForm" novalidate>
+        {% csrf_token %}
+        
+        <!-- 1. IDENTIFICACIÓN -->
+        <div class="erp-card">
+            <h3 class="text-base font-black text-black mb-4 uppercase flex items-center gap-2"><i class="ph-bold ph-user text-red-600 text-2xl"></i> Datos Principales</h3>
+            <div class="flex items-center gap-3 mb-5">
+                <div class="flex-grow">{{ form.customer }}</div>
+                <a href="{% url 'customers:manage' %}" target="_blank" class="w-12 h-[52px] rounded-xl bg-gray-200 text-black border border-gray-300 flex items-center justify-center shadow-sm hover:bg-gray-300 transition"><i class="ph-bold ph-plus text-xl"></i></a>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="col-span-2 md:col-span-1 bg-gray-50 p-3 rounded-xl border border-gray-200"><label class="block text-[11px] font-black text-black uppercase ml-1">Placa *</label>{{ form.license_plate }}</div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-200"><label class="block text-[11px] font-black text-black uppercase ml-1">KM *</label>{{ form.mileage }}</div>
+                <div><label class="block text-[11px] font-black text-black uppercase ml-1">No. Serie / Chasis</label>{{ form.serial_number }}</div>
+                <div><label class="block text-[11px] font-black text-black uppercase ml-1">Marca *</label>{{ form.brand }}</div>
+                <div><label class="block text-[11px] font-black text-black uppercase ml-1">Modelo *</label>{{ form.model }}</div>
+                <div><label class="block text-[11px] font-black text-black uppercase ml-1">Color *</label>{{ form.color }}</div>
+            </div>
+        </div>
+
+        <!-- 2. TRABAJO Y OBSERVACIONES -->
+        <div class="erp-card">
+            <h3 class="text-base font-black text-black mb-4 uppercase flex items-center gap-2"><i class="ph-bold ph-wrench text-red-600 text-2xl"></i> Trabajo y Observaciones</h3>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-black text-black uppercase mb-2">Trabajo a Realizar *</label>
+                    {{ form.work_to_do }}
+                </div>
+                <div>
+                    <label class="block text-sm font-black text-black uppercase mb-2">Observaciones Técnicas Generales</label>
+                    {{ form.observations }}
+                </div>
+                <div>
+                    <label class="block text-sm font-black text-black uppercase mb-2">Observación y Peticiones del Cliente</label>
+                    {{ form.customer_observation }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. EVIDENCIA FOTOGRÁFICA (ACUMULATIVA Y MÁS GRANDE) -->
+        <div class="erp-card border-red-200 shadow-md">
+            <h3 class="text-base font-black text-black mb-2 uppercase flex items-center gap-2"><i class="ph-bold ph-camera text-red-600 text-2xl"></i> Evidencia Visual (Fotos y Videos)</h3>
+            <p class="text-sm font-bold text-gray-700 mb-4">Puedes <strong>seguir añadiendo más fotos</strong> sin que se borren las anteriores. Toca las imágenes en la galería para agregarles comentarios.</p>
+            
+            <!-- Botón de Cámara Compacto -->
+            <div class="relative w-full mb-4">
+                <!-- Se omite el name nativo aquí para enviarlo por JS luego o que el DataTransfer lo mantenga -->
+                <input type="file" id="mediaInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*, video/mp4" multiple capture="environment">
+                <div class="bg-red-50 border-2 border-dashed border-red-300 rounded-xl p-4 flex items-center justify-center gap-4 hover:bg-red-100 transition-all shadow-sm">
+                    <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-md">
+                        <i class="ph-bold ph-camera-plus text-2xl"></i>
+                    </div>
+                    <div class="text-left">
+                        <h4 class="text-base font-black text-black">Añadir Evidencia</h4>
+                        <p class="text-xs text-gray-700 font-bold mt-0.5">Toca aquí para abrir la cámara</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carrusel de Miniaturas Más Grande -->
+            <div id="photo-previews" class="photo-scroller rounded-xl bg-gray-100 min-h-[160px] p-4 border border-gray-300 flex items-center justify-center shadow-inner">
+                <span class="text-sm text-gray-500 font-black"><i class="ph-bold ph-image text-xl align-middle"></i> Aquí aparecerán tus fotos...</span>
+            </div>
+            <!-- Input oculto para enviar los archivos acumulados -->
+            <input type="file" name="media_uploads" id="realMediaInput" multiple class="hidden">
+            <input type="hidden" name="media_comments_data" id="media_comments_data">
+        </div>
+
+        <!-- 4. MAPA DE DAÑOS -->
+        <div class="erp-card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-black text-black uppercase flex items-center gap-2"><i class="ph-bold ph-crosshair text-red-600 text-2xl"></i> Mapa Visual de Daños</h3>
+                <button type="button" id="undo-damage" class="bg-gray-200 px-4 py-2 rounded-lg shadow-sm text-xs font-black text-black border border-gray-300 hover:bg-gray-300 transition"><i class="ph-bold ph-arrow-u-up-left"></i> Deshacer Marca</button>
+            </div>
+            <p class="text-sm font-black text-gray-600 mb-4">Toca sobre las siluetas en la imagen para dejar una marca (X) sobre rayones o daños.</p>
+            
+            <div class="relative w-full border-2 border-gray-300 rounded-xl overflow-hidden bg-white shadow-inner">
+                <img id="moto-bg-img" src="{% static 'img/esquema_moto.jpg' %}" alt="Esquema Moto" class="w-full h-auto block select-none pointer-events-none" style="min-height: 250px; object-fit: contain;">
+                <canvas id="damage-map" class="absolute top-0 left-0 w-full h-full touch-none cursor-crosshair"></canvas>
+            </div>
+            <input type="hidden" name="damage_map_data" id="damage_map_data">
+        </div>
+
+        <!-- 5. INVENTARIO -->
+        <div class="erp-card bg-white">
+            <h3 class="text-base font-black text-black mb-2 uppercase flex items-center gap-2"><i class="ph-bold ph-list-checks text-red-600 text-2xl"></i> Inventario y Estado Físico</h3>
+            <p class="text-sm font-black text-gray-600 mb-6">Marca "B" (Bueno) o "M" (Malo). Toca de nuevo el botón para desmarcar.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <!-- COLUMNA EXTERIOR -->
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-center bg-gray-200 text-black text-sm font-black py-2 rounded-lg mb-4 uppercase tracking-widest border border-gray-300">Exterior</div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Espejos</span><div class="flex gap-2"><label><input type="radio" name="chk_espejos" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_espejos" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Pito</span><div class="flex gap-2"><label><input type="radio" name="chk_pito" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_pito" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Placa</span><div class="flex gap-2"><label><input type="radio" name="chk_placa" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_placa" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Tapa Gasolina</span><div class="flex gap-2"><label><input type="radio" name="chk_tapa-gas" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_tapa-gas" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Templadores</span><div class="flex gap-2"><label><input type="radio" name="chk_templadores" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_templadores" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Timón</span><div class="flex gap-2"><label><input type="radio" name="chk_timon" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_timon" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Velocímetro</span><div class="flex gap-2"><label><input type="radio" name="chk_velocimetro" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_velocimetro" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Pintura/Asiento</span><div class="flex gap-2"><label><input type="radio" name="chk_pintura" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_pintura" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Faros/Stops</span><div class="flex gap-2"><label><input type="radio" name="chk_faros" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_faros" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                    </div>
+                </div>
+
+                <!-- COLUMNA INTERIOR -->
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-center bg-gray-200 text-black text-sm font-black py-2 rounded-lg mb-4 uppercase tracking-widest border border-gray-300">Interior</div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Botones/Mandos</span><div class="flex gap-2"><label><input type="radio" name="chk_botones" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_botones" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Carburador</span><div class="flex gap-2"><label><input type="radio" name="chk_carburador" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_carburador" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Estribos/Posap</span><div class="flex gap-2"><label><input type="radio" name="chk_estribos" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_estribos" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Filtro Gasolina</span><div class="flex gap-2"><label><input type="radio" name="chk_filtro-gas" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_filtro-gas" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Pernería</span><div class="flex gap-2"><label><input type="radio" name="chk_perneria" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_perneria" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Switch/Llaves</span><div class="flex gap-2"><label><input type="radio" name="chk_switch" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_switch" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Batería</span><div class="flex gap-2"><label><input type="radio" name="chk_bateria" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_bateria" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                    </div>
+                </div>
+
+                <!-- COLUMNA ACCESORIOS -->
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-center bg-gray-200 text-black text-sm font-black py-2 rounded-lg mb-4 uppercase tracking-widest border border-gray-300">Accesorios</div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Accesorio Pato</span><div class="flex gap-2"><label><input type="radio" name="chk_acc-pato" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_acc-pato" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Alarma</span><div class="flex gap-2"><label><input type="radio" name="chk_alarma" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_alarma" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Baúl/Maletero</span><div class="flex gap-2"><label><input type="radio" name="chk_baul" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_baul" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Fusiblera</span><div class="flex gap-2"><label><input type="radio" name="chk_fusiblera" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_fusiblera" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Herramientas</span><div class="flex gap-2"><label><input type="radio" name="chk_herramientas" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_herramientas" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Lujos Inox</span><div class="flex gap-2"><label><input type="radio" name="chk_inox" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_inox" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Medidor Aceite</span><div class="flex gap-2"><label><input type="radio" name="chk_medidor-aceite" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_medidor-aceite" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200"><span class="text-[12px] font-black text-black">Tapa Radiador</span><div class="flex gap-2"><label><input type="radio" name="chk_radiador" value="B" class="bm-radio"><span class="bm-label">B</span></label><label><input type="radio" name="chk_radiador" value="M" class="bm-radio"><span class="bm-label">M</span></label></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-black text-black uppercase mb-2">Observaciones Especiales del Inventario</label>
+                <textarea name="inventory_observations" rows="2" class="form-control" placeholder="Detalla aquí si hay repuestos adaptados, herramientas incompletas..."></textarea>
+            </div>
+            
+            <div class="bg-gray-100 p-4 rounded-xl border border-gray-300 mt-4">
+                <label class="block text-xs font-black text-black uppercase mb-3 tracking-widest">El cliente deja en taller:</label>
+                <div class="flex flex-wrap gap-6">
+                    <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="left_keys" class="custom-checkbox" checked><span class="text-sm font-black text-black">Llaves</span></label>
+                    <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="left_helmet" class="custom-checkbox"><span class="text-sm font-black text-black">Casco</span></label>
+                    <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="left_registration" class="custom-checkbox"><span class="text-sm font-black text-black">Matrícula</span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. RECEPCIÓN FINAL (GASOLINA Y ABONO) -->
+        <div class="erp-card bg-gray-100 border-gray-300">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <label class="block text-sm font-black text-black uppercase mb-3 flex justify-between items-center">
+                        <span><i class="ph-bold ph-gas-pump text-red-600"></i> Combustible</span>
+                        <span id="fuel-text" class="bg-gray-200 text-black px-3 py-1 rounded-md text-xs border border-gray-300">1/2 Tanque</span>
+                    </label>
+                    <div class="fuel-slider-container mt-4">
+                        <input type="range" min="0" max="4" value="2" class="fuel-slider" id="fuelSlider">
+                        <div class="flex justify-between text-xs font-black text-black px-1 mt-3">
+                            <span>Vacío</span><span>1/4</span><span>Medio</span><span>3/4</span><span>Lleno</span>
+                        </div>
+                    </div>
+                    <input type="hidden" name="fuel_level" id="id_fuel_level" value="1/2">
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <label class="block text-sm font-black text-black uppercase mb-3">Abono Inicial ($)</label>
+                    {{ form.deposit_amount }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. FIRMA Y GUARDADO -->
+        <div class="erp-card text-center relative border-gray-300 shadow-lg">
+            <h3 class="text-2xl font-black text-black mb-2 uppercase">Conformidad del Cliente *</h3>
+            <p class="text-sm font-black text-gray-700 mb-6">El cliente debe firmar aceptando el inventario, el mapa de daños y las condiciones.</p>
+            
+            <div class="bg-white border-2 border-gray-400 rounded-2xl relative max-w-xl mx-auto mb-8 shadow-inner">
+                <div class="p-1">
+                    <canvas id="signature-pad"></canvas>
+                </div>
+                <button type="button" id="clear-signature" class="absolute top-3 right-3 w-12 h-12 bg-gray-200 border border-gray-300 rounded-full text-black hover:text-white hover:bg-red-600 flex items-center justify-center shadow-md transition-all z-20" title="Borrar firma">
+                    <i class="ph-bold ph-eraser text-2xl"></i>
+                </button>
+            </div>
+            <input type="hidden" name="signature_base64" id="signature_base64">
+
+            <button type="submit" class="w-full sm:w-auto sm:min-w-[400px] inline-flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700 text-white px-8 py-5 rounded-2xl text-xl font-black transition-all shadow-xl shadow-red-600/30 transform hover:-translate-y-1 border-2 border-red-700">
+                <i class="ph-bold ph-floppy-disk text-3xl align-middle"></i> REGISTRAR ORDEN DE TALLER
+            </button>
+        </div>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('#customer_select').select2({ width: '100%', placeholder: "Buscar cliente..." });
+
+        // 1. DESMARCAR BOTONES B/M
+        $('.bm-radio').on('click', function(e) {
+            let name = $(this).attr('name');
+            if ($(this).data('waschecked') == true) {
+                $(this).prop('checked', false);
+                $(this).data('waschecked', false);
+            } else {
+                $(`input[name="${name}"]`).data('waschecked', false); 
+                $(this).data('waschecked', true); 
+            }
+        });
+
+        // 2. SLIDER DE GASOLINA
+        const fuelLevels = ["Reserva", "1/4", "1/2", "3/4", "Lleno"];
+        $('#fuelSlider').on('input', function() {
+            let val = parseInt($(this).val());
+            let text = fuelLevels[val] + (val>0 && val<4 ? ' Tanque' : '');
+            $('#fuel-text').text(text);
+            $('#id_fuel_level').val(fuelLevels[val]);
+        });
+
+        // 3. FOTOS: ACUMULADOR DE ARCHIVOS Y GALERÍA COMPACTA
+        let uploadedMedia = []; 
+        let currentMediaIndex = 0;
+        const dataTransfer = new DataTransfer(); // Objeto para acumular archivos reales
+
+        $('#mediaInput').on('change', function(event) {
+            let newFiles = this.files;
+            let previewContainer = $('#photo-previews');
+
+            for(let i = 0; i < newFiles.length; i++) {
+                let file = newFiles[i];
+                if (file.type.startsWith('video/') && file.size > 10485760) {
+                    alert('El video supera los 10MB. Graba un clip más corto.');
+                    continue; 
+                }
+
+                dataTransfer.items.add(file); // Agrega al recolector nativo
+                
+                let fileUrl = URL.createObjectURL(file);
+                let type = file.type.startsWith('video/') ? 'video' : 'image';
+                
+                uploadedMedia.push({file: file, url: fileUrl, type: type, comment: ""});
+            }
+
+            // Sincronizar el input oculto con la suma de todos los archivos
+            document.getElementById('realMediaInput').files = dataTransfer.files;
+
+            renderThumbnails();
+        });
+
+        function renderThumbnails() {
+            let previewContainer = $('#photo-previews');
+            
+            if(uploadedMedia.length === 0) { 
+                previewContainer.removeClass('justify-start').addClass('justify-center').html('<span class="text-sm text-gray-500 font-black"><i class="ph-bold ph-image text-xl align-middle"></i> Aquí aparecerán tus fotos...</span>'); 
+                return; 
+            }
+
+            previewContainer.removeClass('justify-center').addClass('justify-start').empty();
+
+            uploadedMedia.forEach((media, index) => {
+                if(media.type === 'image') {
+                    previewContainer.append(`<img src="${media.url}" class="h-32 w-32 object-cover rounded-xl border-2 border-gray-400 shadow-md cursor-pointer hover:scale-105 transition shrink-0" onclick="openGallery(${index})">`);
+                } else {
+                    previewContainer.append(`<div class="h-32 w-32 bg-gray-900 text-white rounded-xl flex flex-col items-center justify-center cursor-pointer border-2 border-gray-400 shadow-md hover:scale-105 transition shrink-0" onclick="openGallery(${index})"><i class="ph-bold ph-video-camera text-4xl mb-1"></i><span class="text-[10px] font-black mt-1">VIDEO</span></div>`);
+                }
+            });
+        }
+
+        // Abrir Galería Flotante (COMPACTA)
+        window.openGallery = function(index) {
+            if (uploadedMedia.length === 0) return;
+            currentMediaIndex = index;
+            renderModalMedia();
+            $('#mediaModal').removeClass('hidden').addClass('flex');
+            setTimeout(() => $('#mediaModal').removeClass('opacity-0').addClass('opacity-100'), 10);
+        };
+
+        function renderModalMedia() {
+            let media = uploadedMedia[currentMediaIndex];
+            let viewer = $('#modalViewer');
+            viewer.empty(); 
+            
+            if (media.type === 'image') {
+                viewer.append(`<img src="${media.url}" class="max-w-full max-h-full object-contain drop-shadow-md">`);
+            } else {
+                viewer.append(`<video src="${media.url}" controls autoplay class="max-w-full max-h-full object-contain drop-shadow-md"></video>`);
+            }
+            
+            $('#mediaCounter').text(`${currentMediaIndex + 1} / ${uploadedMedia.length}`);
+            $('#mediaCommentInput').val(media.comment); 
+            
+            if(uploadedMedia.length <= 1) {
+                $('#prevMedia, #nextMedia').hide();
+            } else {
+                $('#prevMedia, #nextMedia').show();
+            }
+        }
+
+        $('#mediaCommentInput').on('input', function() {
+            if(uploadedMedia.length > 0) {
+                uploadedMedia[currentMediaIndex].comment = $(this).val();
+            }
+        });
+
+        // Eliminar foto específica
+        $('#removeMediaBtn').on('click', function() {
+            // Eliminar de los arrays
+            uploadedMedia.splice(currentMediaIndex, 1);
+            
+            // Reconstruir el DataTransfer (no se puede borrar directamente un índice, hay que hacer uno nuevo)
+            let dt = new DataTransfer();
+            uploadedMedia.forEach(m => dt.items.add(m.file));
+            dataTransfer.items.clear();
+            uploadedMedia.forEach(m => dataTransfer.items.add(m.file));
+            document.getElementById('realMediaInput').files = dataTransfer.files;
+
+            renderThumbnails();
+
+            if (uploadedMedia.length === 0) {
+                $('#closeModal').click();
+            } else {
+                currentMediaIndex = (currentMediaIndex >= uploadedMedia.length) ? uploadedMedia.length - 1 : currentMediaIndex;
+                renderModalMedia();
+            }
+        });
+
+        $('#prevMedia').click(function() {
+            currentMediaIndex = (currentMediaIndex > 0) ? currentMediaIndex - 1 : uploadedMedia.length - 1;
+            renderModalMedia();
+        });
+
+        $('#nextMedia').click(function() {
+            currentMediaIndex = (currentMediaIndex < uploadedMedia.length - 1) ? currentMediaIndex + 1 : 0;
+            renderModalMedia();
+        });
+
+        $('#closeModal, #mediaModal').on('click', function(e) {
+            if(e.target.id === 'mediaModal' || $(e.target).closest('#closeModal').length > 0) {
+                $('#mediaModal').removeClass('opacity-100').addClass('opacity-0');
+                setTimeout(() => {
+                    $('#mediaModal').removeClass('flex').addClass('hidden');
+                    $('#modalViewer').empty(); 
+                }, 300);
+            }
+        });
+
+        $(document).keydown(function(e) {
+            if (!$('#mediaModal').hasClass('hidden')) {
+                if (e.key === "ArrowLeft") $('#prevMedia').click();
+                if (e.key === "ArrowRight") $('#nextMedia').click();
+                if (e.key === "Escape") $('#closeModal').click();
+            }
+        });
+
+
+        // 4. MAPA DE DAÑOS INTERACTIVO
+        const damageCanvas = document.getElementById('damage-map');
+        const imgBg = document.getElementById('moto-bg-img');
+        const dCtx = damageCanvas.getContext('2d');
+        let damages = []; 
+
+        function resizeDamageCanvas() {
+            damageCanvas.width = imgBg.clientWidth;
+            damageCanvas.height = imgBg.clientHeight;
+            redrawDamages();
+        }
+        
+        if (imgBg.complete) { resizeDamageCanvas(); } 
+        else { imgBg.addEventListener('load', resizeDamageCanvas); }
+        window.addEventListener('resize', resizeDamageCanvas);
+
+        function redrawDamages() {
+            dCtx.clearRect(0, 0, damageCanvas.width, damageCanvas.height);
+            dCtx.fillStyle = '#dc2626'; 
+            dCtx.font = "bold 16px Arial";
+            dCtx.textAlign = "center";
+            dCtx.textBaseline = "middle";
+            
+            damages.forEach(p => {
+                dCtx.beginPath();
+                dCtx.arc(p.x * damageCanvas.width, p.y * damageCanvas.height, 10, 0, 2 * Math.PI);
+                dCtx.fill();
+                dCtx.fillStyle = 'black'; 
+                dCtx.fillText("X", p.x * damageCanvas.width, p.y * damageCanvas.height + 1);
+                dCtx.fillStyle = '#dc2626';
+            });
+        }
+
+        $(damageCanvas).on('click', function(e) {
+            const rect = damageCanvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = (e.clientY - rect.top) / rect.height;
+            damages.push({x, y});
+            redrawDamages();
+        });
+
+        $('#undo-damage').on('click', function() {
+            damages.pop(); 
+            redrawDamages();
+        });
+
+
+        // 5. FIRMA DIGITAL
+        var sigCanvas = document.getElementById('signature-pad');
+        function resizeSigCanvas() {
+            var ratio = Math.max(window.devicePixelRatio || 1, 1);
+            sigCanvas.width = sigCanvas.offsetWidth * ratio;
+            sigCanvas.height = sigCanvas.offsetHeight * ratio;
+            sigCanvas.getContext("2d").scale(ratio, ratio);
+        }
+        window.addEventListener('resize', resizeSigCanvas);
+        resizeSigCanvas();
+        var signaturePad = new SignaturePad(sigCanvas, { penColor: "rgb(0, 0, 0)" }); 
+        $('#clear-signature').on('click', () => signaturePad.clear());
+
+
+        // 6. VALIDACIÓN FLOTANTE Y RECOLECCIÓN
+        function showToast(msg) {
+            $('#errorMsg').text(msg);
+            $('#errorToast').fadeIn().delay(4000).fadeOut();
+        }
+
+        $('#intakeForm').on('submit', function(e) {
+            $('.form-control').removeClass('is-invalid');
+            let isValid = this.checkValidity(); 
+            
+            if (!isValid) {
+                e.preventDefault();
+                $(this).find(':invalid').first().focus().addClass('is-invalid');
+                showToast("Faltan campos obligatorios (*). Revísalos.");
+                return;
+            }
+
+            if (signaturePad.isEmpty()) {
+                e.preventDefault();
+                showToast("La firma del cliente es obligatoria.");
+                $('html, body').animate({ scrollTop: $("#signature-pad").offset().top - 100 }, 500);
+                return;
+            }
+
+            let combinedInventory = {};
+            $('.bm-radio:checked').each(function() {
+                let name = $(this).attr('name').replace('chk_', '');
+                combinedInventory[name] = $(this).val(); 
+            });
+
+            // Recopilar arrays finales
+            let finalComments = uploadedMedia.map(m => m.comment);
+            $('#media_comments_data').val(JSON.stringify(finalComments));
+            $('#damage_map_data').val(JSON.stringify(damages));
+            $('#signature_base64').val(signaturePad.toDataURL());
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Orden de Recepción Técnica</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 11px;
+            color: #2c3e50;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+        }
+        /* Encabezado */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .logo-box { width: 40%; }
+        .logo-box img { max-height: 50px; }
+        .info-box { width: 50%; text-align: right; }
+        .info-box h1 { font-size: 16px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px; }
+        .info-box p { margin: 0; font-size: 10px; color: #555; }
+        .order-number { font-size: 18px; font-weight: bold; color: #d32f2f; }
+
+        /* Contenedores Flexibles */
+        .row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .col-half { width: 48%; }
+        
+        /* Cajas de Datos */
+        .data-section {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+        .section-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 3px;
+            letter-spacing: 0.5px;
+        }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table td { padding: 4px 0; font-size: 11px; }
+        .data-table .label { font-weight: bold; color: #34495e; width: 35%; }
+
+        /* Checklists e Inventario */
+        .inventory-grid { display: flex; justify-content: space-between; flex-wrap: wrap; }
+        .inventory-item { width: 30%; font-size: 11px; margin-bottom: 5px; }
+        .check-box { 
+            display: inline-block; width: 10px; height: 10px; 
+            border: 1px solid #333; margin-right: 5px; text-align: center; line-height: 10px;
+        }
+        .checked { background-color: #333; color: #fff; }
+
+        /* Texto Largo */
+        .text-box {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            min-height: 50px;
+            background-color: #fff;
+            border-radius: 4px;
+        }
+
+        /* Evidencia Fotográfica */
+        .photo-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .photo-item { 
+            width: 30%; height: 120px; 
+            border: 1px solid #ccc; border-radius: 4px;
+            overflow: hidden; text-align: center; background: #eee;
+        }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Firmas */
+        .signatures-area {
+            display: flex; justify-content: space-around;
+            margin-top: 50px; page-break-inside: avoid;
+        }
+        .signature-box { text-align: center; width: 40%; }
+        .signature-line { border-top: 1px solid #000; padding-top: 5px; margin-top: 40px; font-weight: bold; }
+        .signature-img { max-height: 80px; margin-bottom: -35px; }
+
+        /* Footer */
+        .footer {
+            margin-top: 40px; font-size: 8px; color: #7f8c8d; text-align: justify;
+            border-top: 1px solid #e0e0e0; padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-box">
+            <img src="{% static 'img/logo.png' %}" alt="Bedoya Motors">
+        </div>
+        <div class="info-box">
+            <h1>Orden de Recepción Técnica</h1>
+            <p>Comprobante de Ingreso</p>
+            <p class="order-number">N° {{ order.id|stringformat:"05d" }}</p>
+            <p>Fecha de Ingreso: {{ order.created_at|date:"d M Y, H:i" }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-half data-section">
+            <div class="section-title">Datos del Cliente</div>
+            <table class="data-table">
+                <tr><td class="label">Propietario:</td><td>{{ order.customer.first_name }} {{ order.customer.last_name }}</td></tr>
+                <tr><td class="label">C.I / RUC:</td><td>{{ order.customer.cedula }}</td></tr>
+                <tr><td class="label">Teléfono:</td><td>{{ order.customer.phone_number }}</td></tr>
+                <tr><td class="label">Email:</td><td>{{ order.customer.email|default:"N/A" }}</td></tr>
+            </table>
+        </div>
+
+        <div class="col-half data-section">
+            <div class="section-title">Información del Vehículo</div>
+            <table class="data-table">
+                <tr><td class="label">Placa:</td><td style="font-weight:bold;">{{ order.license_plate|upper }}</td></tr>
+                <tr><td class="label">Marca / Modelo:</td><td>{{ order.brand|title }} / {{ order.model|title }}</td></tr>
+                <tr><td class="label">Color:</td><td>{{ order.color|title }}</td></tr>
+                <tr><td class="label">Kilometraje:</td><td>{{ order.mileage }} km</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="data-section" style="margin-bottom: 15px;">
+        <div class="section-title">Estado e Inventario de Recepción</div>
+        <div class="row" style="margin-bottom: 0;">
+            
+            <div class="col-half">
+                <p style="margin: 0 0 5px 0; font-weight: bold; font-size: 10px;">Artículos entregados al Taller:</p>
+                <div class="inventory-grid">
+                    <div class="inventory-item">
+                        <span class="check-box {% if order.left_keys %}checked{% endif %}">{% if order.left_keys %}X{% endif %}</span> Llaves
+                    </div>
+                    <div class="inventory-item">
+                        <span class="check-box {% if order.left_helmet %}checked{% endif %}">{% if order.left_helmet %}X{% endif %}</span> Casco
+                    </div>
+                    <div class="inventory-item">
+                        <span class="check-box {% if order.left_registration %}checked{% endif %}">{% if order.left_registration %}X{% endif %}</span> Matrícula
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-half">
+                <p style="margin: 0 0 5px 0; font-weight: bold; font-size: 10px;">Nivel de Combustible reportado:</p>
+                <div style="font-size: 12px; font-weight: bold; text-transform: uppercase;">
+                    ⛽ Nivel: {{ order.get_fuel_level_display|default:order.fuel_level }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title">Motivo de Visita / Observaciones Iniciales</div>
+    <div class="text-box" style="margin-bottom: 15px;">
+        {{ order.issue_description|linebreaksbr }}
+    </div>
+
+    {% if order.deposit_amount > 0 %}
+    <div class="data-section" style="margin-bottom: 15px;">
+        <div class="section-title">Anticipos Financieros</div>
+        <table class="data-table">
+            <tr><td class="label" style="width: 20%;">Abono Inicial:</td>
+            <td style="font-size: 14px; font-weight: bold; color: #27ae60;">$ {{ order.deposit_amount }}</td></tr>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="section-title">Evidencia Fotográfica de Ingreso</div>
+    {% if photos %}
+        <div class="photo-grid">
+            {% for photo in photos %}
+                <div class="photo-item">
+                    <img src="{{ request.scheme }}://{{ request.get_host }}{{ photo.media_file.url }}" alt="Foto">
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-box" style="color: #7f8c8d; text-align: center; min-height: 20px;">
+            No se registró evidencia fotográfica en el sistema.
+        </div>
+    {% endif %}
+
+    <div class="signatures-area">
+        <div class="signature-box">
+            <div style="height: 60px;"></div> <div class="signature-line">Por Bedoya Motors</div>
+            <span style="font-size: 9px; color: #7f8c8d;">Recibe Conforme</span>
+        </div>
+        <div class="signature-box">
+            <div style="height: 60px; position: relative;">
+                {% if order.client_signature_base64 %}
+                    <img class="signature-img" src="{{ order.client_signature_base64 }}" alt="Firma del Cliente">
+                {% endif %}
+            </div>
+            <div class="signature-line">{{ order.customer.first_name }} {{ order.customer.last_name }}</div>
+            <span style="font-size: 9px; color: #7f8c8d;">C.I: {{ order.customer.cedula }} - Acepta Condiciones</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <strong>TÉRMINOS Y CONDICIONES DE TALLER:</strong> 1. El taller no se responsabiliza por la pérdida de objetos de valor, documentos o accesorios no declarados en el inventario inicial de esta orden. 2. Toda reparación tiene garantía únicamente sobre la mano de obra realizada; repuestos eléctricos no poseen garantía. 3. Vehículos que permanezcan más de 15 días tras ser notificados como listos generarán un recargo por concepto de bodegaje diario. 4. Con su firma, el cliente autoriza la revisión y desarmado de las piezas necesarias para emitir el diagnóstico.
+    </div>
+
+</body>
+</html>

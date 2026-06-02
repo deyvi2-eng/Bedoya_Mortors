@@ -3,6 +3,8 @@ from django.urls import path, include
 from django.http import HttpResponse
 from django.core.management import call_command
 from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.conf.urls.static import static
 
 # ==========================================
 # SCRIPT TEMPORAL DE RESETEO
@@ -49,4 +51,7 @@ urlpatterns = [
     path('customers/', include('customers.urls')),
     path('audits/', include('audits.urls')),
     path('reports/', include('reports.urls')),
+    path('taller/', include('workshop.urls')),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
