@@ -1,9 +1,15 @@
+import json
+import io
+import base64
+from PIL import Image, ImageDraw
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
 from django.http import HttpResponse
-from django.template.loader import render_to_string, get_template
+from django.template.loader import get_template
+from django.contrib.staticfiles import finders
 
 # Importación para generar PDF sin dependencias del sistema (Ideal para Render)
 from xhtml2pdf import pisa
@@ -41,7 +47,7 @@ def workshop_dashboard(request):
 def create_intake(request):
     """Crea una nueva orden de recepción de vehículo"""
     
-    # ⚠️ LISTA ACTUALIZADA CON LOS NOMBRES EXACTOS DEL NUEVO HTML DE INGRESO
+    # NOMBRES EXACTOS SACADOS DE TU HTML FRONTEND
     checklist_keys = [
         'espejos', 'pito', 'placa', 'tapa-gas', 'templadores', 'timon', 'velocimetro', 'pintura', 'faros',
         'botones', 'carburador', 'estribos', 'filtro-gas', 'perneria', 'switch', 'bateria',
@@ -53,52 +59,54 @@ def create_intake(request):
         signature_data = request.POST.get('signature_base64')
         media_files = request.FILES.getlist('media_uploads')
         
-        # Capturamos el mapa de daños
+        # Capturas de JSON y observaciones
         damage_map_data = request.POST.get('damage_map_data', '[]')
-        
-        # ⚠️ CAPTURAR LAS NUEVAS OBSERVACIONES DE INVENTARIO
+        media_comments_data = request.POST.get('media_comments_data', '[]')
         inventory_obs = request.POST.get('inventory_observations', '')
         
-        # Capturamos toda la matriz B/M iterando sobre la nueva lista
+        try:
+            media_comments = json.loads(media_comments_data)
+        except:
+            media_comments = []
+
         condition_data = {}
         for key in checklist_keys:
             val = request.POST.get(f'chk_{key}')
-            if val: # Solo guardamos si marcó B o M
+            if val:
                 condition_data[key] = val
 
         if form.is_valid():
             service_order = form.save(commit=False)
             
-            # Si el usuario llenó observaciones de inventario, lo concatenamos a las generales
+            # Guardamos las observaciones de inventario
             if inventory_obs:
-                if service_order.observations:
-                    service_order.observations += f"\nObs. Inventario Extra: {inventory_obs}"
-                else:
-                    service_order.observations = f"Obs. Inventario Extra: {inventory_obs}"
+                obs_text = f"Novedades Inventario Extra: {inventory_obs}"
+                service_order.observations = f"{service_order.observations}\n\n{obs_text}" if service_order.observations else obs_text
 
-            # Manejo de los checkbox del cliente (Llaves, casco, matrícula)
-            service_order.left_keys = request.POST.get('left_keys') == 'on'
-            service_order.left_helmet = request.POST.get('left_helmet') == 'on'
-            service_order.left_registration = request.POST.get('left_registration') == 'on'
+            # 🛠️ CORRECCIÓN: Checkboxes infalibles (Si el checkbox existe en el POST, es True)
+            service_order.left_keys = bool(request.POST.get('left_keys'))
+            service_order.left_helmet = bool(request.POST.get('left_helmet'))
+            service_order.left_registration = bool(request.POST.get('left_registration'))
             
-            # Asignamos el JSON del checklist
             service_order.condition_checklist = condition_data
-            
-            # Guardamos los datos JSON del mapa visual
-            import json
             service_order.damage_map_data = json.loads(damage_map_data)
             
-            # Asignamos la firma
             if signature_data:
                 service_order.client_signature_base64 = signature_data
                 
             service_order.status = 'pending'
             service_order.save()
             
-            # Guardamos la evidencia multimedia
-            for file in media_files:
+            # Guardar fotos con su comentario respectivo
+            for index, file in enumerate(media_files):
                 is_video = file.content_type.startswith('video/')
-                ServiceMedia.objects.create(service_order=service_order, media_file=file, is_video=is_video)
+                comment = media_comments[index] if index < len(media_comments) else ""
+                ServiceMedia.objects.create(
+                    service_order=service_order, 
+                    media_file=file, 
+                    is_video=is_video,
+                    description=comment # Se guarda el comentario de la foto
+                )
                 
             messages.success(request, f"¡Vehículo {service_order.license_plate} ingresado con éxito!")
             return redirect('workshop:workshop_dashboard') 
@@ -107,52 +115,72 @@ def create_intake(request):
     else:
         form = ServiceOrderForm()
 
-    return render(request, 'workshop/intake_form.html', {
-        'form': form
-    })
+    return render(request, 'workshop/intake_form.html', {'form': form})
 
 
 def generate_entry_pdf(request, order_id):
-    """Genera el PDF de ingreso usando xhtml2pdf (100% Python, compatible con Render)"""
+    """Genera el PDF de ingreso usando xhtml2pdf"""
     order = get_object_or_404(ServiceOrder, id=order_id)
     photos = order.media_files.filter(is_video=False)
 
-    # 1. Extraemos el diccionario (Si está vacío, usamos uno nuevo {})
     chk = order.condition_checklist or {}
     
-    # 2. Preparamos las listas exactas para las 3 columnas del PDF (Etiqueta, Valor)
+    # Preparamos el inventario físico para el PDF
     exterior = [
-        ('Espejos', chk.get('espejos', 'NA')),
-        ('Pito', chk.get('pito', 'NA')),
-        ('Placa', chk.get('placa', 'NA')),
-        ('Tapa Gasolina', chk.get('tapa-gas', 'NA')),
-        ('Templadores', chk.get('templadores', 'NA')),
-        ('Timón', chk.get('timon', 'NA')),
-        ('Velocímetro', chk.get('velocimetro', 'NA')),
-        ('Pintura/Asiento', chk.get('pintura', 'NA')),
-        ('Faros/Stops', chk.get('faros', 'NA')),
+        ('Espejos', chk.get('espejos', 'NA')), ('Pito', chk.get('pito', 'NA')), ('Placa', chk.get('placa', 'NA')),
+        ('Tapa Gasolina', chk.get('tapa-gas', 'NA')), ('Templadores', chk.get('templadores', 'NA')), 
+        ('Timón', chk.get('timon', 'NA')), ('Velocímetro', chk.get('velocimetro', 'NA')), 
+        ('Pintura/Asiento', chk.get('pintura', 'NA')), ('Faros/Stops', chk.get('faros', 'NA')),
     ]
     interior = [
-        ('Botones/Mandos', chk.get('botones', 'NA')),
-        ('Carburador', chk.get('carburador', 'NA')),
-        ('Estribos', chk.get('estribos', 'NA')),
-        ('Filtro Gasolina', chk.get('filtro-gas', 'NA')),
-        ('Pernería', chk.get('perneria', 'NA')),
-        ('Switch/Llaves', chk.get('switch', 'NA')),
+        ('Botones/Mandos', chk.get('botones', 'NA')), ('Carburador', chk.get('carburador', 'NA')), 
+        ('Estribos', chk.get('estribos', 'NA')), ('Filtro Gasolina', chk.get('filtro-gas', 'NA')), 
+        ('Pernería', chk.get('perneria', 'NA')), ('Switch/Llaves', chk.get('switch', 'NA')), 
         ('Batería', chk.get('bateria', 'NA')),
     ]
     accesorios = [
-        ('Acc Pato', chk.get('acc-pato', 'NA')),
-        ('Alarma', chk.get('alarma', 'NA')),
-        ('Baúl/Maletero', chk.get('baul', 'NA')),
-        ('Fusiblera', chk.get('fusiblera', 'NA')),
-        ('Herramientas', chk.get('herramientas', 'NA')),
-        ('Lujos Inox', chk.get('inox', 'NA')),
-        ('Medidor Aceite', chk.get('medidor-aceite', 'NA')),
-        ('Tapa Radiador', chk.get('radiador', 'NA')),
+        ('Acc Pato', chk.get('acc-pato', 'NA')), ('Alarma', chk.get('alarma', 'NA')), 
+        ('Baúl/Maletero', chk.get('baul', 'NA')), ('Fusiblera', chk.get('fusiblera', 'NA')), 
+        ('Herramientas', chk.get('herramientas', 'NA')), ('Lujos Inox', chk.get('inox', 'NA')), 
+        ('Medidor Aceite', chk.get('medidor-aceite', 'NA')), ('Tapa Radiador', chk.get('radiador', 'NA')),
     ]
 
-    # 3. Mandamos las listas ya procesadas al contexto
+    # === MAGIA DE PYTHON: DIBUJAR CÍRCULOS Y X EN LA IMAGEN ===
+    damage_map_img_b64 = None
+    if order.damage_map_data:
+        # Buscamos la ruta física de tu esquema
+        img_path = finders.find('img/esquema_moto.jpg')
+        if img_path:
+            try:
+                # Abrimos la imagen con Pillow
+                with Image.open(img_path) as img:
+                    img = img.convert("RGBA")
+                    draw = ImageDraw.Draw(img)
+                    width, height = img.size
+                    
+                    # Dibujamos los Círculos Rojos con la X Negra adentro
+                    for point in order.damage_map_data:
+                        # Convertir las coordenadas proporcionales (0 a 1) en píxeles exactos
+                        px = int(float(point.get('x', 0)) * width)
+                        py = int(float(point.get('y', 0)) * height)
+                        
+                        # 1. Dibujar el CÍRCULO ROJO grueso
+                        r = 15 # Radio del círculo (más grande)
+                        draw.ellipse((px - r, py - r, px + r, py + r), outline="#dc2626", width=4)
+                        
+                        # 2. Dibujar la X NEGRA adentro
+                        l = 8 # Largo de las aspas de la X
+                        draw.line((px - l, py - l, px + l, py + l), fill="black", width=4)
+                        draw.line((px - l, py + l, px + l, py - l), fill="black", width=4)
+                    
+                    # Convertir a Base64 para inyectar directo al HTML del PDF
+                    buffer = io.BytesIO()
+                    img.convert("RGB").save(buffer, format="JPEG")
+                    img_str = base64.b64encode(buffer.getvalue()).decode()
+                    damage_map_img_b64 = f"data:image/jpeg;base64,{img_str}"
+            except Exception as e:
+                print(f"Error procesando el mapa de daños: {e}")
+
     context = {
         'order': order,
         'photos': photos,
@@ -160,19 +188,17 @@ def generate_entry_pdf(request, order_id):
         'exterior': exterior,
         'interior': interior,
         'accesorios': accesorios,
+        'damage_map_img_b64': damage_map_img_b64, # Imagen quemada
     }
     
     template = get_template('workshop/intake_pdf.html')
     html_string = template.render(context)
-    
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="Ingreso_{order.license_plate}_{order.id}.pdf"'
+    response['Content-Disposition'] = f'inline; filename="Ingreso_{order.license_plate}.pdf"'
     
     pisa_status = pisa.CreatePDF(html_string, dest=response)
-    
     if pisa_status.err:
-        return HttpResponse(f"Tuvimos un error al generar el PDF de la orden {order.id}")
-    
+        return HttpResponse("Tuvimos un error al generar el PDF.")
     return response
 
 
@@ -198,7 +224,7 @@ def change_status(request, order_id, new_status):
 def service_checkout(request, order_id):
     """Vista para liquidar la orden, agregar repuestos y mano de obra"""
     order = get_object_or_404(ServiceOrder, id=order_id)
-    products = Product.objects.filter(stock__gt=0) # Solo productos con stock disponible
+    products = Product.objects.filter(stock_actual__gt=0)
     
     if request.method == 'POST':
         # Aquí procesaremos los items que se agreguen
@@ -282,13 +308,26 @@ def finalize_service_order(request, order_id):
             
             # 4. Descuento estricto de inventario físico
             if item.product:
-                item.product.stock -= item.quantity
+                item.product.stock_actual -= item.quantity
                 item.product.save()
-
+                
         # 5. Cerrar la orden de taller
         order.status = 'delivered'
         order.completed_at = timezone.now()
         order.save()
 
     messages.success(request, f"Factura generada y vehículo entregado con éxito. Ingresos en caja actualizados.")
+    return redirect('workshop:workshop_dashboard')
+
+
+def delete_order(request, order_id):
+    """Elimina permanentemente una orden de recepción y sus archivos (Fotos/Videos en cascada)"""
+    order = get_object_or_404(ServiceOrder, id=order_id)
+    
+    if request.method == 'POST':
+        placa_eliminada = order.license_plate
+        # Al ejecutar delete() en la orden, Django eliminará en cascada las fotos de ServiceMedia
+        order.delete()
+        messages.success(request, f"¡Seguridad: La orden de la placa {placa_eliminada} fue eliminada permanentemente del sistema!")
+        
     return redirect('workshop:workshop_dashboard')

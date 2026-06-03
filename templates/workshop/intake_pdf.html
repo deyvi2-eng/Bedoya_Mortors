@@ -6,20 +6,21 @@
     <title>Orden Técnica - Bedoya Motors</title>
     <style>
         @page { size: A4 portrait; margin: 1cm 1.2cm; }
-        body { font-family: 'Helvetica', sans-serif; font-size: 9px; color: #111; line-height: 1.2; }
+        body { font-family: 'Helvetica', sans-serif; font-size: 10px; color: #1e293b; line-height: 1.3; }
         
         table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        th, td { border: 1px solid #bdc3c7; padding: 4px; vertical-align: middle; }
-        th { background-color: #ecf0f1; text-align: left; font-weight: bold; width: 22%; color: #2c3e50; }
+        th, td { border: 1px solid #cbd5e1; padding: 5px; vertical-align: top; }
+        th { background-color: #f1f5f9; text-align: left; font-weight: bold; width: 18%; color: #0f172a; }
         
         .section-header { 
-            background-color: #dc2626; color: white; font-size: 10px; font-weight: bold; 
-            text-transform: uppercase; padding: 4px 6px; margin-top: 10px; margin-bottom: 4px; border-radius: 2px;
+            background-color: #1e293b; color: #ffffff; font-size: 11px; font-weight: bold; 
+            text-transform: uppercase; padding: 5px 8px; margin-top: 15px; margin-bottom: 5px; 
+            border-left: 4px solid #ef4444; 
         }
 
-        .status-b { color: #10b981; font-weight: bold; font-size: 10px; }
-        .status-m { color: #ef4444; font-weight: bold; font-size: 10px; }
-        .status-na { color: #95a5a6; font-size: 9px; font-style: italic; }
+        .status-b { color: #059669; font-weight: bold; }
+        .status-m { color: #dc2626; font-weight: bold; }
+        .status-na { color: #94a3b8; font-style: italic; }
 
         .text-center { text-align: center; }
         .bold { font-weight: bold; }
@@ -27,80 +28,101 @@
 </head>
 <body>
 
-    <table style="border: none; margin-bottom: 10px; border-bottom: 2px solid #dc2626;">
+    <!-- 1. ENCABEZADO -->
+    <table style="border: none; margin-bottom: 5px; border-bottom: 2px solid #ef4444;">
         <tr>
-            <td style="width: 40%; border: none; vertical-align: bottom; padding-bottom: 5px;">
-                <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo.png' %}" style="height: 45px; width: auto;">
+            <td style="width: 40%; border: none; vertical-align: bottom; padding-bottom: 10px;">
+                <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo.png' %}" width="160">
             </td>
-            <td style="width: 60%; border: none; text-align: right; padding-bottom: 5px;">
-                <h1 style="margin: 0; font-size: 16px; color: #111;">ORDEN TÉCNICA DE INGRESO</h1>
-                <p style="margin: 2px 0; font-size: 14px; font-weight: bold; color: #dc2626;">N° {{ order.id|stringformat:"05d" }}</p>
-                <p style="margin: 0; color: #555;">Fecha: {{ order.created_at|date:"d M Y, H:i" }}</p>
+            <td style="width: 60%; border: none; text-align: right; padding-bottom: 10px;">
+                <h1 style="margin: 0; font-size: 18px; color: #0f172a;">RECEPCIÓN TÉCNICA</h1>
+                <p style="margin: 2px 0; font-size: 16px; font-weight: bold; color: #ef4444;">Orden N° {{ order.id|stringformat:"05d" }}</p>
+                <p style="margin: 0; font-size: 11px; color: #475569;">Fecha: {{ order.created_at|date:"d M Y, H:i" }}</p>
             </td>
         </tr>
     </table>
 
-    <div class="section-header">1. Información del Cliente y Vehículo</div>
+    <!-- 2. DATOS GENERALES -->
+    <div class="section-header">1. Datos Generales</div>
     <table>
         <tr>
             <th>Propietario:</th><td>{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
-            <th>Placa:</th><td class="bold" style="font-size: 11px;">{{ order.license_plate|upper }}</td>
+            <th>Placa:</th><td class="bold" style="font-size: 12px;">{{ order.license_plate|upper }}</td>
         </tr>
         <tr>
-            <th>C.I / RUC:</th><td>{{ order.customer.cedula|default:"Sin CI" }}</td>
+            <th>C.I / RUC:</th><td>{{ order.customer.cedula|default:"No registrado" }}</td>
             <th>Marca/Modelo:</th><td>{{ order.brand|title }} / {{ order.model|title }}</td>
         </tr>
         <tr>
             <th>Teléfono:</th><td>{{ order.customer.phone }}</td>
-            <th>Kilometraje:</th><td>{{ order.mileage }} km</td>
+            <th>Kilometraje:</th><td class="bold">{{ order.mileage }} km</td>
+        </tr>
+        <tr>
+            <th>Color:</th><td>{{ order.color|title }}</td>
+            <th>No. Serie:</th><td>{{ order.serial_number|default:"N/A" }}</td>
         </tr>
     </table>
 
-    <div class="section-header">2. Estado Físico e Inventario (B: Bueno | M: Malo | N/A: No Aplica)</div>
+    <!-- 3. TRABAJOS Y PETICIONES -->
+    <div class="section-header">2. Trabajos a Realizar y Observaciones</div>
     <table>
         <tr>
-            <td style="width: 33%; vertical-align: top; padding: 0;">
-                <table style="margin:0; border:none;">
-                    <tr><th colspan="2" class="text-center" style="background:#e2e8f0; font-size:8px;">EXTERIOR</th></tr>
+            <th>Trabajo Solicitado:</th>
+            <td colspan="3" class="bold" style="color: #b91c1c;">{{ order.work_to_do|linebreaksbr }}</td>
+        </tr>
+        <tr>
+            <th>Petición Cliente:</th>
+            <td colspan="3">{{ order.customer_observation|default:"Sin peticiones especiales del cliente."|linebreaksbr }}</td>
+        </tr>
+        <tr>
+            <th>Notas del Taller:</th>
+            <td colspan="3">{{ order.observations|default:"Sin observaciones técnicas adicionales."|linebreaksbr }}</td>
+        </tr>
+    </table>
+
+    <!-- 4. MATRIZ DE INVENTARIO -->
+    <div class="section-header">3. Inventario Físico (B: Bueno | M: Malo | NA: No Aplica)</div>
+    <table style="border: none;">
+        <tr>
+            <!-- EXTERIOR -->
+            <td style="width: 33%; padding: 0; border: none; border-right: 1px solid #cbd5e1;">
+                <table style="margin:0; width: 100%;">
+                    <tr><td colspan="2" class="text-center bold" style="background-color: #f1f5f9; border-top: 1px solid #cbd5e1;">EXTERIOR</td></tr>
                     {% for label, val in exterior %}
                     <tr>
-                        <td style="width: 65%; border: 1px solid #eee; padding: 2px 4px;">{{ label }}</td>
-                        <td class="text-center" style="border: 1px solid #eee; padding: 2px;">
-                            {% if val == 'B' %}<span class="status-b">✔ B</span>
-                            {% elif val == 'M' %}<span class="status-m">✖ M</span>
-                            {% else %}<span class="status-na">N/A</span>{% endif %}
+                        <td style="width: 75%; border-top: none; border-bottom: 1px solid #e2e8f0; border-left: 1px solid #cbd5e1; border-right: none;">{{ label }}</td>
+                        <td class="text-center" style="border-top: none; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #cbd5e1; border-left: none;">
+                            {% if val == 'B' %}<span class="status-b">B</span>{% elif val == 'M' %}<span class="status-m">M</span>{% else %}<span class="status-na">-</span>{% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </table>
             </td>
             
-            <td style="width: 33%; vertical-align: top; padding: 0;">
-                <table style="margin:0; border:none;">
-                    <tr><th colspan="2" class="text-center" style="background:#e2e8f0; font-size:8px;">INTERIOR</th></tr>
+            <!-- INTERIOR -->
+            <td style="width: 33%; padding: 0; border: none; border-right: 1px solid #cbd5e1;">
+                <table style="margin:0; width: 100%;">
+                    <tr><td colspan="2" class="text-center bold" style="background-color: #f1f5f9; border-top: 1px solid #cbd5e1;">INTERIOR</td></tr>
                     {% for label, val in interior %}
                     <tr>
-                        <td style="width: 65%; border: 1px solid #eee; padding: 2px 4px;">{{ label }}</td>
-                        <td class="text-center" style="border: 1px solid #eee; padding: 2px;">
-                            {% if val == 'B' %}<span class="status-b">✔ B</span>
-                            {% elif val == 'M' %}<span class="status-m">✖ M</span>
-                            {% else %}<span class="status-na">N/A</span>{% endif %}
+                        <td style="width: 75%; border-top: none; border-bottom: 1px solid #e2e8f0; border-left: none; border-right: none;">{{ label }}</td>
+                        <td class="text-center" style="border-top: none; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #cbd5e1; border-left: none;">
+                            {% if val == 'B' %}<span class="status-b">B</span>{% elif val == 'M' %}<span class="status-m">M</span>{% else %}<span class="status-na">-</span>{% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </table>
             </td>
 
-            <td style="width: 33%; vertical-align: top; padding: 0;">
-                <table style="margin:0; border:none;">
-                    <tr><th colspan="2" class="text-center" style="background:#e2e8f0; font-size:8px;">ACCESORIOS EXTRA</th></tr>
+            <!-- ACCESORIOS -->
+            <td style="width: 34%; padding: 0; border: none;">
+                <table style="margin:0; width: 100%;">
+                    <tr><td colspan="2" class="text-center bold" style="background-color: #f1f5f9; border-top: 1px solid #cbd5e1;">ACCESORIOS</td></tr>
                     {% for label, val in accesorios %}
                     <tr>
-                        <td style="width: 65%; border: 1px solid #eee; padding: 2px 4px;">{{ label }}</td>
-                        <td class="text-center" style="border: 1px solid #eee; padding: 2px;">
-                            {% if val == 'B' %}<span class="status-b">✔ B</span>
-                            {% elif val == 'M' %}<span class="status-m">✖ M</span>
-                            {% else %}<span class="status-na">N/A</span>{% endif %}
+                        <td style="width: 75%; border-top: none; border-bottom: 1px solid #e2e8f0; border-left: none; border-right: none;">{{ label }}</td>
+                        <td class="text-center" style="border-top: none; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #cbd5e1; border-left: none;">
+                            {% if val == 'B' %}<span class="status-b">B</span>{% elif val == 'M' %}<span class="status-m">M</span>{% else %}<span class="status-na">-</span>{% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -109,83 +131,83 @@
         </tr>
     </table>
 
-    <table style="border: none; margin-bottom: 5px;">
+    <!-- 5. DETALLES DE RECEPCIÓN (Agrupados para ahorrar espacio) -->
+    <div class="section-header">4. Detalles de Ingreso y Abono</div>
+    <table style="background-color: #f8fafc;">
         <tr>
-            <td style="width: 40%; border: 1px solid #bdc3c7; background: #f8fafc; vertical-align: top;">
-                <span class="bold">El cliente deja en taller:</span><br>
-                <div style="margin-top: 5px; font-size: 10px;">
-                    ☑ Llaves: {% if order.left_keys %}<span class="status-b">SÍ</span>{% else %}<span class="status-na">NO</span>{% endif %}<br>
-                    ☑ Casco: {% if order.left_helmet %}<span class="status-b">SÍ</span>{% else %}<span class="status-na">NO</span>{% endif %}<br>
-                    ☑ Matrícula: {% if order.left_registration %}<span class="status-b">SÍ</span>{% else %}<span class="status-na">NO</span>{% endif %}
-                </div>
+            <td style="width: 35%;">
+                <span class="bold">Artículos dejados:</span><br><br>
+                Llaves: <span class="bold" style="color: #0f172a;">{{ order.left_keys|yesno:"SÍ,NO" }}</span><br>
+                Casco: <span class="bold" style="color: #0f172a;">{{ order.left_helmet|yesno:"SÍ,NO" }}</span><br>
+                Matrícula: <span class="bold" style="color: #0f172a;">{{ order.left_registration|yesno:"SÍ,NO" }}</span>
             </td>
-            <td style="width: 60%; border: 1px solid #bdc3c7; vertical-align: top;">
-                <span class="bold">Observaciones del Inventario:</span><br>
-                {{ order.observations|default:"Ninguna novedad reportada en el inventario." }}
+            <td style="width: 35%;">
+                <span class="bold">Nivel Combustible:</span> <br><br><span class="bold" style="font-size: 13px; color:#d35400;">⛽ {{ order.get_fuel_level_display|default:order.fuel_level }}</span><br><br>
+                <span class="bold">Ingreso en Grúa:</span> <span class="bold" style="color: #dc2626;">{{ order.arrived_by_crane|yesno:"SÍ,NO" }}</span>
+            </td>
+            <td style="width: 30%; text-align: center; vertical-align: middle; background-color: #ecfdf5; border: 2px solid #10b981;">
+                <p style="margin: 0; font-size: 10px; color: #065f46; font-weight: bold;">ABONO INICIAL RECIBIDO</p>
+                <p style="margin: 5px 0 0 0; font-size: 22px; color: #047857; font-weight: 900;">$ {{ order.deposit_amount }}</p>
             </td>
         </tr>
     </table>
 
-    <div class="section-header">3. Mapa Visual de Daños y Recepción</div>
-    <table style="border: none;">
-        <tr>
-            <td style="width: 50%; border: 1px solid #bdc3c7; text-align: center; vertical-align: middle; padding: 5px;">
-                <span class="bold" style="font-size: 8px;">ESQUEMA DE DAÑOS</span><br>
-                <div style="position: relative; width: 300px; height: 180px; margin: 0 auto;">
-                    <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/esquema_moto.jpg' %}" style="position: absolute; top:0; left:0; width: 300px; height: 180px; z-index: -1;">
-                    {% for point in order.damage_map_data %}
-                        <div style="position: absolute; left: {% widthratio point.x 1 300 %}px; top: {% widthratio point.y 1 180 %}px; color: #dc2626; font-size: 16px; font-weight: 900; line-height: 1; z-index: 10;">X</div>
-                    {% endfor %}
-                </div>
-            </td>
-            <td style="width: 50%; border: none; vertical-align: top; padding-left: 10px;">
-                <table style="margin-bottom: 5px;">
-                    <tr><th style="width: 50%;">Nivel Gasolina:</th><td class="bold text-center" style="color:#d35400;">{{ order.get_fuel_level_display|default:order.fuel_level }}</td></tr>
-                    <tr><th>Abono Inicial:</th><td class="bold text-center" style="color:#10b981; font-size: 12px;">$ {{ order.deposit_amount }}</td></tr>
-                    <tr><th>Ingreso Grúa:</th><td class="text-center">{% if order.arrived_by_crane %}SÍ{% else %}NO{% endif %}</td></tr>
-                </table>
-                <div style="border: 1px solid #bdc3c7; padding: 5px; min-height: 90px; background: #f8fafc;">
-                    <span class="bold">Trabajo a Realizar:</span><br>
-                    {{ order.work_to_do }}
-                </div>
-            </td>
-        </tr>
-    </table>
+    <!-- 6. MAPA VISUAL GIGANTE -->
+    <div class="section-header">5. Mapa Visual de Daños</div>
+    <div class="text-center" style="border: 1px solid #cbd5e1; padding: 15px; background: #ffffff;">
+        <!-- IMPORTANTE: AQUÍ USAMOS LA IMAGEN PROCESADA EN BASE64 CON LAS 'X' QUEMADAS -->
+        {% if damage_map_img_b64 %}
+            <img src="{{ damage_map_img_b64 }}" width="550">
+        {% else %}
+            <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/esquema_moto.jpg' %}" width="550">
+        {% endif %}
+    </div>
 
-    <div class="section-header">4. Registro Fotográfico</div>
-    <table style="border: 1px solid #bdc3c7;">
+    <!-- 7. EVIDENCIA FOTOGRÁFICA -->
+    <div class="section-header" style="page-break-before: auto;">6. Registro Fotográfico</div>
+    <table style="border: 1px solid #cbd5e1;">
         <tr>
             {% if photos %}
                 {% for photo in photos %}
-                    <td style="width: 33%; padding: 5px; text-align: center;">
-                        <img src="{{ photo.media_file.url }}" style="height: 100px; max-width: 100%; border-radius: 4px; border: 1px solid #ccc;">
+                    <td style="width: 33%; padding: 5px; text-align: center; border: 1px solid #e2e8f0;">
+                        <!-- Tamaño forzado con width nativo -->
+                        <img src="{{ photo.media_file.url }}" width="150" style="border: 1px solid #cbd5e1;"><br>
+                        <div style="margin-top: 5px; font-size: 9px; color: #475569; text-align: left;">
+                            <span class="bold">Obs:</span> {{ photo.description|default:"Sin observaciones." }}
+                        </div>
                     </td>
                     {% if forloop.counter|divisibleby:3 and not forloop.last %}</tr><tr>{% endif %}
                 {% endfor %}
             {% else %}
-                <td class="text-center" style="padding: 15px; color: #95a5a6;">Sin fotografías adjuntas.</td>
+                <td class="text-center" style="padding: 15px; color: #9ca3af;">No se adjuntaron fotografías.</td>
             {% endif %}
         </tr>
     </table>
 
-    <table style="border: none; margin-top: 30px; width: 100%;">
+    <!-- 8. FIRMAS -->
+    <table style="border: none; margin-top: 30px; width: 100%; page-break-inside: avoid;">
         <tr>
             <td style="width: 50%; text-align: center; border: none; vertical-align: bottom;">
-                <div style="border-top: 1px solid #111; width: 70%; margin: 0 auto; padding-top: 2px;">
+                <div style="border-top: 1px solid #111; width: 70%; margin: 0 auto; padding-top: 3px;">
                     <span class="bold">Taller Bedoya Motors</span><br>
-                    <span style="font-size: 8px; color: #555;">Recibe Conforme</span>
+                    <span style="font-size: 8px; color: #64748b;">Firma de Recepción Técnica</span>
                 </div>
             </td>
             <td style="width: 50%; text-align: center; border: none; vertical-align: bottom;">
                 {% if order.client_signature_base64 %}
-                    <img src="{{ order.client_signature_base64 }}" style="height: 50px; margin-bottom: 2px;"><br>
+                    <img src="{{ order.client_signature_base64 }}" width="150" style="margin-bottom: 2px;"><br>
                 {% else %}<br><br><br>{% endif %}
-                <div style="border-top: 1px solid #111; width: 70%; margin: 0 auto; padding-top: 2px;">
+                <div style="border-top: 1px solid #111; width: 70%; margin: 0 auto; padding-top: 3px;">
                     <span class="bold">{{ order.customer.first_name }} {{ order.customer.last_name }}</span><br>
-                    <span style="font-size: 8px; color: #555;">C.I: {{ order.customer.cedula }} - Acepta Condiciones</span>
+                    <span style="font-size: 8px; color: #64748b;">C.I: {{ order.customer.cedula|default:"NA" }} - Acepta Condiciones</span>
                 </div>
             </td>
         </tr>
     </table>
+
+    <!-- TÉRMINOS -->
+    <div style="margin-top: 15px; font-size: 7px; color: #64748b; text-align: justify; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+        <span class="bold" style="color: #111827;">TÉRMINOS Y CONDICIONES:</span> 1. El taller no se responsabiliza por objetos de valor no declarados en este inventario. 2. Toda reparación tiene garantía exclusiva sobre la mano de obra; repuestos eléctricos no tienen garantía. 3. Vehículos que permanezcan más de 15 días tras ser notificados como listos generarán un recargo por bodegaje diario. 4. Autorizo el desarmado necesario para emitir el diagnóstico.
+    </div>
 </body>
 </html>

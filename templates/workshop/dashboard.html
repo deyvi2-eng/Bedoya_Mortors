@@ -2,152 +2,161 @@
 {% load static %}
 
 {% block content %}
-<!-- Meta vital para que en celular no se haga zoom accidental y parezca app -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<div class="max-w-7xl mx-auto space-y-4 md:space-y-6 pb-8">
+<div class="max-w-7xl mx-auto space-y-6 pb-12 px-4 sm:px-0 mt-4">
     
-    <!-- Encabezado / Navegación Superior -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div class="flex items-center gap-3">
-            <a href="/" class="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors">
-                <i class="ph-bold ph-arrow-left"></i>
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-2 h-full bg-orange-500"></div>
+        <div class="flex items-center gap-4">
+            <a href="/" class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-black transition-all shadow-sm">
+                <i class="ph-bold ph-house text-lg"></i>
             </a>
-            <h2 class="text-lg md:text-xl font-black text-gray-800 flex items-center gap-2">
-                <i class="ph-bold ph-kanban text-orange-500"></i> Tablero del Taller
-            </h2>
+            <div>
+                <h2 class="text-2xl font-black text-gray-900 tracking-tight">Tablero de Taller</h2>
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Gestión de Reparaciones</p>
+            </div>
         </div>
         
-        <a href="{% url 'workshop:create_intake' %}" class="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md flex items-center justify-center gap-2">
-            <i class="ph-bold ph-plus-circle text-lg"></i> Nueva Recepción
+        <a href="{% url 'workshop:create_intake' %}" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl text-sm font-black transition-transform transform hover:-translate-y-0.5 shadow-lg shadow-red-600/30 flex items-center justify-center gap-2">
+            <i class="ph-bold ph-plus text-xl"></i> NUEVO INGRESO
         </a>
     </div>
 
-    <!-- Tablero Kanban (Grilla de 2 columnas) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <!-- COLUMNA 1: MOTOS EN EL TALLER (Pendientes) -->
-        <div class="bg-gray-50 rounded-2xl p-3 md:p-5 border border-gray-100 min-h-[60vh]">
-            <div class="flex items-center gap-2 mb-4 px-2">
-                <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shadow-sm">
-                    <i class="ph-bold ph-wrench text-lg"></i>
+        <div class="bg-gray-50/50 rounded-3xl p-4 md:p-6 border border-gray-200 shadow-inner min-h-[65vh]">
+            <div class="flex items-center justify-between mb-5 border-b border-gray-200 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-sm">
+                        <i class="ph-bold ph-wrench text-xl"></i>
+                    </div>
+                    <h5 class="text-base font-black text-gray-800 uppercase tracking-wider">En Reparación</h5>
                 </div>
-                <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wider">En Reparación</h5>
-                <span class="bg-gray-200 text-gray-700 text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto">{{ active_orders|length }}</span>
+                <span class="bg-orange-500 text-white text-xs font-black px-3 py-1 rounded-lg shadow-sm">{{ active_orders|length }}</span>
             </div>
             
             <div class="space-y-4">
                 {% for order in active_orders %}
-                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="bg-gray-100 border border-gray-200 text-gray-800 text-xs font-black px-2.5 py-1 rounded-md tracking-widest uppercase">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 hover:shadow-xl hover:border-orange-300 transition-all relative group">
+                    
+                    <button onclick="openDeleteModal('{{ order.license_plate|upper }}', '{% url 'workshop:delete_order' order.id %}')" 
+                            class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white flex items-center justify-center transition-colors border border-red-100 opacity-80 hover:opacity-100 z-10">
+                        <i class="ph-bold ph-trash text-lg"></i>
+                    </button>
+
+                    <div class="flex items-center gap-3 mb-3 pr-10">
+                        <span class="bg-gray-900 text-white text-xs font-black px-3 py-1.5 rounded-lg tracking-widest uppercase shadow-sm">
                             {{ order.license_plate }}
                         </span>
-                        <span class="text-[10px] font-bold text-gray-400 flex items-center gap-1">
-                            <i class="ph-bold ph-clock"></i> {{ order.created_at|date:"d M, H:i" }}
+                        <span class="text-[11px] font-bold text-gray-500 flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-md">
+                            <i class="ph-bold ph-calendar"></i> {{ order.created_at|date:"d M, H:i" }}
                         </span>
                     </div>
                     
-                    <h6 class="text-base font-black text-gray-800 mb-1">{{ order.brand|title }} {{ order.model|title }}</h6>
-                    <p class="text-xs text-gray-500 mb-2 font-medium">
-                        <i class="ph-bold ph-user mr-1"></i> {{ order.customer.first_name }} {{ order.customer.last_name }}
+                    <h6 class="text-lg font-black text-gray-900 mb-1 leading-tight">{{ order.brand|title }} {{ order.model|title }}</h6>
+                    <p class="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1.5">
+                        <i class="ph-bold ph-user-circle text-gray-400 text-lg"></i> {{ order.customer.first_name }} {{ order.customer.last_name }}
                     </p>
                     
-                    <div class="bg-red-50 border border-red-100 rounded-lg p-2 mb-4">
-                        <p class="text-[11px] text-red-600 font-bold mb-0 flex items-start gap-1">
-                            <i class="ph-bold ph-warning-circle mt-0.5"></i> 
-                            <span class="line-clamp-2">{{ order.issue_description }}</span>
+                    <div class="bg-orange-50/50 border border-orange-100 rounded-xl p-3 mb-4">
+                        <p class="text-[12px] text-orange-800 font-bold mb-0 flex items-start gap-2">
+                            <i class="ph-bold ph-warning-circle text-orange-600 text-base mt-0.5"></i> 
+                            <span class="line-clamp-2 leading-snug">{{ order.work_to_do|default:"Sin detalle de trabajo asignado." }}</span>
                         </p>
                     </div>
                     
-                    <!-- Botones de Acción (Grid adaptable a celular) -->
-                    <div class="grid grid-cols-2 gap-2 mt-auto">
-                        <a href="{% url 'workshop:generate_entry_pdf' order.id %}" target="_blank" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-center px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1">
-                            <i class="ph-bold ph-file-pdf"></i> PDF
+                    <div class="grid grid-cols-2 gap-3 mt-auto">
+                        <a href="{% url 'workshop:generate_entry_pdf' order.id %}" target="_blank" class="bg-white border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 text-gray-700 text-center px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-printer text-base"></i> IMPRIMIR
                         </a>
-                        <a href="{% url 'workshop:change_status' order.id 'ready' %}" class="bg-emerald-500 hover:bg-emerald-600 text-white text-center px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center justify-center gap-1">
-                            <i class="ph-bold ph-check-circle"></i> Listo
+                        <a href="{% url 'workshop:change_status' order.id 'ready' %}" class="bg-emerald-500 hover:bg-emerald-600 text-white text-center px-4 py-2.5 rounded-xl text-xs font-black transition-colors shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-check-circle text-base"></i> MARCAR LISTO
                         </a>
                     </div>
                 </div>
                 {% empty %}
-                <div class="flex flex-col items-center justify-center py-10 text-center">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3 text-gray-300">
-                        <i class="ph-bold ph-motorcycle text-3xl"></i>
+                <div class="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-dashed border-gray-300">
+                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-300">
+                        <i class="ph-bold ph-motorcycle text-4xl"></i>
                     </div>
-                    <p class="text-sm font-bold text-gray-400">No hay motos pendientes</p>
+                    <p class="text-sm font-bold text-gray-400">Taller despejado.<br>No hay órdenes en reparación.</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- COLUMNA 2: MOTOS TERMINADAS -->
-        <div class="bg-gray-50 rounded-2xl p-3 md:p-5 border border-gray-100 min-h-[60vh]">
-            <div class="flex items-center gap-2 mb-4 px-2">
-                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm">
-                    <i class="ph-bold ph-flag-checkered text-lg"></i>
+        <div class="bg-gray-50/50 rounded-3xl p-4 md:p-6 border border-gray-200 shadow-inner min-h-[65vh]">
+            <div class="flex items-center justify-between mb-5 border-b border-gray-200 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm">
+                        <i class="ph-bold ph-flag-checkered text-xl"></i>
+                    </div>
+                    <h5 class="text-base font-black text-gray-800 uppercase tracking-wider">Listas para Entrega</h5>
                 </div>
-                <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Listas / Entrega</h5>
-                <span class="bg-gray-200 text-gray-700 text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto">{{ completed_orders|length }}</span>
+                <span class="bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-lg shadow-sm">{{ completed_orders|length }}</span>
             </div>
             
             <div class="space-y-4">
                 {% for order in completed_orders %}
-                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 {% if order.status == 'ready' %}border-l-4 border-l-emerald-500{% else %}border-l-4 border-l-gray-300 opacity-75{% endif %} hover:shadow-md transition-all">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 {% if order.status == 'ready' %}border-l-4 border-l-emerald-500{% else %}border-l-4 border-l-gray-300 opacity-60 hover:opacity-100{% endif %} hover:shadow-xl transition-all relative group">
                     
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="bg-gray-100 border border-gray-200 text-gray-800 text-xs font-black px-2.5 py-1 rounded-md tracking-widest uppercase">
+                    <button onclick="openDeleteModal('{{ order.license_plate|upper }}', '{% url 'workshop:delete_order' order.id %}')" 
+                            class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white flex items-center justify-center transition-colors border border-red-100 opacity-80 hover:opacity-100 z-10">
+                        <i class="ph-bold ph-trash text-lg"></i>
+                    </button>
+
+                    <div class="flex justify-between items-start mb-3 pr-10">
+                        <span class="bg-gray-100 border border-gray-200 text-gray-800 text-xs font-black px-3 py-1.5 rounded-lg tracking-widest uppercase shadow-sm">
                             {{ order.license_plate }}
                         </span>
                         {% if order.status == 'ready' %}
-                            <span class="bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-wider">Esperando Cliente</span>
+                            <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Pendiente Pago</span>
                         {% else %}
-                            <span class="bg-gray-100 text-gray-500 border border-gray-200 text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-wider">Entregada</span>
+                            <span class="bg-gray-100 text-gray-500 border border-gray-200 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider"><i class="ph-bold ph-check"></i> Entregada</span>
                         {% endif %}
                     </div>
                     
-                    <h6 class="text-base font-black text-gray-800 mb-1">{{ order.brand|title }} {{ order.model|title }}</h6>
-                    <p class="text-xs text-gray-500 mb-1 font-medium">
-                        <i class="ph-bold ph-user mr-1"></i> {{ order.customer.first_name }} {{ order.customer.last_name }}
+                    <h6 class="text-lg font-black text-gray-900 mb-1 leading-tight">{{ order.brand|title }} {{ order.model|title }}</h6>
+                    <p class="text-sm text-gray-600 mb-2 font-medium flex items-center gap-1.5">
+                        <i class="ph-bold ph-user-circle text-gray-400 text-lg"></i> {{ order.customer.first_name }} {{ order.customer.last_name }}
                     </p>
-                    <p class="text-[10px] text-gray-400 font-bold mb-3 flex items-center gap-1">
-                        <i class="ph-bold ph-calendar-check"></i> Terminado: {{ order.completed_at|date:"d M Y" }}
+                    <p class="text-[11px] text-gray-500 font-bold mb-4 flex items-center gap-1 bg-gray-50 inline-flex px-2 py-1 rounded-md border border-gray-100">
+                        <i class="ph-bold ph-check-square-offset"></i> Trabajo finalizado el {{ order.completed_at|date:"d M" }}
                     </p>
                     
-                    <!-- Botones de Acción -->
                     <div class="flex flex-col gap-2 mt-auto">
-                        <div class="grid grid-cols-2 gap-2">
-                            <a href="{% url 'workshop:generate_entry_pdf' order.id %}" target="_blank" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-center px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1">
-                                <i class="ph-bold ph-file-pdf"></i> Respaldo
+                        <div class="grid grid-cols-2 gap-3">
+                            <a href="{% url 'workshop:generate_entry_pdf' order.id %}" target="_blank" class="bg-white border-2 border-gray-200 hover:border-gray-400 text-gray-700 text-center px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-file-pdf text-base"></i> RESPALDO
                             </a>
                             
                             {% if order.status == 'ready' %}
-                                <a href="{% url 'workshop:service_checkout' order.id %}" class="bg-blue-600 hover:bg-blue-700 text-white text-center px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center justify-center gap-1">
-                                    <i class="ph-bold ph-currency-dollar"></i> Liquidar
+                                <a href="{% url 'workshop:service_checkout' order.id %}" class="bg-blue-600 hover:bg-blue-700 text-white text-center px-4 py-2.5 rounded-xl text-xs font-black transition-colors shadow-md flex items-center justify-center gap-2">
+                                    <i class="ph-bold ph-currency-dollar text-base"></i> LIQUIDAR
                                 </a>
                             {% else %}
-                                <button class="bg-gray-100 text-gray-400 text-center px-3 py-2 rounded-lg text-xs font-bold cursor-not-allowed flex items-center justify-center gap-1" disabled>
-                                    <i class="ph-bold ph-lock-key"></i> Cerrada
+                                <button class="bg-gray-100 text-gray-400 border border-gray-200 text-center px-4 py-2.5 rounded-xl text-xs font-black cursor-not-allowed flex items-center justify-center gap-2" disabled>
+                                    <i class="ph-bold ph-lock-key text-base"></i> CERRADA
                                 </button>
                             {% endif %}
                         </div>
 
-                        <!-- EL PLUS: Botón de WhatsApp a todo lo ancho -->
                         {% if order.status == 'ready' %}
-                        <a href="https://api.whatsapp.com/send?phone={{ order.customer.phone_number|cut:' ' }}&text=Hola%20{{ order.customer.first_name }},%20te%20saludamos%20de%20*Bedoya%20Motors*%20%F0%9F%8F%8D%EF%B8%8F.%20Te%20informamos%20que%20tu%20veh%C3%ADculo%20placa%20*{{ order.license_plate|upper }}*%20ya%20se%20encuentra%20LISTO.%20Puedes%20acercarte%20al%20taller%20para%20la%20entrega.%20%C2%A1Te%20esperamos!" 
+                        <a href="https://api.whatsapp.com/send?phone={{ order.customer.phone|cut:' ' }}&text=Hola%20{{ order.customer.first_name }},%20te%20saludamos%20de%20*Bedoya%20Motors*%20%F0%9F%8F%8D%EF%B8%8F.%20Te%20informamos%20que%20tu%20veh%C3%ADculo%20placa%20*{{ order.license_plate|upper }}*%20ya%20se%20encuentra%20LISTO.%20%C2%A1Te%20esperamos!" 
                            target="_blank" 
-                           class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white text-center px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center justify-center gap-2 mt-1">
-                            <i class="ph-bold ph-whatsapp-logo text-base"></i> Avisar al Cliente
+                           class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white text-center px-4 py-2.5 rounded-xl text-xs font-black transition-colors shadow-sm flex items-center justify-center gap-2 mt-1">
+                            <i class="ph-bold ph-whatsapp-logo text-lg"></i> NOTIFICAR AL CLIENTE
                         </a>
                         {% endif %}
                     </div>
                 </div>
                 {% empty %}
-                <div class="flex flex-col items-center justify-center py-10 text-center">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3 text-gray-300">
-                        <i class="ph-bold ph-check-circle text-3xl"></i>
+                <div class="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-dashed border-gray-300">
+                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-300">
+                        <i class="ph-bold ph-check-circle text-4xl"></i>
                     </div>
-                    <p class="text-sm font-bold text-gray-400">Sin vehículos para entregar</p>
+                    <p class="text-sm font-bold text-gray-400">Sin vehículos en cola<br>para ser entregados.</p>
                 </div>
                 {% endfor %}
             </div>
@@ -155,4 +164,92 @@
 
     </div>
 </div>
+
+<div id="deleteSecurityModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[9999] backdrop-blur-sm opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-3xl max-w-md w-full mx-4 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="modalContent">
+        
+        <div id="deleteStep1" class="p-6 md:p-8">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
+                <i class="ph-bold ph-trash text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-black text-gray-900 mb-2 tracking-tight">¿Anular esta orden?</h3>
+            <p class="text-gray-600 text-sm font-medium mb-6">Estás intentando eliminar la orden de reparación de la placa <strong id="placaLabel1" class="text-gray-900 bg-gray-100 px-2 py-0.5 rounded"></strong>. Esta acción detendrá el proceso de taller y no se puede deshacer.</p>
+            
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeDeleteModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-xl font-black transition-colors">Cancelar</button>
+                <button onclick="goToStep2()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-black transition-colors shadow-lg shadow-red-600/30">Sí, continuar</button>
+            </div>
+        </div>
+
+        <div id="deleteStep2" class="p-6 md:p-8 hidden bg-red-600 text-white relative">
+            <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, #000 10px, #000 20px);"></div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="ph-fill ph-warning-octagon text-4xl text-white"></i>
+                    <h3 class="text-xl font-black tracking-tight">¡ALTO AHÍ!</h3>
+                </div>
+                <p class="text-red-50 text-sm font-medium mb-4">Si eliminas la orden <strong id="placaLabel2" class="text-white bg-black/20 px-2 py-0.5 rounded"></strong> borrarás permanentemente:</p>
+                <ul class="text-sm font-bold text-white/90 space-y-2 mb-8 ml-1">
+                    <li><i class="ph-bold ph-x"></i> Fotografías y Evidencia</li>
+                    <li><i class="ph-bold ph-x"></i> Mapa de daños y checklist</li>
+                    <li><i class="ph-bold ph-x"></i> Firma legal del cliente</li>
+                </ul>
+                
+                <form id="deleteForm" method="POST" action="">
+                    {% csrf_token %}
+                    <div class="flex flex-col gap-3 mt-8">
+                        <button type="submit" class="w-full bg-black hover:bg-gray-900 text-white py-3.5 rounded-xl font-black transition-colors shadow-xl flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-skull"></i> ELIMINAR DEFINITIVAMENTE
+                        </button>
+                        <button type="button" onclick="closeDeleteModal()" class="w-full bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-black transition-colors">
+                            Mejor conservarla
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('deleteSecurityModal');
+    const modalContent = document.getElementById('modalContent');
+    const step1 = document.getElementById('deleteStep1');
+    const step2 = document.getElementById('deleteStep2');
+    const deleteForm = document.getElementById('deleteForm');
+
+    function openDeleteModal(placa, actionUrl) {
+        document.getElementById('placaLabel1').innerText = placa;
+        document.getElementById('placaLabel2').innerText = placa;
+        deleteForm.action = actionUrl;
+        
+        // Reset a paso 1
+        step1.classList.remove('hidden');
+        step2.classList.add('hidden');
+        
+        // Mostrar Modal con animación
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+        }, 10);
+    }
+
+    function goToStep2() {
+        step1.classList.add('hidden');
+        step2.classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+        modal.classList.add('opacity-0');
+        modalContent.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }, 300); // Tiempo de espera para la animación
+    }
+</script>
 {% endblock %}

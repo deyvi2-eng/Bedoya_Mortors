@@ -42,7 +42,9 @@ class ServiceOrder(models.Model):
     # Nivel de Gasolina y Abono
     fuel_level = models.CharField(max_length=20, default='1/2', verbose_name="Nivel de Combustible")
     deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Abono Inicial ($)")
-    
+    left_keys = models.BooleanField(default=False, verbose_name="Dejó Llaves")
+    left_helmet = models.BooleanField(default=False, verbose_name="Dejó Casco")
+    left_registration = models.BooleanField(default=False, verbose_name="Dejó Matrícula")
     # Control de Estados y Tiempos
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Estado de la Orden")
     created_at = models.DateTimeField(default=timezone.now, verbose_name="Fecha de Ingreso")
