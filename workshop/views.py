@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.http import HttpResponse
 from django.template.loader import get_template
 from django.contrib.staticfiles import finders
+from django.core.files.base import ContentFile
 
 # Importación para generar PDF sin dependencias del sistema (Ideal para Render)
 from xhtml2pdf import pisa
@@ -107,6 +108,17 @@ def create_intake(request):
                     is_video=is_video,
                     description=comment # Se guarda el comentario de la foto
                 )
+            
+            # ==========================================
+            # GENERACIÓN DE PDF AUTOMÁTICA EN BACKGROUND
+            # ==========================================
+            try:
+                pdf_content = create_pdf_content(service_order, request)
+                if pdf_content:
+                    file_name = f"Ingreso_{service_order.license_plate}_{service_order.id}.pdf"
+                    service_order.intake_pdf.save(file_name, ContentFile(pdf_content))
+            except Exception as e:
+                print(f"Error pre-generando PDF: {e}")
                 
             messages.success(request, f"¡Vehículo {service_order.license_plate} ingresado con éxito!")
             return redirect('workshop:workshop_dashboard') 
@@ -118,11 +130,9 @@ def create_intake(request):
     return render(request, 'workshop/intake_form.html', {'form': form})
 
 
-def generate_entry_pdf(request, order_id):
-    """Genera el PDF de ingreso usando xhtml2pdf"""
-    order = get_object_or_404(ServiceOrder, id=order_id)
+def create_pdf_content(order, request):
+    """Genera el contenido binario del PDF en memoria"""
     photos = order.media_files.filter(is_video=False)
-
     chk = order.condition_checklist or {}
     
     # Preparamos el inventario físico para el PDF
@@ -145,41 +155,44 @@ def generate_entry_pdf(request, order_id):
         ('Medidor Aceite', chk.get('medidor-aceite', 'NA')), ('Tapa Radiador', chk.get('radiador', 'NA')),
     ]
 
-    # === MAGIA DE PYTHON: DIBUJAR CÍRCULOS Y X EN LA IMAGEN ===
     damage_map_img_b64 = None
     if order.damage_map_data:
-        # Buscamos la ruta física de tu esquema
         img_path = finders.find('img/esquema_moto.jpg')
         if img_path:
             try:
-                # Abrimos la imagen con Pillow
                 with Image.open(img_path) as img:
                     img = img.convert("RGBA")
                     draw = ImageDraw.Draw(img)
                     width, height = img.size
                     
-                    # Dibujamos los Círculos Rojos con la X Negra adentro
                     for point in order.damage_map_data:
-                        # Convertir las coordenadas proporcionales (0 a 1) en píxeles exactos
                         px = int(float(point.get('x', 0)) * width)
                         py = int(float(point.get('y', 0)) * height)
                         
-                        # 1. Dibujar el CÍRCULO ROJO grueso
-                        r = 15 # Radio del círculo (más grande)
+                        r = 15 
                         draw.ellipse((px - r, py - r, px + r, py + r), outline="#dc2626", width=4)
                         
-                        # 2. Dibujar la X NEGRA adentro
-                        l = 8 # Largo de las aspas de la X
+                        l = 8 
                         draw.line((px - l, py - l, px + l, py + l), fill="black", width=4)
                         draw.line((px - l, py + l, px + l, py - l), fill="black", width=4)
                     
-                    # Convertir a Base64 para inyectar directo al HTML del PDF
                     buffer = io.BytesIO()
                     img.convert("RGB").save(buffer, format="JPEG")
                     img_str = base64.b64encode(buffer.getvalue()).decode()
                     damage_map_img_b64 = f"data:image/jpeg;base64,{img_str}"
             except Exception as e:
                 print(f"Error procesando el mapa de daños: {e}")
+
+    # === NUEVO: Convertir Logo a Base64 para producción ===
+    logo_b64 = None
+    logo_path = finders.find('img/logo.png')
+    if logo_path:
+        try:
+            with open(logo_path, "rb") as image_file:
+                img_str = base64.b64encode(image_file.read()).decode('utf-8')
+                logo_b64 = f"data:image/png;base64,{img_str}"
+        except Exception as e:
+            print(f"Error cargando el logo en base64: {e}")
 
     context = {
         'order': order,
@@ -188,18 +201,48 @@ def generate_entry_pdf(request, order_id):
         'exterior': exterior,
         'interior': interior,
         'accesorios': accesorios,
-        'damage_map_img_b64': damage_map_img_b64, # Imagen quemada
+        'damage_map_img_b64': damage_map_img_b64, 
+        'logo_b64': logo_b64, # <- Añadido al contexto aquí
     }
     
     template = get_template('workshop/intake_pdf.html')
     html_string = template.render(context)
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="Ingreso_{order.license_plate}.pdf"'
     
-    pisa_status = pisa.CreatePDF(html_string, dest=response)
+    buffer_pdf = io.BytesIO()
+    pisa_status = pisa.CreatePDF(html_string, dest=buffer_pdf)
+    
     if pisa_status.err:
-        return HttpResponse("Tuvimos un error al generar el PDF.")
-    return response
+        return None
+    return buffer_pdf.getvalue()
+
+
+def generate_entry_pdf(request, order_id):
+    """Devuelve el PDF pre-generado al instante o lo crea al vuelo"""
+    order = get_object_or_404(ServiceOrder, id=order_id)
+    
+    # Si el PDF ya está generado, devolver el archivo físico INMEDIATAMENTE
+    if order.intake_pdf:
+        response = HttpResponse(order.intake_pdf.read(), content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="Ingreso_{order.license_plate}.pdf"'
+        return response
+    
+    # Si por alguna razón es antiguo y no tiene PDF, lo generamos al vuelo
+    pdf_content = create_pdf_content(order, request)
+    if pdf_content:
+        file_name = f"Ingreso_{order.license_plate}_{order.id}.pdf"
+        
+        # 🛡️ PROTECCIÓN CONTRA EL LÍMITE DE 10MB DE CLOUDINARY
+        try:
+            order.intake_pdf.save(file_name, ContentFile(pdf_content), save=True)
+        except Exception as e:
+            # Si pesa más de 10MB, Cloudinary lo rechaza. Lo ignoramos y lo mostramos de todas formas.
+            print(f"Aviso Cloudinary: PDF supera límite de 10MB. No se guardó pero se visualizará: {e}")
+            
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="Ingreso_{order.license_plate}.pdf"'
+        return response
+        
+    return HttpResponse("Tuvimos un error al generar el PDF.")
 
 
 def change_status(request, order_id, new_status):

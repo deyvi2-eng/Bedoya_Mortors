@@ -52,7 +52,7 @@ class ServiceOrder(models.Model):
     
     # Firma Legal
     client_signature_base64 = models.TextField(blank=True, null=True, verbose_name="Firma Digital")
-
+    intake_pdf = models.FileField(upload_to='workshop/pdfs/intakes/', blank=True, null=True, verbose_name="PDF de Ingreso")
     def __str__(self):
         return f"Orden #{self.id} - {self.license_plate} ({self.get_status_display()})"
 

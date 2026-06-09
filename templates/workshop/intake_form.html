@@ -55,26 +55,18 @@
     .custom-checkbox:checked { background-color: #fca5a5; border-color: #ef4444; }
     .custom-checkbox:checked::after { content: '✓'; color: #000000; position: absolute; font-weight: 900; font-size: 16px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
-    /* Galería Scroll Horizontal (Mejorado para fotos más grandes) */
+    /* Galería Scroll Horizontal */
     .photo-scroller { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.75rem; scroll-behavior: smooth; }
     .photo-scroller::-webkit-scrollbar { height: 8px; }
     .photo-scroller::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 10px; }
 </style>
 
-<!-- Mensaje de Error Flotante -->
 <div id="errorToast" class="error-toast flex items-center gap-2">
     <i class="ph-bold ph-warning-circle text-xl text-red-600"></i> <span id="errorMsg">Completa los campos obligatorios.</span>
 </div>
 
-<!-- ======================================================= -->
-<!-- MODAL DE GALERÍA FLOTANTE COMPACTA Y ESTRUCTURADA -->
-<!-- ======================================================= -->
 <div id="mediaModal" class="fixed inset-0 bg-black/60 z-[10000] hidden items-center justify-center p-4 transition-opacity duration-300 opacity-0 backdrop-blur-sm">
-    
-    <!-- Contenedor Blanco (Compacto) -->
     <div class="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl relative overflow-hidden" id="modalBox">
-        
-        <!-- Cabecera -->
         <div class="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50 shrink-0">
             <h3 class="font-black text-base text-black flex items-center gap-2">
                 <i class="ph-bold ph-image text-red-600 text-xl"></i> Evidencia
@@ -84,22 +76,16 @@
             </button>
         </div>
         
-        <!-- Área de la Foto -->
         <div class="w-full bg-gray-100 flex items-center justify-center relative shrink-0" style="height: 35vh; min-height: 250px;">
             <button type="button" id="prevMedia" class="absolute left-2 z-10 bg-white border border-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-black shadow-md hover:bg-gray-200 transition-all">
                 <i class="ph-bold ph-caret-left text-xl"></i>
             </button>
-            
-            <div id="modalViewer" class="w-full h-full flex items-center justify-center p-2 overflow-hidden">
-                <!-- Imagen/Video inyectado -->
-            </div>
-            
+            <div id="modalViewer" class="w-full h-full flex items-center justify-center p-2 overflow-hidden"></div>
             <button type="button" id="nextMedia" class="absolute right-2 z-10 bg-white border border-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-black shadow-md hover:bg-gray-200 transition-all">
                 <i class="ph-bold ph-caret-right text-xl"></i>
             </button>
         </div>
 
-        <!-- Área de Comentarios -->
         <div class="p-4 bg-white border-t border-gray-200 flex flex-col gap-2 shrink-0">
             <label class="text-xs font-black text-gray-800 uppercase">Detalle o Comentario de esta foto:</label>
             <textarea id="mediaCommentInput" rows="2" class="form-control !min-h-[70px] text-sm" placeholder="Ej: Rayón profundo en la tapa lateral derecha..."></textarea>
@@ -110,10 +96,8 @@
         </div>
     </div>
 </div>
-<!-- ======================================================= -->
 
 <div class="max-w-4xl mx-auto pb-24 pt-4 px-3 sm:px-0">
-    <!-- HEADER -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
         <div class="flex items-center gap-4 w-full sm:w-auto">
             <a href="{% url 'workshop:workshop_dashboard' %}" class="w-12 h-12 rounded-xl bg-gray-100 border border-gray-300 flex items-center justify-center text-black shadow-sm hover:bg-gray-200 transition shrink-0"><i class="ph-bold ph-arrow-left text-2xl"></i></a>
@@ -128,13 +112,21 @@
     <form method="POST" enctype="multipart/form-data" id="intakeForm" novalidate>
         {% csrf_token %}
         
-        <!-- 1. IDENTIFICACIÓN -->
         <div class="erp-card">
             <h3 class="text-base font-black text-black mb-4 uppercase flex items-center gap-2"><i class="ph-bold ph-user text-red-600 text-2xl"></i> Datos Principales</h3>
-            <div class="flex items-center gap-3 mb-5">
+            
+            <div class="flex items-center gap-2 mb-5">
                 <div class="flex-grow">{{ form.customer }}</div>
-                <a href="{% url 'customers:manage' %}" target="_blank" class="w-12 h-[52px] rounded-xl bg-gray-200 text-black border border-gray-300 flex items-center justify-center shadow-sm hover:bg-gray-300 transition"><i class="ph-bold ph-plus text-xl"></i></a>
+                
+                <a href="{% url 'customers:manage' %}" target="_blank" title="Crear Nuevo Cliente" class="w-12 h-[52px] rounded-xl bg-gray-200 text-black border border-gray-300 flex items-center justify-center shadow-sm hover:bg-gray-300 transition shrink-0">
+                    <i class="ph-bold ph-user-plus text-xl"></i>
+                </a>
+
+                <button type="button" id="refreshCustomersBtn" title="Actualizar lista de clientes" class="w-12 h-[52px] rounded-xl bg-gray-200 text-black border border-gray-300 flex items-center justify-center shadow-sm hover:bg-gray-300 transition shrink-0">
+                    <i class="ph-bold ph-arrows-clockwise text-xl"></i>
+                </button>
             </div>
+            
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div class="col-span-2 md:col-span-1 bg-gray-50 p-3 rounded-xl border border-gray-200"><label class="block text-[11px] font-black text-black uppercase ml-1">Placa *</label>{{ form.license_plate }}</div>
                 <div class="bg-gray-50 p-3 rounded-xl border border-gray-200"><label class="block text-[11px] font-black text-black uppercase ml-1">KM *</label>{{ form.mileage }}</div>
@@ -145,7 +137,6 @@
             </div>
         </div>
 
-        <!-- 2. TRABAJO Y OBSERVACIONES -->
         <div class="erp-card">
             <h3 class="text-base font-black text-black mb-4 uppercase flex items-center gap-2"><i class="ph-bold ph-wrench text-red-600 text-2xl"></i> Trabajo y Observaciones</h3>
             <div class="space-y-6">
@@ -164,14 +155,11 @@
             </div>
         </div>
 
-        <!-- 3. EVIDENCIA FOTOGRÁFICA (ACUMULATIVA Y MÁS GRANDE) -->
         <div class="erp-card border-red-200 shadow-md">
             <h3 class="text-base font-black text-black mb-2 uppercase flex items-center gap-2"><i class="ph-bold ph-camera text-red-600 text-2xl"></i> Evidencia Visual (Fotos y Videos)</h3>
             <p class="text-sm font-bold text-gray-700 mb-4">Puedes <strong>seguir añadiendo más fotos</strong> sin que se borren las anteriores. Toca las imágenes en la galería para agregarles comentarios.</p>
             
-            <!-- Botón de Cámara Compacto -->
             <div class="relative w-full mb-4">
-                <!-- Se omite el name nativo aquí para enviarlo por JS luego o que el DataTransfer lo mantenga -->
                 <input type="file" id="mediaInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*, video/mp4" multiple capture="environment">
                 <div class="bg-red-50 border-2 border-dashed border-red-300 rounded-xl p-4 flex items-center justify-center gap-4 hover:bg-red-100 transition-all shadow-sm">
                     <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-md">
@@ -184,16 +172,13 @@
                 </div>
             </div>
 
-            <!-- Carrusel de Miniaturas Más Grande -->
             <div id="photo-previews" class="photo-scroller rounded-xl bg-gray-100 min-h-[160px] p-4 border border-gray-300 flex items-center justify-center shadow-inner">
                 <span class="text-sm text-gray-500 font-black"><i class="ph-bold ph-image text-xl align-middle"></i> Aquí aparecerán tus fotos...</span>
             </div>
-            <!-- Input oculto para enviar los archivos acumulados -->
             <input type="file" name="media_uploads" id="realMediaInput" multiple class="hidden">
             <input type="hidden" name="media_comments_data" id="media_comments_data">
         </div>
 
-        <!-- 4. MAPA DE DAÑOS -->
         <div class="erp-card">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-base font-black text-black uppercase flex items-center gap-2"><i class="ph-bold ph-crosshair text-red-600 text-2xl"></i> Mapa Visual de Daños</h3>
@@ -208,13 +193,11 @@
             <input type="hidden" name="damage_map_data" id="damage_map_data">
         </div>
 
-        <!-- 5. INVENTARIO -->
         <div class="erp-card bg-white">
             <h3 class="text-base font-black text-black mb-2 uppercase flex items-center gap-2"><i class="ph-bold ph-list-checks text-red-600 text-2xl"></i> Inventario y Estado Físico</h3>
             <p class="text-sm font-black text-gray-600 mb-6">Marca "B" (Bueno) o "M" (Malo). Toca de nuevo el botón para desmarcar.</p>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <!-- COLUMNA EXTERIOR -->
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
                     <div class="text-center bg-gray-200 text-black text-sm font-black py-2 rounded-lg mb-4 uppercase tracking-widest border border-gray-300">Exterior</div>
                     <div class="space-y-3">
@@ -230,7 +213,6 @@
                     </div>
                 </div>
 
-                <!-- COLUMNA INTERIOR -->
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
                     <div class="text-center bg-gray-200 text-black text-sm font-black py-2 rounded-lg mb-4 uppercase tracking-widest border border-gray-300">Interior</div>
                     <div class="space-y-3">
@@ -244,7 +226,6 @@
                     </div>
                 </div>
 
-                <!-- COLUMNA ACCESORIOS -->
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
                     <div class="text-center bg-gray-200 text-black text-sm font-black py-2 rounded-lg mb-4 uppercase tracking-widest border border-gray-300">Accesorios</div>
                     <div class="space-y-3">
@@ -275,7 +256,6 @@
             </div>
         </div>
 
-        <!-- 6. RECEPCIÓN FINAL (GASOLINA Y ABONO) -->
         <div class="erp-card bg-gray-100 border-gray-300">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -298,7 +278,6 @@
             </div>
         </div>
 
-        <!-- 7. FIRMA Y GUARDADO -->
         <div class="erp-card text-center relative border-gray-300 shadow-lg">
             <h3 class="text-2xl font-black text-black mb-2 uppercase">Conformidad del Cliente *</h3>
             <p class="text-sm font-black text-gray-700 mb-6">El cliente debe firmar aceptando el inventario, el mapa de daños y las condiciones.</p>
@@ -328,6 +307,47 @@
     $(document).ready(function() {
         $('#customer_select').select2({ width: '100%', placeholder: "Buscar cliente..." });
 
+        function showToast(msg) {
+            $('#errorMsg').text(msg);
+            $('#errorToast').fadeIn().delay(4000).fadeOut();
+        }
+
+        // LÓGICA DE ACTUALIZACIÓN SILENCIOSA DE CLIENTES
+        $('#refreshCustomersBtn').on('click', function() {
+            let btn = $(this);
+            let icon = btn.find('i');
+            icon.addClass('animate-spin'); // Añade una animación de giro
+            
+            // Petición silenciosa a la misma página
+            $.ajax({
+                url: window.location.href, 
+                type: 'GET',
+                success: function(response) {
+                    // Extrae solo la lista actualizada del menú desplegable
+                    let newSelectHtml = $(response).find('select[name="customer"]').html();
+                    let currentVal = $('select[name="customer"]').val();
+                    
+                    // Reemplaza las opciones viejas por las nuevas
+                    $('select[name="customer"]').html(newSelectHtml);
+                    
+                    // Vuelve a aplicar el cliente que ya tenías seleccionado (si aplica)
+                    if(currentVal) {
+                        $('select[name="customer"]').val(currentVal);
+                    }
+                    
+                    // Reinicializa el buscador visual Select2
+                    $('select[name="customer"]').select2({ width: '100%', placeholder: "Buscar cliente..." });
+                    
+                    icon.removeClass('animate-spin');
+                    showToast("¡Lista de clientes actualizada con éxito!");
+                },
+                error: function() {
+                    icon.removeClass('animate-spin');
+                    showToast("Error al actualizar la lista.");
+                }
+            });
+        });
+
         // 1. DESMARCAR BOTONES B/M
         $('.bm-radio').on('click', function(e) {
             let name = $(this).attr('name');
@@ -352,7 +372,7 @@
         // 3. FOTOS: ACUMULADOR DE ARCHIVOS Y GALERÍA COMPACTA
         let uploadedMedia = []; 
         let currentMediaIndex = 0;
-        const dataTransfer = new DataTransfer(); // Objeto para acumular archivos reales
+        const dataTransfer = new DataTransfer(); 
 
         $('#mediaInput').on('change', function(event) {
             let newFiles = this.files;
@@ -365,7 +385,7 @@
                     continue; 
                 }
 
-                dataTransfer.items.add(file); // Agrega al recolector nativo
+                dataTransfer.items.add(file); 
                 
                 let fileUrl = URL.createObjectURL(file);
                 let type = file.type.startsWith('video/') ? 'video' : 'image';
@@ -373,7 +393,6 @@
                 uploadedMedia.push({file: file, url: fileUrl, type: type, comment: ""});
             }
 
-            // Sincronizar el input oculto con la suma de todos los archivos
             document.getElementById('realMediaInput').files = dataTransfer.files;
 
             renderThumbnails();
@@ -398,7 +417,6 @@
             });
         }
 
-        // Abrir Galería Flotante (COMPACTA)
         window.openGallery = function(index) {
             if (uploadedMedia.length === 0) return;
             currentMediaIndex = index;
@@ -434,12 +452,9 @@
             }
         });
 
-        // Eliminar foto específica
         $('#removeMediaBtn').on('click', function() {
-            // Eliminar de los arrays
             uploadedMedia.splice(currentMediaIndex, 1);
             
-            // Reconstruir el DataTransfer (no se puede borrar directamente un índice, hay que hacer uno nuevo)
             let dt = new DataTransfer();
             uploadedMedia.forEach(m => dt.items.add(m.file));
             dataTransfer.items.clear();
@@ -547,11 +562,6 @@
 
 
         // 6. VALIDACIÓN FLOTANTE Y RECOLECCIÓN
-        function showToast(msg) {
-            $('#errorMsg').text(msg);
-            $('#errorToast').fadeIn().delay(4000).fadeOut();
-        }
-
         $('#intakeForm').on('submit', function(e) {
             $('.form-control').removeClass('is-invalid');
             let isValid = this.checkValidity(); 
@@ -576,7 +586,6 @@
                 combinedInventory[name] = $(this).val(); 
             });
 
-            // Recopilar arrays finales
             let finalComments = uploadedMedia.map(m => m.comment);
             $('#media_comments_data').val(JSON.stringify(finalComments));
             $('#damage_map_data').val(JSON.stringify(damages));
