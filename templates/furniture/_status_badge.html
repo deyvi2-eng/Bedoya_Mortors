@@ -1,0 +1,8 @@
+{% if s == 'RECIBIDO' %}<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-sky-100 text-sky-800"><i class="ph-fill ph-tray-arrow-down"></i> Recibido</span>
+{% elif s == 'EN_PROCESO' %}<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-800"><i class="ph-fill ph-hammer"></i> En proceso</span>
+{% elif s == 'LISTO' %}<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-green-100 text-green-800"><i class="ph-fill ph-check-circle"></i> Listo</span>
+{% elif s == 'ENTREGADO' %}<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-stone-200 text-stone-700"><i class="ph-fill ph-handshake"></i> Entregado</span>
+{% elif s == 'CANCELADO' %}<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-red-100 text-red-700"><i class="ph-fill ph-x-circle"></i> Cancelado</span>
+{% elif s == 'PENDIENTE' %}<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-800"><i class="ph-fill ph-clock"></i> Pendiente</span>
+{% elif s == 'ACEPTADA' %}<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-green-100 text-green-800"><i class="ph-fill ph-check-circle"></i> Aceptada</span>
+{% elif s == 'RECHAZADA' %}<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-red-100 text-red-700"><i class="ph-fill ph-x-circle"></i> Rechazada</span>{% endif %}

@@ -1,0 +1,185 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1c1917">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}Muebles M&amp;L{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛋️</text></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        wood: { 50:'#fbf7f1', 100:'#f4ead9', 200:'#e8d3b1', 300:'#d9b582', 400:'#c9955a', 500:'#b87b3e', 600:'#9c6233', 700:'#7d4c2c', 800:'#663f29', 900:'#553525' },
+                    },
+                    boxShadow: {
+                        card: '0 1px 2px rgba(28,25,23,.04), 0 8px 24px rgba(28,25,23,.05)',
+                        lift: '0 12px 32px -8px rgba(28,25,23,.25)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { background: #faf8f5; }
+        input, select, textarea { font-size: 16px !important; } /* evita el zoom automático en iPhone */
+        .field { width: 100%; background: #fff; border: 1.5px solid #e7e5e4; border-radius: 1rem; padding: .8rem 1rem; outline: none; transition: .15s; color: #1c1917; }
+        .field:focus { border-color: #b87b3e; box-shadow: 0 0 0 4px rgba(184,123,62,.15); }
+        .field::placeholder { color: #a8a29e; }
+        .label { display:block; font-size: .78rem; font-weight: 800; color: #57534e; margin-bottom: .4rem; }
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; font-weight:800; border-radius:1rem; padding:.85rem 1.25rem; transition:.15s; }
+        .btn:active { transform: scale(.97); }
+        .btn-primary { background:#1c1917; color:#fff; }
+        .btn-primary:hover { background:#000; }
+        .btn-wood { background:#b87b3e; color:#fff; }
+        .btn-wood:hover { background:#9c6233; }
+        .btn-soft { background:#f5f5f4; color:#44403c; }
+        .btn-soft:hover { background:#e7e5e4; }
+        .btn-wa { background:#25d366; color:#fff; }
+        .btn-wa:hover { background:#1eb257; }
+        .card { background:#fff; border:1px solid #f0ece6; border-radius:1.5rem; box-shadow: 0 1px 2px rgba(28,25,23,.04), 0 8px 24px rgba(28,25,23,.05); }
+        .nav-item.active { background:#1c1917; color:#fff; }
+        .nav-item.active i { color:#d9b582; }
+        .tab-item.active { color:#1c1917; }
+        .tab-item.active i { color:#b87b3e; }
+        .no-scrollbar::-webkit-scrollbar { display:none; }
+        .no-scrollbar { scrollbar-width:none; }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        [x-cloak] { display:none !important; }
+        @keyframes pop { from { transform: translateY(10px); opacity:0 } to { transform:none; opacity:1 } }
+        .pop { animation: pop .25s ease-out; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="font-sans text-stone-800 antialiased min-h-[100dvh]">
+
+{% with company=furniture_company %}
+<!-- ======== MENÚ LATERAL (COMPUTADORA) ======== -->
+<aside class="hidden lg:flex fixed inset-y-0 left-0 w-72 flex-col bg-white border-r border-stone-200/70 z-30">
+    <a href="{% url 'furniture:home' %}" class="flex items-center gap-3 px-6 h-20 border-b border-stone-100">
+        {% include 'furniture/_logo.html' with size='w-12 h-12' %}
+        <div class="min-w-0">
+            <p class="font-extrabold text-lg leading-tight truncate">{{ company.name }}</p>
+            <p class="text-[11px] font-bold tracking-widest uppercase text-wood-500">Taller de muebles</p>
+        </div>
+    </a>
+
+    <div class="px-4 pt-5">
+        <button type="button" onclick="FM.openSheet('sheet-new')" class="btn btn-wood w-full py-4 text-[15px] shadow-lift"><i class="ph-bold ph-plus-circle text-xl"></i> Nuevo trabajo</button>
+    </div>
+
+    <nav class="flex-1 px-4 py-5 space-y-1 text-[15px] font-bold">
+        {% include 'furniture/_nav_link.html' with key='home' url_name='furniture:home' icon='ph-house' label='Inicio' %}
+        {% include 'furniture/_nav_link.html' with key='orders' url_name='furniture:orders' icon='ph-clipboard-text' label='Hojas de entrada' %}
+        {% include 'furniture/_nav_link.html' with key='quotes' url_name='furniture:quotes' icon='ph-receipt' label='Proformas' %}
+        {% include 'furniture/_nav_link.html' with key='clients' url_name='furniture:clients' icon='ph-users-three' label='Clientes' %}
+    </nav>
+
+    <div class="p-4 border-t border-stone-100 space-y-2">
+        {% if request.user.role == 'ADMIN' or request.user.is_superuser %}
+        <a href="{% url 'companies:edit' 'muebles-ml' %}" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-stone-500 hover:bg-stone-100"><i class="ph-bold ph-gear text-lg"></i> Datos de la empresa</a>
+        <a href="/" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-stone-500 hover:bg-stone-100"><i class="ph-bold ph-arrow-u-up-left text-lg"></i> Ir a Bedoya Motors</a>
+        {% endif %}
+        <div class="flex items-center gap-3 px-3 py-2">
+            <div class="w-10 h-10 rounded-xl bg-wood-100 text-wood-700 flex items-center justify-center font-extrabold">{{ request.user.first_name|default:request.user.username|first|upper }}</div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
+                <p class="text-xs text-stone-400">Sesión activa</p>
+            </div>
+            <a href="/accounts/logout/" class="w-10 h-10 rounded-xl hover:bg-red-50 text-stone-400 hover:text-red-600 flex items-center justify-center" title="Cerrar sesión"><i class="ph-bold ph-sign-out text-lg"></i></a>
+        </div>
+    </div>
+</aside>
+
+<!-- ======== ENCABEZADO (CELULAR) ======== -->
+<header class="lg:hidden sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-stone-200/70">
+    <div class="flex items-center justify-between h-16 px-4">
+        <a href="{% url 'furniture:home' %}" class="flex items-center gap-2.5 min-w-0">
+            {% include 'furniture/_logo.html' with size='w-10 h-10' %}
+            <span class="font-extrabold text-[17px] truncate">{{ company.name }}</span>
+        </a>
+        <button type="button" onclick="FM.openSheet('sheet-account')" class="w-10 h-10 rounded-xl bg-wood-100 text-wood-700 flex items-center justify-center font-extrabold">{{ request.user.first_name|default:request.user.username|first|upper }}</button>
+    </div>
+</header>
+
+<!-- ======== CONTENIDO ======== -->
+<main class="lg:pl-72">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 pt-5 lg:pt-10 pb-32 lg:pb-16">
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+<!-- ======== BARRA INFERIOR (CELULAR) ======== -->
+<nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-stone-200/70 safe-bottom">
+    <div class="grid grid-cols-5 h-[68px] text-stone-400">
+        <a href="{% url 'furniture:home' %}" class="tab-item {% if nav == 'home' %}active{% endif %} flex flex-col items-center justify-center gap-0.5"><i class="ph-fill ph-house text-[24px]"></i><span class="text-[11px] font-bold">Inicio</span></a>
+        <a href="{% url 'furniture:orders' %}" class="tab-item {% if nav == 'orders' %}active{% endif %} flex flex-col items-center justify-center gap-0.5"><i class="ph-fill ph-clipboard-text text-[24px]"></i><span class="text-[11px] font-bold">Órdenes</span></a>
+        <div class="flex items-center justify-center">
+            <button type="button" onclick="FM.openSheet('sheet-new')" aria-label="Nuevo trabajo" class="-mt-7 w-16 h-16 rounded-2xl bg-wood-500 text-white shadow-lift flex items-center justify-center active:scale-95 transition border-4 border-white"><i class="ph-bold ph-plus text-3xl"></i></button>
+        </div>
+        <a href="{% url 'furniture:quotes' %}" class="tab-item {% if nav == 'quotes' %}active{% endif %} flex flex-col items-center justify-center gap-0.5"><i class="ph-fill ph-receipt text-[24px]"></i><span class="text-[11px] font-bold">Proformas</span></a>
+        <a href="{% url 'furniture:clients' %}" class="tab-item {% if nav == 'clients' %}active{% endif %} flex flex-col items-center justify-center gap-0.5"><i class="ph-fill ph-users-three text-[24px]"></i><span class="text-[11px] font-bold">Clientes</span></a>
+    </div>
+</nav>
+
+<!-- ======== HOJA: NUEVO TRABAJO ======== -->
+<div id="sheet-new" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-stone-900/50 backdrop-blur-sm" data-close></div>
+    <div class="absolute inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[520px] bg-white rounded-t-[2rem] sm:rounded-[2rem] p-5 sm:p-6 safe-bottom pop">
+        <div class="w-12 h-1.5 bg-stone-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+        <h3 class="text-xl font-extrabold mb-1">¿Qué vas a hacer?</h3>
+        <p class="text-sm text-stone-400 mb-5">Elige una opción para empezar</p>
+        <div class="grid grid-cols-2 gap-3">
+            <a href="{% url 'furniture:order_create' %}?tipo=RETAPIZADO" class="rounded-3xl p-4 bg-wood-50 border-2 border-wood-100 hover:border-wood-400 transition flex flex-col gap-3">
+                <span class="w-12 h-12 rounded-2xl bg-wood-500 text-white flex items-center justify-center"><i class="ph-fill ph-armchair text-2xl"></i></span>
+                <span><span class="block font-extrabold text-[17px]">Retapizado</span><span class="text-xs text-stone-500">Recibir un mueble</span></span>
+            </a>
+            <a href="{% url 'furniture:order_create' %}?tipo=FABRICACION" class="rounded-3xl p-4 bg-sky-50 border-2 border-sky-100 hover:border-sky-400 transition flex flex-col gap-3">
+                <span class="w-12 h-12 rounded-2xl bg-sky-600 text-white flex items-center justify-center"><i class="ph-fill ph-hammer text-2xl"></i></span>
+                <span><span class="block font-extrabold text-[17px]">Fabricación</span><span class="text-xs text-stone-500">Mueble nuevo</span></span>
+            </a>
+            <a href="{% url 'furniture:quote_create' %}" class="col-span-2 rounded-3xl p-4 bg-stone-50 border-2 border-stone-100 hover:border-stone-400 transition flex items-center gap-4">
+                <span class="w-12 h-12 rounded-2xl bg-stone-900 text-white flex items-center justify-center"><i class="ph-fill ph-receipt text-2xl"></i></span>
+                <span><span class="block font-extrabold text-[17px]">Proforma</span><span class="text-xs text-stone-500">Cotizar un trabajo rápido</span></span>
+            </a>
+        </div>
+        <button type="button" data-close class="btn btn-soft w-full mt-4">Cancelar</button>
+    </div>
+</div>
+
+<!-- ======== HOJA: CUENTA (CELULAR) ======== -->
+<div id="sheet-account" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-stone-900/50 backdrop-blur-sm" data-close></div>
+    <div class="absolute inset-x-0 bottom-0 bg-white rounded-t-[2rem] p-5 safe-bottom pop space-y-2">
+        <div class="w-12 h-1.5 bg-stone-200 rounded-full mx-auto mb-3"></div>
+        <p class="font-extrabold text-lg px-1">{{ request.user.get_full_name|default:request.user.username }}</p>
+        {% if request.user.role == 'ADMIN' or request.user.is_superuser %}
+        <a href="{% url 'companies:edit' 'muebles-ml' %}" class="flex items-center gap-3 px-4 py-4 rounded-2xl bg-stone-50 font-bold"><i class="ph-bold ph-gear text-xl"></i> Datos de la empresa</a>
+        <a href="/" class="flex items-center gap-3 px-4 py-4 rounded-2xl bg-stone-50 font-bold"><i class="ph-bold ph-arrow-u-up-left text-xl"></i> Ir a Bedoya Motors</a>
+        {% endif %}
+        <a href="/accounts/logout/" class="flex items-center gap-3 px-4 py-4 rounded-2xl bg-red-50 text-red-600 font-bold"><i class="ph-bold ph-sign-out text-xl"></i> Cerrar sesión</a>
+    </div>
+</div>
+{% endwith %}
+
+<div id="toasts" class="fixed z-[100] top-4 inset-x-4 sm:left-auto sm:right-6 sm:w-96 space-y-2 pointer-events-none"></div>
+
+<script src="{% static 'furniture/app.js' %}"></script>
+<script>
+    {% for message in messages %}FM.toast("{{ message|escapejs }}", "{{ message.tags }}");
+    {% endfor %}
+</script>
+{% block modals %}{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

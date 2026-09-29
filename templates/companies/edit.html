@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}{{ company.name }} | Empresas{% endblock %}
+{% block header_title %}Datos de la empresa{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="max-w-3xl mx-auto space-y-5">
+    {% csrf_token %}
+    <a href="{% url 'companies:list' %}" class="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-900"><i class="ph-bold ph-arrow-left"></i> Empresas</a>
+
+    {% if form.errors %}
+    <div class="bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm font-bold">Revise los campos marcados en rojo.</div>
+    {% endif %}
+
+    <!-- LOGO -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 md:p-6 flex flex-col sm:flex-row items-center gap-5">
+        <label for="logo-input" class="relative w-32 h-32 shrink-0 rounded-3xl bg-gray-50 border-2 border-dashed border-gray-200 hover:border-gray-900 flex items-center justify-center overflow-hidden cursor-pointer transition-all">
+            <img id="logo-preview" src="{% if company.logo %}{{ company.logo.url }}{% endif %}" class="w-full h-full object-contain p-3 {% if not company.logo %}hidden{% endif %}" alt="">
+            <div id="logo-empty" class="text-center text-gray-400 {% if company.logo %}hidden{% endif %}"><i class="ph-bold ph-image text-3xl"></i><p class="text-[11px] font-bold mt-1">Subir logo</p></div>
+        </label>
+        {{ form.logo }}
+        <div class="text-center sm:text-left">
+            <p class="text-lg font-black text-gray-900">{{ company.name }}</p>
+            <p class="text-sm text-gray-400">Toque el cuadro para cambiar el logo. Recomendado: PNG con fondo transparente.</p>
+            {% if form.logo.errors %}<p class="text-sm text-red-600 font-bold mt-1">{{ form.logo.errors.0 }}</p>{% endif %}
+        </div>
+    </div>
+
+    <!-- DATOS -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for field in form %}{% if field.name != 'logo' and field.name != 'document_notes' %}
+        <div class="{% if field.name == 'address' %}md:col-span-2{% endif %}">
+            <label class="block text-xs font-black text-gray-500 uppercase mb-1.5">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<p class="text-sm text-red-600 font-bold mt-1">{{ field.errors.0 }}</p>{% endif %}
+        </div>
+        {% endif %}{% endfor %}
+        <div class="md:col-span-2">
+            <label class="block text-xs font-black text-gray-500 uppercase mb-1.5">{{ form.document_notes.label }}</label>
+            {{ form.document_notes }}
+            <p class="text-xs text-gray-400 mt-1">{{ form.document_notes.help_text }}</p>
+        </div>
+    </div>
+
+    <div class="sticky bottom-24 md:bottom-4 z-10">
+        <button class="w-full bg-gray-900 hover:bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-[.98] transition-all flex items-center justify-center gap-2"><i class="ph-bold ph-floppy-disk text-lg"></i> Guardar cambios</button>
+    </div>
+</form>
+
+<script>
+document.getElementById('logo-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const img = document.getElementById('logo-preview');
+    img.src = URL.createObjectURL(file);
+    img.classList.remove('hidden');
+    document.getElementById('logo-empty').classList.add('hidden');
+});
+</script>
+{% endblock %}

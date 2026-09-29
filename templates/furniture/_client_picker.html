@@ -1,0 +1,20 @@
+<div id="client-picker" class="relative">
+    <input type="hidden" name="client_id">
+    <div data-client-searchbox>
+        <div class="relative">
+            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-xl"></i>
+            <input data-client-search type="search" style="scroll-margin-top: 5rem" class="field !pl-12 !py-4" placeholder="Buscar por nombre, celular o cédula…" autocomplete="off">
+        </div>
+        <button type="button" data-client-new class="mt-3 w-full btn border-2 border-dashed border-wood-300 text-wood-700 hover:bg-wood-50 py-3.5"><i class="ph-bold ph-user-plus text-lg"></i> Cliente nuevo</button>
+        <div data-client-results class="hidden absolute z-30 left-0 right-0 top-[3.9rem] bg-white rounded-2xl border border-stone-200 shadow-lift overflow-hidden max-h-[50vh] overflow-y-auto divide-y divide-stone-100"></div>
+    </div>
+    <div data-client-selected class="hidden flex items-center gap-3 p-4 rounded-2xl bg-wood-50 border-2 border-wood-200">
+        <span class="w-12 h-12 rounded-2xl bg-wood-500 text-white flex items-center justify-center shrink-0"><i class="ph-fill ph-user text-2xl"></i></span>
+        <div class="flex-1 min-w-0">
+            <p data-name class="font-extrabold text-[17px] truncate"></p>
+            <p data-meta class="text-sm text-stone-500 truncate"></p>
+        </div>
+        <button type="button" data-client-edit class="w-10 h-10 rounded-xl bg-white text-stone-500 flex items-center justify-center" title="Editar datos"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
+        <button type="button" data-client-change class="h-10 px-3 rounded-xl bg-white text-sm font-bold text-stone-600">Cambiar</button>
+    </div>
+</div>

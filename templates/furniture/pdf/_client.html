@@ -1,0 +1,6 @@
+<div class="section">Datos del cliente</div>
+<table class="kv">
+    <tr><td class="k">Nombre:</td><td class="v">{{ client.name }}</td><td class="k">Cédula / RUC:</td><td class="v">{{ client.id_number|default:"—" }}</td></tr>
+    <tr><td class="k">Celular:</td><td class="v">{{ client.phone }}</td><td class="k">Correo:</td><td class="v">{{ client.email|default:"—" }}</td></tr>
+    {% if client.address %}<tr><td class="k">Dirección:</td><td class="v" colspan="3">{{ client.address }}</td></tr>{% endif %}
+</table>

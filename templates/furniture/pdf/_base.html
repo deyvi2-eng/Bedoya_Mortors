@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>{% block doc_title %}{% endblock %}</title>
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 1.2cm 1.3cm 1.8cm 1.3cm;
+        @frame footer { -pdf-frame-content: footer; bottom: .6cm; margin-left: 1.3cm; margin-right: 1.3cm; height: .8cm; }
+    }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 9.5pt; color: #1c1917; line-height: 1.35; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { vertical-align: top; padding: 0; }
+    .muted { color: #78716c; }
+    .accent { color: #9c6233; }
+    .company-name { font-size: 16pt; font-weight: bold; color: #1c1917; }
+    .doc-box { background-color: #1c1917; color: #ffffff; padding: 8px 12px 8px 8px; text-align: right; }
+    .doc-title { font-size: 10pt; font-weight: bold; }
+    .doc-number { font-size: 15pt; font-weight: bold; color: #d9b582; }
+    .section { font-size: 8.5pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #9c6233;
+               border-bottom: 1.5px solid #e8d3b1; padding-bottom: 3px; margin-top: 14px; margin-bottom: 6px; }
+    .kv td { padding: 3px 4px; }
+    .kv .k { color: #78716c; width: 17%; }
+    .kv .v { font-weight: bold; width: 33%; }
+    .items th { background-color: #f4ead9; color: #553525; font-size: 8.5pt; text-align: left; padding: 6px 6px; }
+    .items td { border-bottom: 1px solid #eee7dd; padding: 6px 6px; }
+    .num, .items th.num { text-align: right; }
+    .totals td { padding: 4px 6px; }
+    .grand { background-color: #1c1917; color: #ffffff; font-weight: bold; font-size: 11pt; }
+    .box { border: 1px solid #eee7dd; background-color: #fbf7f1; padding: 8px 10px; }
+    .photo-cell { padding: 4px; text-align: center; }
+    .photo-cap { font-size: 7.5pt; color: #78716c; }
+    .sign-cell { text-align: center; padding: 0 14px; }
+    .sign-line { border-top: 1px solid #1c1917; padding-top: 4px; font-size: 8.5pt; }
+    .notes { font-size: 7.5pt; color: #78716c; margin-top: 14px; border-top: 1px solid #eee7dd; padding-top: 6px; }
+    #footer { font-size: 7.5pt; color: #a8a29e; text-align: center; }
+</style>
+</head>
+<body>
+    <!-- ENCABEZADO -->
+    <table>
+        <tr>
+            {% if logo %}<td style="width: 22%;"><img src="{{ logo }}" style="width: 110px;"></td>{% endif %}
+            <td style="{% if logo %}width: 45%;{% else %}width: 67%;{% endif %} padding-right: 10px;">
+                <div class="company-name">{{ company.name }}</div>
+                {% if company.legal_name %}<div class="muted">{{ company.legal_name }}</div>{% endif %}
+                {% if company.ruc %}<div><b>RUC:</b> {{ company.ruc }}</div>{% endif %}
+                {% if company.address %}<div class="muted">{{ company.address }}</div>{% endif %}
+                <div class="muted">{% if company.phone %}Tel: {{ company.phone }}{% endif %}{% if company.phone and company.email %} · {% endif %}{{ company.email }}</div>
+            </td>
+            <td style="width: 33%;">
+                <div class="doc-box">
+                    <div class="doc-title">{% block doc_label %}{% endblock %}</div>
+                    <div class="doc-number">{% block doc_number %}{% endblock %}</div>
+                    <div style="font-size: 8.5pt;">{% block doc_date %}{% endblock %}</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    {% block body %}{% endblock %}
+
+    {% if notes %}<div class="notes"><b>Condiciones:</b> {{ notes|linebreaksbr }}</div>{% endif %}
+
+    <div id="footer">{{ company.name }} · Página <pdf:pagenumber> de <pdf:pagecount></div>
+</body>
+</html>

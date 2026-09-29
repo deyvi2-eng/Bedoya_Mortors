@@ -1,0 +1,91 @@
+{% extends 'furniture/base.html' %}
+{% block title %}Nueva proforma | {{ furniture_company.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-5">
+    <div class="flex items-center gap-3">
+        <a href="{% url 'furniture:quotes' %}" class="w-11 h-11 rounded-xl bg-white border border-stone-200 flex items-center justify-center shrink-0" aria-label="Volver"><i class="ph-bold ph-arrow-left text-lg"></i></a>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Nueva proforma</h1>
+            <p class="text-sm text-stone-400">Cotización rápida para el cliente</p>
+        </div>
+    </div>
+
+    <div class="card p-5 sm:p-6 space-y-5">
+        <div>
+            <p class="label">Cliente</p>
+            {% include 'furniture/_client_picker.html' %}
+        </div>
+        <div>
+            <p class="label">Tipo de trabajo</p>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="cursor-pointer rounded-2xl border-2 border-stone-200 px-4 py-3 font-bold flex items-center gap-2 has-[:checked]:border-wood-500 has-[:checked]:bg-wood-50">
+                    <input type="radio" name="kind" value="RETAPIZADO" class="sr-only" {% if initial.kind != 'FABRICACION' %}checked{% endif %}><i class="ph-fill ph-armchair text-xl text-wood-600"></i> Retapizado
+                </label>
+                <label class="cursor-pointer rounded-2xl border-2 border-stone-200 px-4 py-3 font-bold flex items-center gap-2 has-[:checked]:border-sky-500 has-[:checked]:bg-sky-50">
+                    <input type="radio" name="kind" value="FABRICACION" class="sr-only" {% if initial.kind == 'FABRICACION' %}checked{% endif %}><i class="ph-fill ph-hammer text-xl text-sky-600"></i> Fabricación
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+        <p class="label">Detalle y precios</p>
+        {% include 'furniture/_items_editor.html' %}
+    </div>
+
+    <div class="card p-5 sm:p-6">
+        {% include 'furniture/_photo_picker.html' with picker_id='photos' title='Fotos de referencia (opcional)' hint='Modelo, tela o diseño que se cotiza' %}
+    </div>
+
+    <div class="card p-5 sm:p-6 grid sm:grid-cols-3 gap-4">
+        <div class="sm:col-span-2">
+            <div class="flex items-center justify-between mb-1.5">
+                <label for="notes" class="label !mb-0">Notas / condiciones</label>
+                {% include 'furniture/_dictate_btn.html' with target='notes' %}
+            </div>
+            <textarea id="notes" rows="3" class="field" placeholder="Ej: Incluye transporte. Tiempo de entrega 15 días. 50% de anticipo."></textarea>
+        </div>
+        <div>
+            <label for="valid_days" class="label">Válida por (días)</label>
+            <input id="valid_days" type="number" min="1" max="365" value="15" inputmode="numeric" class="field">
+        </div>
+    </div>
+
+    <div class="sticky bottom-[84px] lg:bottom-4 z-20">
+        <div class="flex gap-3 p-2 rounded-[1.4rem] bg-white/90 backdrop-blur-xl border border-stone-200 shadow-lift">
+            <div class="flex-1 flex flex-col justify-center px-3">
+                <p class="text-[11px] font-bold text-stone-400 leading-none">Total</p>
+                <p class="text-lg font-extrabold leading-tight" data-items-total>$0.00</p>
+            </div>
+            <button type="button" id="btn-save" class="btn btn-wood px-6"><i class="ph-bold ph-check-circle text-xl"></i> Guardar proforma</button>
+        </div>
+    </div>
+</div>
+{{ initial|json_script:"initial-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const initial = JSON.parse(document.getElementById('initial-data').textContent);
+    const $ = (id) => document.getElementById(id);
+    const picker = FM.ClientPicker($('client-picker'), { initial: initial.client });
+    const items = FM.ItemsEditor($('items-editor'), { items: initial.items });
+    const photos = FM.PhotoPicker($('photos'));
+
+    $('btn-save').addEventListener('click', async function () {
+        if (!picker.get()) { FM.toast('Seleccione o cree el cliente.', 'error'); return window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        if (!items.get().length) return FM.toast('Agregue al menos un ítem con descripción y precio.', 'error');
+        const fd = new FormData();
+        fd.append('client_id', picker.get().id);
+        fd.append('kind', document.querySelector('input[name=kind]:checked').value);
+        fd.append('items', JSON.stringify(items.get()));
+        fd.append('notes', $('notes').value);
+        fd.append('valid_days', $('valid_days').value);
+        photos.appendTo(fd);
+        try { await FM.submit('{% url "furniture:quote_create" %}', fd, this); } catch (e) { /* mostrado */ }
+    });
+})();
+</script>
+{% endblock %}

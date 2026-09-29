@@ -1,0 +1,17 @@
+{% if photo_rows %}
+<div class="section">{{ photos_title }}</div>
+<table>
+    {% for row in photo_rows %}
+    <tr>
+        {% for p in row %}
+        <td class="photo-cell" width="33%">
+            {% if p %}
+            <img src="{{ p.src }}" style="width: 160px;">
+            {% if p.caption or p.stage %}<div class="photo-cap">{{ p.stage|default:"" }}{% if p.stage and p.caption %} · {% endif %}{{ p.caption }}</div>{% endif %}
+            {% endif %}
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}

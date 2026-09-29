@@ -1,0 +1,119 @@
+{% extends 'furniture/base.html' %}
+{% block title %}Inicio | {{ company.name }}{% endblock %}
+
+{% block content %}
+<div class="space-y-7">
+    <!-- SALUDO -->
+    <div>
+        <p class="text-stone-400 font-semibold">{% now "l, j \d\e F" %}</p>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Hola, {{ request.user.first_name|default:request.user.username }} 👋</h1>
+    </div>
+
+    <!-- ACCIONES PRINCIPALES -->
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <a href="{% url 'furniture:order_create' %}?tipo=RETAPIZADO" class="group relative overflow-hidden rounded-[1.75rem] p-5 sm:p-6 bg-wood-500 text-white shadow-lift active:scale-[.98] transition">
+            <i class="ph-fill ph-armchair absolute -right-4 -bottom-6 text-[120px] opacity-15 group-hover:scale-110 transition"></i>
+            <span class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6"><i class="ph-bold ph-plus text-2xl"></i></span>
+            <p class="text-lg sm:text-xl font-extrabold leading-tight">Nuevo<br>Retapizado</p>
+        </a>
+        <a href="{% url 'furniture:order_create' %}?tipo=FABRICACION" class="group relative overflow-hidden rounded-[1.75rem] p-5 sm:p-6 bg-stone-900 text-white shadow-lift active:scale-[.98] transition">
+            <i class="ph-fill ph-hammer absolute -right-4 -bottom-6 text-[120px] opacity-15 group-hover:scale-110 transition"></i>
+            <span class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mb-6"><i class="ph-bold ph-plus text-2xl"></i></span>
+            <p class="text-lg sm:text-xl font-extrabold leading-tight">Nueva<br>Fabricación</p>
+        </a>
+        <a href="{% url 'furniture:quote_create' %}" class="group col-span-2 lg:col-span-1 relative overflow-hidden rounded-[1.75rem] p-5 sm:p-6 bg-white border border-stone-200 shadow-card active:scale-[.98] transition flex lg:block items-center gap-4">
+            <i class="ph-fill ph-receipt absolute -right-4 -bottom-6 text-[120px] text-stone-100 group-hover:scale-110 transition"></i>
+            <span class="relative w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center lg:mb-6 shrink-0"><i class="ph-bold ph-receipt text-2xl"></i></span>
+            <p class="relative text-lg sm:text-xl font-extrabold leading-tight">Nueva Proforma<span class="block text-sm font-semibold text-stone-400">Cotizar rápido</span></p>
+        </a>
+    </div>
+
+    <!-- ALERTAS -->
+    {% if overdue or due_today %}
+    <div class="grid sm:grid-cols-2 gap-3">
+        {% if overdue %}
+        <a href="{% url 'furniture:orders' %}" class="flex items-center gap-3 p-4 rounded-2xl bg-red-50 border border-red-200">
+            <span class="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center"><i class="ph-fill ph-warning text-xl"></i></span>
+            <div><p class="font-extrabold text-red-800">{{ overdue|length }} atrasada{{ overdue|length|pluralize }}</p><p class="text-sm text-red-600">Pasó la fecha de entrega</p></div>
+        </a>
+        {% endif %}
+        {% if due_today %}
+        <a href="{% url 'furniture:orders' %}" class="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">
+            <span class="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center"><i class="ph-fill ph-calendar-check text-xl"></i></span>
+            <div><p class="font-extrabold text-amber-900">{{ due_today|length }} para entregar hoy</p><p class="text-sm text-amber-700">Revise que estén listas</p></div>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- TABLERO -->
+    <section>
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-extrabold">Trabajos en el taller</h2>
+            <a href="{% url 'furniture:orders' %}" class="text-sm font-bold text-wood-600">Ver todo →</a>
+        </div>
+
+        <!-- En celular: pestañas; en computadora: 3 columnas -->
+        <div class="lg:hidden flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 mb-3" id="board-tabs">
+            <button data-col="col-received" class="board-tab shrink-0 px-4 py-2.5 rounded-full text-sm font-extrabold bg-stone-900 text-white">Recibidos · {{ received|length }}</button>
+            <button data-col="col-progress" class="board-tab shrink-0 px-4 py-2.5 rounded-full text-sm font-extrabold bg-white border border-stone-200">En proceso · {{ in_progress|length }}</button>
+            <button data-col="col-ready" class="board-tab shrink-0 px-4 py-2.5 rounded-full text-sm font-extrabold bg-white border border-stone-200">Listos · {{ ready|length }}</button>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-4">
+            {% for col_id, title, dot, list in board %}
+            <div id="{{ col_id }}" class="board-col {% if not forloop.first %}hidden lg:block{% endif %}">
+                <div class="hidden lg:flex items-center gap-2 mb-3 px-1">
+                    <span class="w-2.5 h-2.5 rounded-full {{ dot }}"></span>
+                    <p class="font-extrabold">{{ title }}</p>
+                    <span class="text-sm font-bold text-stone-400">{{ list|length }}</span>
+                </div>
+                <div class="space-y-3 lg:bg-stone-100/60 lg:rounded-3xl lg:p-3 lg:min-h-[200px]">
+                    {% for o in list %}
+                        {% include 'furniture/_order_card.html' %}
+                    {% empty %}
+                        <div class="text-center py-10 text-stone-400">
+                            <i class="ph ph-coffee text-4xl"></i>
+                            <p class="text-sm font-semibold mt-1">Nada por aquí</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- PROFORMAS PENDIENTES -->
+    {% if pending_quotes %}
+    <section>
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-extrabold">Proformas sin respuesta</h2>
+            <a href="{% url 'furniture:quotes' %}?estado=PENDIENTE" class="text-sm font-bold text-wood-600">Ver todas →</a>
+        </div>
+        <div class="card divide-y divide-stone-100">
+            {% for q in pending_quotes %}
+            <a href="{% url 'furniture:quote_detail' q.pk %}" class="flex items-center gap-3 p-4 hover:bg-stone-50 first:rounded-t-3xl last:rounded-b-3xl">
+                <span class="w-11 h-11 rounded-xl bg-stone-100 flex items-center justify-center"><i class="ph-fill ph-receipt text-xl text-stone-500"></i></span>
+                <div class="flex-1 min-w-0">
+                    <p class="font-bold truncate">{{ q.client.name }}</p>
+                    <p class="text-xs text-stone-400">{{ q.number }} · hace {{ q.created_at|timesince }}</p>
+                </div>
+                <p class="font-extrabold">${{ q.total|floatformat:"2u" }}</p>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.board-tab').forEach((tab) => tab.addEventListener('click', () => {
+    document.querySelectorAll('.board-tab').forEach((t) => t.className = 'board-tab shrink-0 px-4 py-2.5 rounded-full text-sm font-extrabold bg-white border border-stone-200');
+    tab.className = 'board-tab shrink-0 px-4 py-2.5 rounded-full text-sm font-extrabold bg-stone-900 text-white';
+    document.querySelectorAll('.board-col').forEach((c) => c.classList.add('hidden', 'lg:block'));
+    document.getElementById(tab.dataset.col).classList.remove('hidden');
+}));
+</script>
+{% endblock %}

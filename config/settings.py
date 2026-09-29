@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     'audits',
     'notifications',
     'workshop',
+    'companies',
+    'furniture',
 ]
 
 MIDDLEWARE = [
@@ -47,7 +49,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'audits.middleware.SecurityAuditMiddleware'
+    'audits.middleware.SecurityAuditMiddleware',
+    'accounts.middleware.BusinessAccessMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -63,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'furniture.context_processors.furniture_company',
             ],
         },
     },

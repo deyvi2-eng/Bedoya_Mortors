@@ -1,0 +1,50 @@
+{% extends 'furniture/base.html' %}
+{% block title %}Clientes | {{ furniture_company.name }}{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+    <div class="flex items-center justify-between gap-3">
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Clientes</h1>
+        <button type="button" id="btn-new-client" class="btn btn-wood"><i class="ph-bold ph-user-plus text-lg"></i> <span class="hidden sm:inline">Nuevo cliente</span><span class="sm:hidden">Nuevo</span></button>
+    </div>
+
+    <form method="get" class="relative">
+        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-xl"></i>
+        <input name="q" value="{{ q }}" type="search" class="field !pl-12 !py-3.5" placeholder="Buscar por nombre, celular o cédula…">
+    </form>
+
+    {% if clients %}
+    <div class="card divide-y divide-stone-100 overflow-hidden">
+        {% for c in clients %}
+        <a href="{% url 'furniture:client_detail' c.pk %}" class="flex items-center gap-3 sm:gap-4 p-4 hover:bg-stone-50 transition">
+            <span class="w-12 h-12 rounded-2xl bg-wood-100 text-wood-700 flex items-center justify-center text-lg font-extrabold shrink-0">{{ c.name|first|upper }}</span>
+            <div class="flex-1 min-w-0">
+                <p class="font-extrabold truncate">{{ c.name }}</p>
+                <p class="text-sm text-stone-400 truncate">{{ c.phone }}{% if c.id_number %} · {{ c.id_number }}{% endif %}</p>
+            </div>
+            <div class="hidden sm:flex gap-4 text-center">
+                <div><p class="font-extrabold">{{ c.n_orders }}</p><p class="text-[11px] font-bold text-stone-400">Hojas</p></div>
+                <div><p class="font-extrabold">{{ c.n_quotes }}</p><p class="text-[11px] font-bold text-stone-400">Proformas</p></div>
+            </div>
+            <i class="ph-bold ph-caret-right text-stone-300 text-lg"></i>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card p-10 text-center">
+        <i class="ph ph-users-three text-5xl text-stone-300"></i>
+        <p class="font-extrabold text-lg mt-2">{% if q %}No se encontró “{{ q }}”{% else %}Aún no hay clientes{% endif %}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('btn-new-client').addEventListener('click', () => {
+    const q = '{{ q|escapejs }}';
+    const prefill = q ? (/^[\d\s+]+$/.test(q) ? { phone: q } : { name: q }) : {};
+    FM.openClientModal({ prefill, onSaved: (c) => location.href = `/muebles/clientes/${c.id}/` });
+});
+</script>
+{% endblock %}

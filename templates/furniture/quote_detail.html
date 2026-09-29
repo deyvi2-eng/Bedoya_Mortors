@@ -1,0 +1,104 @@
+{% extends 'furniture/base.html' %}
+{% block title %}{{ quote.number }} | {{ furniture_company.name }}{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+    <div class="flex items-start gap-3">
+        <a href="{% url 'furniture:quotes' %}" class="w-11 h-11 rounded-xl bg-white border border-stone-200 flex items-center justify-center shrink-0" aria-label="Volver"><i class="ph-bold ph-arrow-left text-lg"></i></a>
+        <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Proforma {{ quote.number }}</h1>
+                {% include 'furniture/_status_badge.html' with s=quote.status %}
+            </div>
+            <p class="text-sm text-stone-400 mt-0.5">{% include 'furniture/_kind_badge.html' with k=quote.kind %} · Válida hasta {{ quote.valid_until|date:"d M Y" }}</p>
+        </div>
+    </div>
+
+    {% if is_new %}
+    <div class="card p-5 sm:p-6 border-2 !border-green-300 bg-green-50/50 pop">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="w-12 h-12 rounded-2xl bg-green-500 text-white flex items-center justify-center"><i class="ph-bold ph-check text-2xl"></i></span>
+            <div><p class="text-lg font-extrabold">¡Proforma lista!</p><p class="text-sm text-stone-500">Envíela al cliente ahora.</p></div>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-2">
+            <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="btn btn-wa py-4 text-[16px]"><i class="ph-fill ph-whatsapp-logo text-2xl"></i> Enviar por WhatsApp</a>
+            <a href="{% url 'furniture:quote_pdf' quote.pk %}" target="_blank" class="btn btn-soft bg-white py-4"><i class="ph-bold ph-file-pdf text-xl"></i> Ver PDF</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid lg:grid-cols-3 gap-5 items-start">
+        <div class="lg:col-span-2 space-y-5">
+            {% if quote.status == 'PENDIENTE' %}
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <a href="{% url 'furniture:order_create' %}?proforma={{ quote.pk }}" class="sm:col-span-2 btn btn-primary py-5 text-[16px] shadow-lift"><i class="ph-bold ph-check-circle text-2xl"></i> Cliente aceptó · Crear hoja de entrada</a>
+                <form method="post" action="{% url 'furniture:quote_status' quote.pk %}">{% csrf_token %}<input type="hidden" name="status" value="RECHAZADA">
+                    <button class="btn btn-soft w-full py-5"><i class="ph-bold ph-x-circle text-xl"></i> No aceptó</button></form>
+            </div>
+            {% endif %}
+            {% for o in quote.orders.all %}
+            <a href="{% url 'furniture:order_detail' o.pk %}" class="flex items-center gap-3 p-4 rounded-2xl bg-green-50 border border-green-200 font-bold text-green-900"><i class="ph-fill ph-link text-xl"></i> Convertida en hoja de entrada {{ o.number }} →</a>
+            {% endfor %}
+
+            <div class="card p-5 flex items-center gap-4">
+                <span class="w-14 h-14 rounded-2xl bg-wood-100 text-wood-700 flex items-center justify-center text-xl font-extrabold shrink-0">{{ quote.client.name|first|upper }}</span>
+                <div class="flex-1 min-w-0">
+                    <a href="{% url 'furniture:client_detail' quote.client.pk %}" class="font-extrabold text-lg hover:underline truncate block">{{ quote.client.name }}</a>
+                    <p class="text-sm text-stone-500 truncate">{{ quote.client.phone }}</p>
+                </div>
+                <a href="tel:{{ quote.client.phone }}" class="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center" aria-label="Llamar"><i class="ph-fill ph-phone text-xl"></i></a>
+            </div>
+
+            <div class="card overflow-hidden">
+                <p class="label px-5 pt-5">Detalle</p>
+                <div class="divide-y divide-stone-100">
+                    {% for item in quote.items.all %}
+                    <div class="flex items-start justify-between gap-3 px-5 py-3">
+                        <div class="min-w-0"><p class="font-bold">{{ item.description }}</p><p class="text-sm text-stone-400">{{ item.quantity|floatformat:"-2u" }} × ${{ item.unit_price|floatformat:"2u" }}</p></div>
+                        <p class="font-extrabold shrink-0">${{ item.total|floatformat:"2u" }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="flex items-center justify-between bg-stone-900 text-white px-5 py-4">
+                    <span class="font-bold text-stone-300">Total</span><span class="text-2xl font-extrabold">${{ quote.total|floatformat:"2u" }}</span>
+                </div>
+            </div>
+
+            {% if quote.notes %}
+            <div class="card p-5"><p class="label">Notas / condiciones</p><p class="text-[15px] whitespace-pre-line">{{ quote.notes }}</p></div>
+            {% endif %}
+
+            {% if quote.photos.all %}
+            <div class="card p-5">
+                <p class="label">Fotos de referencia</p>
+                <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {% for p in quote.photos.all %}<a href="{{ p.image.url }}" target="_blank"><img src="{{ p.image.url }}" loading="lazy" class="rounded-xl aspect-square object-cover w-full" alt="{{ p.caption }}"></a>{% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="space-y-5 lg:sticky lg:top-6">
+            <div class="card p-5 space-y-2">
+                <p class="label">Documento</p>
+                <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="btn btn-wa w-full py-4"><i class="ph-fill ph-whatsapp-logo text-2xl"></i> Enviar por WhatsApp</a>
+                <button type="button" onclick="FM.sharePdf('{% url 'furniture:quote_pdf' quote.pk %}', '{{ quote.number }}.pdf', 'Proforma {{ quote.number }}')" class="btn btn-soft w-full"><i class="ph-bold ph-share-network text-xl"></i> Compartir archivo PDF</button>
+                <a href="{% url 'furniture:quote_pdf' quote.pk %}" target="_blank" class="btn btn-soft w-full"><i class="ph-bold ph-file-pdf text-xl"></i> Ver / imprimir PDF</a>
+                <button type="button" onclick="FM.copy('{{ pdf_public_url }}')" class="btn btn-soft w-full"><i class="ph-bold ph-link text-xl"></i> Copiar enlace</button>
+            </div>
+            <details class="card p-5 group">
+                <summary class="label !mb-0 cursor-pointer list-none flex items-center justify-between">Más opciones <i class="ph-bold ph-caret-down group-open:rotate-180 transition"></i></summary>
+                <div class="mt-4 space-y-2">
+                    {% if quote.status != 'PENDIENTE' %}
+                    <form method="post" action="{% url 'furniture:quote_status' quote.pk %}">{% csrf_token %}<input type="hidden" name="status" value="PENDIENTE">
+                        <button class="btn btn-soft w-full"><i class="ph-bold ph-arrow-counter-clockwise"></i> Volver a pendiente</button></form>
+                    {% endif %}
+                    <form method="post" action="{% url 'furniture:quote_delete' quote.pk %}" onsubmit="return confirm('¿Eliminar {{ quote.number }}?')">{% csrf_token %}
+                        <button class="btn w-full bg-red-50 text-red-600 hover:bg-red-100"><i class="ph-bold ph-trash text-lg"></i> Eliminar proforma</button></form>
+                </div>
+            </details>
+        </div>
+    </div>
+</div>
+{% if is_new %}<script>history.replaceState(null, '', location.pathname);</script>{% endif %}
+{% endblock %}

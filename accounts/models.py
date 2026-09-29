@@ -6,6 +6,7 @@ class User(AbstractUser, BaseModel):
     class Role(models.TextChoices):
         ADMIN = 'ADMIN', 'Administrador'
         SELLER = 'SELLER', 'Vendedor'
+        FURNITURE = 'MUEBLES', 'Muebles M&L'
 
     role = models.CharField(
         max_length=10, 
@@ -25,6 +26,9 @@ class User(AbstractUser, BaseModel):
         
     def is_seller(self):
         return self.role == self.Role.SELLER
+
+    def is_furniture(self):
+        return self.role == self.Role.FURNITURE
 
     class Meta:
         verbose_name = "Usuario"

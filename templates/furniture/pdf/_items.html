@@ -1,0 +1,18 @@
+<table class="items">
+    <tr>
+        <th style="width: 9%;" class="num">Cant.</th>
+        <th style="width: 55%;">Descripción</th>
+        <th style="width: 18%;" class="num">V. unitario</th>
+        <th style="width: 18%;" class="num">V. total</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+        <td class="num">{{ item.quantity|floatformat:"-2u" }}</td>
+        <td>{{ item.description }}</td>
+        <td class="num">${{ item.unit_price|floatformat:"2u" }}</td>
+        <td class="num"><b>${{ item.total|floatformat:"2u" }}</b></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="muted">Valores por definir.</td></tr>
+    {% endfor %}
+</table>

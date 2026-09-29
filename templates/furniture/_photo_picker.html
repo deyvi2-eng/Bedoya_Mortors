@@ -1,0 +1,18 @@
+<div id="{{ picker_id }}" class="space-y-3">
+    <div class="flex items-end justify-between">
+        <div>
+            <p class="label !mb-0" data-photo-title>{{ title }}</p>
+            <p class="text-xs text-stone-400" data-photo-hint>{{ hint }}</p>
+        </div>
+        <span data-photo-count class="text-xs font-bold text-wood-600"></span>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+        <label class="btn btn-wood py-4 cursor-pointer"><i class="ph-bold ph-camera text-xl"></i> Tomar foto
+            <input type="file" accept="image/*" capture="environment" class="hidden">
+        </label>
+        <label class="btn btn-soft py-4 cursor-pointer"><i class="ph-bold ph-images text-xl"></i> Galería
+            <input type="file" accept="image/*" multiple class="hidden">
+        </label>
+    </div>
+    <div data-photo-grid class="hidden grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+</div>

@@ -172,6 +172,21 @@
                 <div class="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center"><i class="ph-fill ph-shield-check text-rose-600"></i></div>
                 <p class="text-xs font-bold text-slate-700">Auditoría</p>
             </a>
+
+            <a href="{% url 'accounts:manage' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-transparent">
+                <div class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center"><i class="ph-fill ph-user-gear text-slate-600"></i></div>
+                <p class="text-xs font-bold text-slate-700">Usuarios y roles</p>
+            </a>
+
+            <a href="{% url 'companies:list' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-transparent">
+                <div class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center"><i class="ph-fill ph-buildings text-slate-600"></i></div>
+                <p class="text-xs font-bold text-slate-700">Empresas</p>
+            </a>
+
+            <a href="{% url 'furniture:home' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-transparent">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center"><i class="ph-fill ph-armchair text-amber-700"></i></div>
+                <p class="text-xs font-bold text-slate-700">Muebles M&amp;L</p>
+            </a>
             {% endif %}
         </nav>
 
@@ -287,6 +302,36 @@
                     <div>
                         <p class="text-sm font-bold">Auditoría</p>
                         <span class="text-[11px] text-slate-400">Actividad del sistema</span>
+                    </div>
+                </a>
+
+                <a href="{% url 'accounts:manage' %}" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+                        <i class="ph-fill ph-user-gear text-slate-600 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Usuarios y roles</p>
+                        <span class="text-[11px] text-slate-400">Accesos y contraseñas</span>
+                    </div>
+                </a>
+
+                <a href="{% url 'companies:list' %}" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+                        <i class="ph-fill ph-buildings text-slate-600 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Empresas</p>
+                        <span class="text-[11px] text-slate-400">Logo, RUC y datos</span>
+                    </div>
+                </a>
+
+                <a href="{% url 'furniture:home' %}" class="nav-link flex items-center gap-3 px-3 py-3 rounded-3xl">
+                    <div class="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                        <i class="ph-fill ph-armchair text-amber-700 text-[20px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Muebles M&amp;L</p>
+                        <span class="text-[11px] text-slate-400">Ir al sistema de muebles</span>
                     </div>
                 </a>
                 {% endif %}

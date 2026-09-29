@@ -1,0 +1,35 @@
+{% extends 'furniture/base.html' %}
+{% block title %}Hojas de entrada | {{ furniture_company.name }}{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+    <div class="flex items-center justify-between gap-3">
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Hojas de entrada</h1>
+        <button type="button" onclick="FM.openSheet('sheet-new')" class="btn btn-wood hidden sm:inline-flex"><i class="ph-bold ph-plus text-lg"></i> Nueva</button>
+    </div>
+
+    <form method="get" class="relative">
+        <input type="hidden" name="estado" value="{{ status }}">
+        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-xl"></i>
+        <input name="q" value="{{ q }}" type="search" class="field !pl-12 !py-3.5" placeholder="Buscar cliente, celular o número de hoja…">
+    </form>
+
+    <div class="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+        {% for value, label in tabs %}
+        <a href="?estado={{ value }}{% if q %}&q={{ q|urlencode }}{% endif %}" class="shrink-0 px-4 py-2.5 rounded-full text-sm font-extrabold transition {% if status == value %}bg-stone-900 text-white{% else %}bg-white border border-stone-200 text-stone-600 hover:border-stone-400{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    {% if orders %}
+    <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        {% for o in orders %}{% include 'furniture/_order_card.html' %}{% endfor %}
+    </div>
+    {% else %}
+    <div class="card p-10 text-center">
+        <i class="ph ph-clipboard-text text-5xl text-stone-300"></i>
+        <p class="font-extrabold text-lg mt-2">No hay hojas aquí</p>
+        <p class="text-stone-400 text-sm">{% if q %}Pruebe con otra búsqueda.{% else %}Cree una nueva con el botón +{% endif %}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

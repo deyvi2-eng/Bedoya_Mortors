@@ -1,0 +1,57 @@
+{% extends 'furniture/base.html' %}
+{% block title %}{{ client.name }} | {{ furniture_company.name }}{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+    <a href="{% url 'furniture:clients' %}" class="inline-flex items-center gap-2 text-sm font-bold text-stone-500 hover:text-stone-900"><i class="ph-bold ph-arrow-left"></i> Clientes</a>
+
+    <div class="card p-5 sm:p-6">
+        <div class="flex items-start gap-4">
+            <span class="w-16 h-16 rounded-3xl bg-wood-500 text-white flex items-center justify-center text-2xl font-extrabold shrink-0">{{ client.name|first|upper }}</span>
+            <div class="flex-1 min-w-0">
+                <h1 class="text-xl sm:text-2xl font-extrabold truncate">{{ client.name }}</h1>
+                <p class="text-stone-500">{{ client.phone }}{% if client.id_number %} · {{ client.id_number }}{% endif %}</p>
+                {% if client.email %}<p class="text-sm text-stone-400 truncate">{{ client.email }}</p>{% endif %}
+                {% if client.address %}<p class="text-sm text-stone-400">{{ client.address }}</p>{% endif %}
+            </div>
+            <button type="button" id="btn-edit" class="w-11 h-11 rounded-xl bg-stone-100 flex items-center justify-center shrink-0" aria-label="Editar"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
+            <a href="https://wa.me/{{ client.whatsapp_number }}" target="_blank" rel="noopener" class="btn btn-wa"><i class="ph-fill ph-whatsapp-logo text-xl"></i> WhatsApp</a>
+            <a href="tel:{{ client.phone }}" class="btn btn-soft"><i class="ph-fill ph-phone text-xl"></i> Llamar</a>
+            <a href="{% url 'furniture:order_create' %}?cliente={{ client.pk }}" class="btn btn-primary"><i class="ph-bold ph-clipboard-text text-xl"></i> Nueva hoja</a>
+            <a href="{% url 'furniture:quote_create' %}?cliente={{ client.pk }}" class="btn btn-soft"><i class="ph-bold ph-receipt text-xl"></i> Proforma</a>
+        </div>
+    </div>
+
+    <section>
+        <h2 class="text-lg font-extrabold mb-3">Hojas de entrada ({{ orders|length }})</h2>
+        {% if orders %}
+        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">{% for o in orders %}{% include 'furniture/_order_card.html' %}{% endfor %}</div>
+        {% else %}<p class="text-stone-400 text-sm">Sin hojas de entrada.</p>{% endif %}
+    </section>
+
+    <section>
+        <h2 class="text-lg font-extrabold mb-3">Proformas ({{ quotes|length }})</h2>
+        {% if quotes %}
+        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">{% for q in quotes %}{% include 'furniture/_quote_card.html' %}{% endfor %}</div>
+        {% else %}<p class="text-stone-400 text-sm">Sin proformas.</p>{% endif %}
+    </section>
+
+    {% if not orders and not quotes %}
+    <form method="post" action="{% url 'furniture:client_delete' client.pk %}" onsubmit="return confirm('¿Eliminar a {{ client.name|escapejs }}?')">
+        {% csrf_token %}
+        <button class="btn bg-red-50 text-red-600 hover:bg-red-100"><i class="ph-bold ph-trash"></i> Eliminar cliente</button>
+    </form>
+    {% endif %}
+</div>
+{{ client.to_dict|json_script:"client-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const client = JSON.parse(document.getElementById('client-data').textContent);
+document.getElementById('btn-edit').addEventListener('click', () =>
+    FM.openClientModal({ client, onSaved: () => location.reload() }));
+</script>
+{% endblock %}

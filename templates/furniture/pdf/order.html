@@ -1,0 +1,59 @@
+{% extends 'furniture/pdf/_base.html' %}
+{% block doc_title %}{{ order.number }}{% endblock %}
+{% block doc_label %}HOJA DE ENTRADA{% endblock %}
+{% block doc_number %}{{ order.number }}{% endblock %}
+{% block doc_date %}{{ order.created_at|date:"d/m/Y H:i" }}<br>{{ order.get_kind_display|upper }}{% endblock %}
+
+{% block body %}
+    {% include 'furniture/pdf/_client.html' with client=order.client %}
+
+    {% if order.requirements or order.observations %}
+    <div class="section">{% if order.kind == 'FABRICACION' %}Mueble solicitado{% else %}Detalle del trabajo{% endif %}</div>
+    <table>
+        {% if order.requirements %}
+        <tr><td class="box" style="padding-bottom: 6px;"><b>{% if order.kind == 'FABRICACION' %}Especificaciones del cliente:{% else %}Requerimientos del cliente:{% endif %}</b><br>{{ order.requirements|linebreaksbr }}</td></tr>
+        {% endif %}
+        {% if order.observations %}
+        <tr><td style="height: 5px;"></td></tr>
+        <tr><td class="box"><b>{% if order.kind == 'FABRICACION' %}Notas adicionales:{% else %}Estado actual / Observaciones:{% endif %}</b><br>{{ order.observations|linebreaksbr }}</td></tr>
+        {% endif %}
+    </table>
+    {% endif %}
+
+    <div class="section">Valores</div>
+    {% include 'furniture/pdf/_items.html' with items=order.items.all %}
+    <table style="margin-top: 6px;">
+        <tr>
+            <td style="width: 55%;" class="muted">
+                {% if order.delivery_date %}<b style="color:#1c1917;">Fecha de entrega estimada:</b> {{ order.delivery_date|date:"d/m/Y" }}<br>{% endif %}
+                Recibido por: {{ order.owner_signer_name|default:"—" }}
+            </td>
+            <td style="width: 45%;">
+                <table class="totals">
+                    <tr><td>Total</td><td class="num"><b>${{ order.total|floatformat:"2u" }}</b></td></tr>
+                    <tr><td>Abono</td><td class="num">${{ order.deposit|floatformat:"2u" }}</td></tr>
+                    <tr class="grand"><td>SALDO</td><td class="num">${{ order.balance|floatformat:"2u" }}</td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    {% if order.kind == 'FABRICACION' %}
+        {% include 'furniture/pdf/_photos.html' with photos_title='Fotos de referencia / diseño' %}
+    {% else %}
+        {% include 'furniture/pdf/_photos.html' with photos_title='Registro fotográfico' %}
+    {% endif %}
+
+    <div class="section">Firmas</div>
+    <table style="margin-top: 6px;">
+        <tr>
+            <td class="sign-cell" width="50%" style="height: 80px; vertical-align: bottom;">{% if owner_signature %}<img src="{{ owner_signature }}" style="height: 70px;">{% endif %}</td>
+            <td class="sign-cell" width="50%" style="height: 80px; vertical-align: bottom;">{% if client_signature %}<img src="{{ client_signature }}" style="height: 70px;">{% endif %}</td>
+        </tr>
+        <tr>
+            <td class="sign-cell" width="50%"><div class="sign-line"><b>{{ order.owner_signer_name|default:company.name }}</b><br><span class="muted">Responsable · {{ company.name }}</span></div></td>
+            <td class="sign-cell" width="50%"><div class="sign-line"><b>{{ order.client.name }}</b><br><span class="muted">Cliente{% if order.client.id_number %} · C.I. {{ order.client.id_number }}{% endif %}</span></div></td>
+        </tr>
+    </table>
+    {% if order.signed_at %}<p class="muted" style="font-size: 7.5pt; text-align: center; margin-top: 6px;">Firmado digitalmente el {{ order.signed_at|date:"d/m/Y \a \l\a\s H:i" }}</p>{% endif %}
+{% endblock %}

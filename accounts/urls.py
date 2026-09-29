@@ -6,7 +6,8 @@ from .views import (
     UserManagementView,
     UserCreateAPI,
     UserToggleActiveAPI,
-    UserDeleteAPI
+    UserDeleteAPI,
+    UserUpdateAPI
 )
 
 app_name = 'accounts'
@@ -19,4 +20,5 @@ urlpatterns = [
     # Nuevas rutas para control visual de usuarios
     path('api/toggle-status/<int:user_id>/', UserToggleActiveAPI.as_view(), name='api-toggle-status'),
     path('api/delete/<int:user_id>/', UserDeleteAPI.as_view(), name='api-delete'),
+    path('api/update/<int:user_id>/', UserUpdateAPI.as_view(), name='api-update'),
 ]

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Empresas | Bedoya Motors{% endblock %}
+{% block header_title %}Empresas{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-5">
+    {% for message in messages %}
+    <div class="bg-green-50 border border-green-200 text-green-800 rounded-2xl px-4 py-3 text-sm font-bold flex items-center gap-2"><i class="ph-fill ph-check-circle text-lg"></i> {{ message }}</div>
+    {% endfor %}
+
+    <div class="bg-white p-5 md:p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <h2 class="text-xl font-black text-gray-900">Negocios del sistema</h2>
+        <p class="text-sm text-gray-400 mt-1">Estos datos aparecen en los PDF (hojas de entrada y proformas) de cada negocio.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for c in companies %}
+        <a href="{% url 'companies:edit' c.slug %}" class="group bg-white rounded-3xl border border-gray-100 shadow-sm p-5 flex gap-4 items-center hover:shadow-lg hover:-translate-y-0.5 transition-all">
+            <div class="w-20 h-20 shrink-0 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
+                {% if c.logo %}<img src="{{ c.logo.url }}" class="w-full h-full object-contain p-2" alt="">
+                {% else %}<i class="ph-fill ph-buildings text-3xl text-gray-300"></i>{% endif %}
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-lg font-black text-gray-900 truncate">{{ c.name }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">RUC: {{ c.ruc|default:"— sin registrar —" }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ c.email|default:"" }}</p>
+                {% if not c.ruc or not c.logo %}
+                <span class="inline-flex items-center gap-1 mt-2 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1"><i class="ph-bold ph-warning"></i> Datos incompletos</span>
+                {% endif %}
+            </div>
+            <i class="ph-bold ph-caret-right text-gray-300 group-hover:text-gray-700 text-xl"></i>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

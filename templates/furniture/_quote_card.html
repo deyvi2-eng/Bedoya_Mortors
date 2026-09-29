@@ -1,0 +1,14 @@
+<a href="{% url 'furniture:quote_detail' q.pk %}" class="card block p-4 hover:shadow-lift hover:-translate-y-0.5 transition-all">
+    <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+            <p class="text-xs font-extrabold text-stone-400">{{ q.number }} · {{ q.created_at|date:"d M" }}</p>
+            <p class="font-extrabold text-[16px] truncate">{{ q.client.name }}</p>
+        </div>
+        {% include 'furniture/_status_badge.html' with s=q.status %}
+    </div>
+    <p class="text-sm text-stone-500 mt-1.5 truncate">{% for i in q.items.all|slice:":2" %}{{ i.description }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    <div class="flex items-center justify-between mt-3 pt-3 border-t border-stone-100">
+        {% include 'furniture/_kind_badge.html' with k=q.kind %}
+        <span class="font-extrabold">${{ q.total|floatformat:"2u" }}</span>
+    </div>
+</a>

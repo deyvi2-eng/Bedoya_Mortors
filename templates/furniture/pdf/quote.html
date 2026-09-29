@@ -1,0 +1,27 @@
+{% extends 'furniture/pdf/_base.html' %}
+{% block doc_title %}{{ quote.number }}{% endblock %}
+{% block doc_label %}PROFORMA{% endblock %}
+{% block doc_number %}{{ quote.number }}{% endblock %}
+{% block doc_date %}{{ quote.created_at|date:"d/m/Y" }}<br>Válida hasta {{ quote.valid_until|date:"d/m/Y" }}{% endblock %}
+
+{% block body %}
+    {% include 'furniture/pdf/_client.html' with client=quote.client %}
+
+    <div class="section">Cotización · {{ quote.get_kind_display }}</div>
+    {% include 'furniture/pdf/_items.html' with items=quote.items.all %}
+    <table style="margin-top: 6px;">
+        <tr>
+            <td style="width: 55%;"></td>
+            <td style="width: 45%;">
+                <table class="totals"><tr class="grand"><td>TOTAL</td><td class="num">${{ quote.total|floatformat:"2u" }}</td></tr></table>
+            </td>
+        </tr>
+    </table>
+
+    {% if quote.notes %}
+    <div class="section">Notas</div>
+    <div class="box">{{ quote.notes|linebreaksbr }}</div>
+    {% endif %}
+
+    {% include 'furniture/pdf/_photos.html' with photos_title='Fotos de referencia' %}
+{% endblock %}
