@@ -1,168 +1,218 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block content %}
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<div class="max-w-7xl mx-auto space-y-5 pb-28 md:pb-12 px-4 sm:px-0 mt-4">
 
-<div class="max-w-7xl mx-auto space-y-6 pb-12 px-4 sm:px-0 mt-4">
-    
-    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4 relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-2 h-full bg-orange-500"></div>
-        <div class="flex items-center gap-4">
-            <a href="/" class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-black transition-all shadow-sm">
-                <i class="ph-bold ph-house text-lg"></i>
+    <!-- ENCABEZADO -->
+    <div class="bg-gray-900 rounded-3xl p-5 md:p-7 text-white relative overflow-hidden shadow-xl">
+        <div class="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-red-600/20 blur-2xl"></div>
+        <div class="absolute right-6 bottom-0 text-white/5 hidden md:block"><i class="ph-fill ph-motorcycle text-[9rem] leading-none"></i></div>
+        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div class="flex items-center gap-4">
+                <a href="/" class="w-11 h-11 shrink-0 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" title="Inicio">
+                    <i class="ph-bold ph-house text-lg"></i>
+                </a>
+                <div>
+                    <p class="text-[11px] font-bold text-red-400 uppercase tracking-[0.2em]">Panel administrativo</p>
+                    <h2 class="text-2xl md:text-3xl font-black tracking-tight">Taller de Reparaciones</h2>
+                </div>
+            </div>
+            <a href="{% url 'workshop:create_intake' %}" class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-3.5 rounded-xl text-sm font-black transition-colors shadow-lg shadow-red-900/40 flex items-center justify-center gap-2">
+                <i class="ph-bold ph-plus-circle text-xl"></i> NUEVO INGRESO
             </a>
-            <div>
-                <h2 class="text-2xl font-black text-gray-900 tracking-tight">Tablero de Taller</h2>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Gestión de Reparaciones</p>
-            </div>
         </div>
-        
-        <a href="{% url 'workshop:create_intake' %}" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl text-sm font-black transition-transform transform hover:-translate-y-0.5 shadow-lg shadow-red-600/30 flex items-center justify-center gap-2">
-            <i class="ph-bold ph-plus text-xl"></i> NUEVO INGRESO
-        </a>
+
+        <!-- INDICADORES -->
+        <div class="relative grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+            <a href="?tab=pending" class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-3.5 transition-colors">
+                <div class="flex items-center gap-2 text-amber-400 text-[11px] font-black uppercase tracking-wider"><i class="ph-bold ph-hourglass-medium"></i> Pendientes</div>
+                <p class="text-2xl md:text-3xl font-black mt-1">{{ stats.pending }}</p>
+            </a>
+            <a href="?tab=in_progress" class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-3.5 transition-colors">
+                <div class="flex items-center gap-2 text-orange-400 text-[11px] font-black uppercase tracking-wider"><i class="ph-bold ph-wrench"></i> En reparación</div>
+                <p class="text-2xl md:text-3xl font-black mt-1">{{ stats.in_progress }}</p>
+            </a>
+            <a href="?tab=ready" class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-3.5 transition-colors">
+                <div class="flex items-center gap-2 text-emerald-400 text-[11px] font-black uppercase tracking-wider"><i class="ph-bold ph-flag-checkered"></i> Listas</div>
+                <p class="text-2xl md:text-3xl font-black mt-1">{{ stats.ready }}</p>
+            </a>
+            <a href="?tab=delivered" class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-3.5 transition-colors">
+                <div class="flex items-center gap-2 text-sky-300 text-[11px] font-black uppercase tracking-wider"><i class="ph-bold ph-handshake"></i> Entregadas</div>
+                <p class="text-2xl md:text-3xl font-black mt-1">{{ stats.delivered }}</p>
+            </a>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <div class="bg-gray-50/50 rounded-3xl p-4 md:p-6 border border-gray-200 shadow-inner min-h-[65vh]">
-            <div class="flex items-center justify-between mb-5 border-b border-gray-200 pb-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-sm">
-                        <i class="ph-bold ph-wrench text-xl"></i>
-                    </div>
-                    <h5 class="text-base font-black text-gray-800 uppercase tracking-wider">En Reparación</h5>
-                </div>
-                <span class="bg-orange-500 text-white text-xs font-black px-3 py-1 rounded-lg shadow-sm">{{ active_orders|length }}</span>
+    <!-- FILTROS: PESTAÑAS + BÚSQUEDA -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-3 md:p-4 space-y-3">
+        <form method="get" class="flex gap-2">
+            <input type="hidden" name="tab" value="{{ current_tab }}">
+            <div class="relative flex-1">
+                <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="search" name="q" value="{{ query }}" placeholder="Buscar por placa, cliente, cédula o marca..."
+                       class="w-full pl-11 pr-3 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none text-sm font-medium transition">
             </div>
-            
-            <div class="space-y-4">
-                {% for order in active_orders %}
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 hover:shadow-xl hover:border-orange-300 transition-all relative group">
-                    
-                    <button onclick="openDeleteModal('{{ order.license_plate|upper }}', '{% url 'workshop:delete_order' order.id %}')" 
-                            class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white flex items-center justify-center transition-colors border border-red-100 opacity-80 hover:opacity-100 z-10">
-                        <i class="ph-bold ph-trash text-lg"></i>
-                    </button>
+            <button type="submit" class="bg-gray-900 hover:bg-black text-white px-4 md:px-6 rounded-xl text-sm font-black flex items-center gap-2">
+                <i class="ph-bold ph-magnifying-glass md:hidden text-lg"></i><span class="hidden md:inline">Buscar</span>
+            </button>
+            {% if query %}
+            <a href="?tab={{ current_tab }}" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 rounded-xl flex items-center" title="Limpiar búsqueda"><i class="ph-bold ph-x text-lg"></i></a>
+            {% endif %}
+        </form>
 
-                    <div class="flex items-center gap-3 mb-3 pr-10">
-                        <span class="bg-gray-900 text-white text-xs font-black px-3 py-1.5 rounded-lg tracking-widest uppercase shadow-sm">
-                            {{ order.license_plate }}
-                        </span>
-                        <span class="text-[11px] font-bold text-gray-500 flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-md">
-                            <i class="ph-bold ph-calendar"></i> {{ order.created_at|date:"d M, H:i" }}
-                        </span>
-                    </div>
-                    
-                    <h6 class="text-lg font-black text-gray-900 mb-1 leading-tight">{{ order.brand|title }} {{ order.model|title }}</h6>
-                    <p class="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1.5">
-                        <i class="ph-bold ph-user-circle text-gray-400 text-lg"></i> {{ order.customer.first_name }} {{ order.customer.last_name }}
-                    </p>
-                    
-                    <div class="bg-orange-50/50 border border-orange-100 rounded-xl p-3 mb-4">
-                        <p class="text-[12px] text-orange-800 font-bold mb-0 flex items-start gap-2">
-                            <i class="ph-bold ph-warning-circle text-orange-600 text-base mt-0.5"></i> 
-                            <span class="line-clamp-2 leading-snug">{{ order.work_to_do|default:"Sin detalle de trabajo asignado." }}</span>
-                        </p>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-3 mt-auto">
-                        <a href="{% url 'workshop:generate_entry_pdf' order.id %}" target="_blank" class="bg-white border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 text-gray-700 text-center px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
-                            <i class="ph-bold ph-printer text-base"></i> IMPRIMIR
-                        </a>
-                        <a href="{% url 'workshop:change_status' order.id 'ready' %}" class="bg-emerald-500 hover:bg-emerald-600 text-white text-center px-4 py-2.5 rounded-xl text-xs font-black transition-colors shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
-                            <i class="ph-bold ph-check-circle text-base"></i> MARCAR LISTO
-                        </a>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-dashed border-gray-300">
-                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-300">
-                        <i class="ph-bold ph-motorcycle text-4xl"></i>
-                    </div>
-                    <p class="text-sm font-bold text-gray-400">Taller despejado.<br>No hay órdenes en reparación.</p>
-                </div>
-                {% endfor %}
-            </div>
+        <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width: none;">
+            {% for tab in tabs %}
+            <a href="?tab={{ tab.key }}{% if query %}&q={{ query|urlencode }}{% endif %}" {% if tab.key == current_tab %}id="activeTab"{% endif %}
+               class="shrink-0 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide flex items-center gap-2 transition-colors border
+                      {% if tab.key == current_tab %}bg-red-600 text-white border-red-600 shadow-md shadow-red-600/20{% else %}bg-white text-gray-600 border-gray-200 hover:bg-gray-50{% endif %}">
+                {{ tab.label }}
+                <span class="px-1.5 py-0.5 rounded-md text-[10px] {% if tab.key == current_tab %}bg-white/20{% else %}bg-gray-100 text-gray-500{% endif %}">{{ tab.count }}</span>
+            </a>
+            {% endfor %}
         </div>
+    </div>
 
-        <div class="bg-gray-50/50 rounded-3xl p-4 md:p-6 border border-gray-200 shadow-inner min-h-[65vh]">
-            <div class="flex items-center justify-between mb-5 border-b border-gray-200 pb-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm">
-                        <i class="ph-bold ph-flag-checkered text-xl"></i>
+    <!-- RESUMEN DE RESULTADOS -->
+    {% if page_obj.paginator.count %}
+    <p class="text-xs font-bold text-gray-500 px-1">
+        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} órdenes{% if query %} para “{{ query }}”{% endif %}
+    </p>
+    {% endif %}
+
+    <!-- ÓRDENES -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {% for order in orders %}
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
+            <div class="h-1.5 {% if order.status == 'pending' %}bg-amber-400{% elif order.status == 'in_progress' %}bg-orange-500{% elif order.status == 'ready' %}bg-emerald-500{% else %}bg-gray-300{% endif %}"></div>
+
+            <div class="p-4 md:p-5 flex flex-col flex-1">
+                <div class="flex items-start justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="bg-gray-900 text-white text-sm font-black px-3 py-1 rounded-lg tracking-widest uppercase">{{ order.license_plate }}</span>
+                        <span class="text-[10px] font-black text-gray-400">#{{ order.id|stringformat:"05d" }}</span>
                     </div>
-                    <h5 class="text-base font-black text-gray-800 uppercase tracking-wider">Listas para Entrega</h5>
-                </div>
-                <span class="bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-lg shadow-sm">{{ completed_orders|length }}</span>
-            </div>
-            
-            <div class="space-y-4">
-                {% for order in completed_orders %}
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 {% if order.status == 'ready' %}border-l-4 border-l-emerald-500{% else %}border-l-4 border-l-gray-300 opacity-60 hover:opacity-100{% endif %} hover:shadow-xl transition-all relative group">
-                    
-                    <button onclick="openDeleteModal('{{ order.license_plate|upper }}', '{% url 'workshop:delete_order' order.id %}')" 
-                            class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white flex items-center justify-center transition-colors border border-red-100 opacity-80 hover:opacity-100 z-10">
+                    <button type="button" onclick="openDeleteModal('{{ order.license_plate|upper|escapejs }}', '{% url 'workshop:delete_order' order.id %}')"
+                            class="w-8 h-8 shrink-0 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 flex items-center justify-center transition-colors" title="Eliminar orden">
                         <i class="ph-bold ph-trash text-lg"></i>
                     </button>
+                </div>
 
-                    <div class="flex justify-between items-start mb-3 pr-10">
-                        <span class="bg-gray-100 border border-gray-200 text-gray-800 text-xs font-black px-3 py-1.5 rounded-lg tracking-widest uppercase shadow-sm">
-                            {{ order.license_plate }}
-                        </span>
-                        {% if order.status == 'ready' %}
-                            <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Pendiente Pago</span>
-                        {% else %}
-                            <span class="bg-gray-100 text-gray-500 border border-gray-200 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider"><i class="ph-bold ph-check"></i> Entregada</span>
-                        {% endif %}
-                    </div>
-                    
-                    <h6 class="text-lg font-black text-gray-900 mb-1 leading-tight">{{ order.brand|title }} {{ order.model|title }}</h6>
-                    <p class="text-sm text-gray-600 mb-2 font-medium flex items-center gap-1.5">
-                        <i class="ph-bold ph-user-circle text-gray-400 text-lg"></i> {{ order.customer.first_name }} {{ order.customer.last_name }}
+                {% if order.status == 'pending' %}
+                    <span class="self-start bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1.5 mb-3"><i class="ph-bold ph-hourglass-medium"></i> Pendiente</span>
+                {% elif order.status == 'in_progress' %}
+                    <span class="self-start bg-orange-50 text-orange-700 border border-orange-200 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1.5 mb-3"><span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span> En reparación</span>
+                {% elif order.status == 'ready' %}
+                    <span class="self-start bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1.5 mb-3"><i class="ph-bold ph-flag-checkered"></i> Lista · pendiente de pago</span>
+                {% else %}
+                    <span class="self-start bg-gray-100 text-gray-500 border border-gray-200 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1.5 mb-3"><i class="ph-bold ph-check"></i> Entregada</span>
+                {% endif %}
+
+                <h6 class="text-lg font-black text-gray-900 leading-tight">{{ order.brand|title }} {{ order.model|title }}</h6>
+                <p class="text-xs text-gray-400 font-bold mb-3">{{ order.color|title }} · {{ order.mileage }} km{% if order.arrived_by_crane %} · <span class="text-red-500">Grúa</span>{% endif %}</p>
+
+                <div class="space-y-1.5 text-sm mb-3">
+                    <p class="text-gray-700 font-semibold flex items-center gap-2 min-w-0">
+                        <i class="ph-bold ph-user-circle text-gray-400 text-lg shrink-0"></i>
+                        <span class="truncate">{{ order.customer.first_name }} {{ order.customer.last_name }}</span>
                     </p>
-                    <p class="text-[11px] text-gray-500 font-bold mb-4 flex items-center gap-1 bg-gray-50 inline-flex px-2 py-1 rounded-md border border-gray-100">
-                        <i class="ph-bold ph-check-square-offset"></i> Trabajo finalizado el {{ order.completed_at|date:"d M" }}
+                    <p class="text-gray-500 text-xs font-semibold flex items-center gap-2">
+                        <i class="ph-bold ph-calendar-blank text-gray-400 text-base shrink-0"></i>
+                        Ingreso: {{ order.created_at|date:"d M Y, H:i" }}
                     </p>
-                    
-                    <div class="flex flex-col gap-2 mt-auto">
-                        <div class="grid grid-cols-2 gap-3">
-                            <a href="{% url 'workshop:generate_entry_pdf' order.id %}" target="_blank" class="bg-white border-2 border-gray-200 hover:border-gray-400 text-gray-700 text-center px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
-                                <i class="ph-bold ph-file-pdf text-base"></i> RESPALDO
+                    {% if order.completed_at %}
+                    <p class="text-gray-500 text-xs font-semibold flex items-center gap-2">
+                        <i class="ph-bold ph-check-square-offset text-gray-400 text-base shrink-0"></i>
+                        Finalizada: {{ order.completed_at|date:"d M Y" }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Trabajo solicitado</p>
+                    <p class="text-xs text-gray-700 font-semibold leading-snug line-clamp-3">{{ order.work_to_do|default:"Sin detalle de trabajo asignado." }}</p>
+                </div>
+
+                <div class="mt-auto space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="{% url 'workshop:generate_entry_pdf' order.id %}" target="_blank" rel="noopener"
+                           class="bg-white border-2 border-gray-200 hover:border-gray-400 text-gray-700 px-3 py-2.5 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5">
+                            <i class="ph-bold ph-file-pdf text-base"></i> PDF
+                        </a>
+                        {% if order.status == 'pending' %}
+                            <a href="{% url 'workshop:change_status' order.id 'in_progress' %}" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2.5 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5">
+                                <i class="ph-bold ph-wrench text-base"></i> INICIAR
                             </a>
-                            
-                            {% if order.status == 'ready' %}
-                                <a href="{% url 'workshop:service_checkout' order.id %}" class="bg-blue-600 hover:bg-blue-700 text-white text-center px-4 py-2.5 rounded-xl text-xs font-black transition-colors shadow-md flex items-center justify-center gap-2">
-                                    <i class="ph-bold ph-currency-dollar text-base"></i> LIQUIDAR
-                                </a>
-                            {% else %}
-                                <button class="bg-gray-100 text-gray-400 border border-gray-200 text-center px-4 py-2.5 rounded-xl text-xs font-black cursor-not-allowed flex items-center justify-center gap-2" disabled>
-                                    <i class="ph-bold ph-lock-key text-base"></i> CERRADA
-                                </button>
-                            {% endif %}
-                        </div>
-
-                        {% if order.status == 'ready' %}
-                        <a href="https://api.whatsapp.com/send?phone={{ order.customer.phone|cut:' ' }}&text=Hola%20{{ order.customer.first_name }},%20te%20saludamos%20de%20*Bedoya%20Motors*%20%F0%9F%8F%8D%EF%B8%8F.%20Te%20informamos%20que%20tu%20veh%C3%ADculo%20placa%20*{{ order.license_plate|upper }}*%20ya%20se%20encuentra%20LISTO.%20%C2%A1Te%20esperamos!" 
-                           target="_blank" 
-                           class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white text-center px-4 py-2.5 rounded-xl text-xs font-black transition-colors shadow-sm flex items-center justify-center gap-2 mt-1">
-                            <i class="ph-bold ph-whatsapp-logo text-lg"></i> NOTIFICAR AL CLIENTE
-                        </a>
+                        {% elif order.status == 'in_progress' %}
+                            <a href="{% url 'workshop:change_status' order.id 'ready' %}" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2.5 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5">
+                                <i class="ph-bold ph-check-circle text-base"></i> LISTA
+                            </a>
+                        {% elif order.status == 'ready' %}
+                            <a href="{% url 'workshop:service_checkout' order.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5">
+                                <i class="ph-bold ph-currency-dollar text-base"></i> LIQUIDAR
+                            </a>
+                        {% else %}
+                            <span class="bg-gray-100 text-gray-400 border border-gray-200 px-3 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5">
+                                <i class="ph-bold ph-lock-key text-base"></i> CERRADA
+                            </span>
                         {% endif %}
                     </div>
+                    {% if order.status == 'pending' %}
+                    <a href="{% url 'workshop:change_status' order.id 'ready' %}" class="w-full text-emerald-700 hover:bg-emerald-50 px-3 py-2 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5">
+                        <i class="ph-bold ph-check-circle text-base"></i> Marcar como lista directamente
+                    </a>
+                    {% elif order.status == 'ready' and order.customer.phone %}
+                    <a href="https://wa.me/{{ order.customer.phone|cut:' ' }}?text=Hola%20{{ order.customer.first_name|urlencode }},%20te%20saludamos%20de%20*Bedoya%20Motors*%20%F0%9F%8F%8D%EF%B8%8F.%20Te%20informamos%20que%20tu%20veh%C3%ADculo%20placa%20*{{ order.license_plate|upper|urlencode }}*%20ya%20se%20encuentra%20LISTO.%20%C2%A1Te%20esperamos!"
+                       target="_blank" rel="noopener"
+                       class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white px-3 py-2.5 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-whatsapp-logo text-lg"></i> NOTIFICAR AL CLIENTE
+                    </a>
+                    {% endif %}
                 </div>
-                {% empty %}
-                <div class="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-dashed border-gray-300">
-                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-300">
-                        <i class="ph-bold ph-check-circle text-4xl"></i>
-                    </div>
-                    <p class="text-sm font-bold text-gray-400">Sin vehículos en cola<br>para ser entregados.</p>
-                </div>
-                {% endfor %}
             </div>
         </div>
-
+        {% empty %}
+        <div class="md:col-span-2 xl:col-span-3 flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-dashed border-gray-300">
+            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-300">
+                <i class="ph-bold {% if query %}ph-magnifying-glass{% else %}ph-motorcycle{% endif %} text-4xl"></i>
+            </div>
+            {% if query %}
+                <p class="text-sm font-bold text-gray-500">No se encontraron órdenes para “{{ query }}”.</p>
+                <a href="?tab={{ current_tab }}" class="mt-3 text-xs font-black text-red-600 hover:underline">Limpiar búsqueda</a>
+            {% else %}
+                <p class="text-sm font-bold text-gray-400">No hay órdenes en esta sección.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
     </div>
+
+    <!-- PAGINACIÓN -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="flex items-center justify-center gap-1.5 flex-wrap pt-2" aria-label="Paginación">
+        {% with base="?tab="|add:current_tab %}
+        {% if page_obj.has_previous %}
+            <a href="{{ base }}{% if query %}&q={{ query|urlencode }}{% endif %}&page={{ page_obj.previous_page_number }}" class="h-10 px-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-black flex items-center gap-1"><i class="ph-bold ph-caret-left"></i><span class="hidden sm:inline">Anterior</span></a>
+        {% else %}
+            <span class="h-10 px-3 rounded-xl bg-gray-50 border border-gray-100 text-gray-300 text-sm font-black flex items-center gap-1"><i class="ph-bold ph-caret-left"></i><span class="hidden sm:inline">Anterior</span></span>
+        {% endif %}
+
+        {% for n in page_range %}
+            {% if n == page_obj.paginator.ELLIPSIS %}
+                <span class="h-10 w-8 flex items-center justify-center text-gray-400 font-black">…</span>
+            {% elif n == page_obj.number %}
+                <span class="h-10 min-w-10 px-3 rounded-xl bg-red-600 text-white text-sm font-black flex items-center justify-center shadow-md shadow-red-600/20">{{ n }}</span>
+            {% else %}
+                <a href="{{ base }}{% if query %}&q={{ query|urlencode }}{% endif %}&page={{ n }}" class="h-10 min-w-10 px-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-black flex items-center justify-center">{{ n }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="{{ base }}{% if query %}&q={{ query|urlencode }}{% endif %}&page={{ page_obj.next_page_number }}" class="h-10 px-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-black flex items-center gap-1"><span class="hidden sm:inline">Siguiente</span><i class="ph-bold ph-caret-right"></i></a>
+        {% else %}
+            <span class="h-10 px-3 rounded-xl bg-gray-50 border border-gray-100 text-gray-300 text-sm font-black flex items-center gap-1"><span class="hidden sm:inline">Siguiente</span><i class="ph-bold ph-caret-right"></i></span>
+        {% endif %}
+        {% endwith %}
+    </nav>
+    {% endif %}
 </div>
 
 <div id="deleteSecurityModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[9999] backdrop-blur-sm opacity-0 transition-opacity duration-300">
@@ -214,6 +264,9 @@
 </div>
 
 <script>
+    // En móvil, desplaza la barra de pestañas hasta la pestaña activa
+    document.getElementById('activeTab')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+
     const modal = document.getElementById('deleteSecurityModal');
     const modalContent = document.getElementById('modalContent');
     const step1 = document.getElementById('deleteStep1');

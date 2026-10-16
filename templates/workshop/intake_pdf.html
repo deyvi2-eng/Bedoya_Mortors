@@ -1,4 +1,3 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -31,11 +30,7 @@
     <table style="border: none; margin-bottom: 5px; border-bottom: 2px solid #ef4444;">
         <tr>
             <td style="width: 40%; border: none; vertical-align: bottom; padding-bottom: 10px;">
-                {% if logo_b64 %}
-                    <img src="{{ logo_b64 }}" width="160">
-                {% else %}
-                    <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo.png' %}" width="160">
-                {% endif %}
+                {% if logo_b64 %}<img src="{{ logo_b64 }}" width="160">{% else %}<span class="bold" style="font-size: 16px;">BEDOYA MOTORS</span>{% endif %}
             </td>
             <td style="width: 60%; border: none; text-align: right; padding-bottom: 10px;">
                 <h1 style="margin: 0; font-size: 18px; color: #0f172a;">RECEPCIÓN TÉCNICA</h1>
@@ -150,11 +145,7 @@
 
     <div class="section-header">5. Mapa Visual de Daños</div>
     <div class="text-center" style="border: 1px solid #cbd5e1; padding: 15px; background: #ffffff;">
-        {% if damage_map_img_b64 %}
-            <img src="{{ damage_map_img_b64 }}" width="550">
-        {% else %}
-            <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/esquema_moto.jpg' %}" width="550">
-        {% endif %}
+        {% if damage_map_img_b64 %}<img src="{{ damage_map_img_b64 }}" width="550">{% else %}<span style="color: #9ca3af;">Mapa de daños no disponible.</span>{% endif %}
     </div>
 
     <div class="section-header" style="page-break-before: auto;">6. Registro Fotográfico</div>
@@ -163,7 +154,7 @@
             {% if photos %}
                 {% for photo in photos %}
                     <td style="width: 33%; padding: 5px; text-align: center; border: 1px solid #e2e8f0;">
-                        <img src="{{ photo.media_file.url }}" width="150" style="border: 1px solid #cbd5e1;"><br>
+                        <img src="{{ photo.src }}" width="150" style="border: 1px solid #cbd5e1;"><br>
                         <div style="margin-top: 5px; font-size: 9px; color: #475569; text-align: left;">
                             <span class="bold">Obs:</span> {{ photo.description|default:"Sin observaciones." }}
                         </div>
@@ -185,8 +176,8 @@
                 </div>
             </td>
             <td style="width: 50%; text-align: center; border: none; vertical-align: bottom;">
-                {% if order.client_signature_base64 %}
-                    <img src="{{ order.client_signature_base64 }}" width="150" style="margin-bottom: 2px;"><br>
+                {% if signature_b64 %}
+                    <img src="{{ signature_b64 }}" width="150" style="margin-bottom: 2px;"><br>
                 {% else %}<br><br><br>{% endif %}
                 <div style="border-top: 1px solid #111; width: 70%; margin: 0 auto; padding-top: 3px;">
                     <span class="bold">{{ order.customer.first_name }} {{ order.customer.last_name }}</span><br>

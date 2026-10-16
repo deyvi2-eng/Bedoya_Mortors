@@ -1,16 +1,22 @@
 import json
 import io
 import base64
+from concurrent.futures import ThreadPoolExecutor
+
+import requests
 from PIL import Image, ImageDraw
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.urls import reverse
+from django.core.paginator import Paginator
+from django.db.models import Q, Count, F
 from django.http import HttpResponse
 from django.template.loader import get_template
 from django.contrib.staticfiles import finders
-from django.core.files.base import ContentFile
 
 # Importación para generar PDF sin dependencias del sistema (Ideal para Render)
 from xhtml2pdf import pisa
@@ -25,24 +31,74 @@ from sales.models import Sale, SaleDetail
 from cash_register.models import CashSession
 
 
+WORKSHOP_TABS = [
+    ('active', 'En taller', ['pending', 'in_progress']),
+    ('pending', 'Pendientes', ['pending']),
+    ('in_progress', 'En reparación', ['in_progress']),
+    ('ready', 'Listas', ['ready']),
+    ('delivered', 'Entregadas', ['delivered']),
+    ('all', 'Todas', None),
+]
+WORKSHOP_PAGE_SIZE = 12
+
+
 def workshop_dashboard(request):
-    """Vista principal que separa las motos ingresadas por su estado"""
-    
-    # 1. Motos en el taller (Pendientes o En Reparación)
-    active_orders = ServiceOrder.objects.filter(
-        status__in=['pending', 'in_progress']
-    ).order_by('-created_at')
-    
-    # 2. Motos listas o ya entregadas (El histórico)
-    completed_orders = ServiceOrder.objects.filter(
-        status__in=['ready', 'delivered']
-    ).order_by('-completed_at', '-created_at') # Las más recientes primero
+    """Panel del taller: pestañas por estado, búsqueda y paginación"""
+    current_tab = request.GET.get('tab', 'active')
+    tabs_by_key = {key: statuses for key, _, statuses in WORKSHOP_TABS}
+    if current_tab not in tabs_by_key:
+        current_tab = 'active'
+    query = request.GET.get('q', '').strip()
+
+    orders = ServiceOrder.objects.select_related('customer')
+    if query:
+        orders = orders.filter(
+            Q(license_plate__icontains=query) | Q(brand__icontains=query) | Q(model__icontains=query) |
+            Q(customer__first_name__icontains=query) | Q(customer__last_name__icontains=query) |
+            Q(customer__cedula__icontains=query)
+        )
+
+    # Conteos por estado (respetan la búsqueda) en una sola consulta
+    status_counts = dict(orders.values_list('status').annotate(n=Count('id')))
+    tabs = []
+    for key, label, statuses in WORKSHOP_TABS:
+        total = sum(status_counts.get(st, 0) for st in statuses) if statuses else sum(status_counts.values())
+        tabs.append({'key': key, 'label': label, 'count': total})
+
+    statuses = tabs_by_key[current_tab]
+    if statuses:
+        orders = orders.filter(status__in=statuses)
+    if current_tab in ('ready', 'delivered'):
+        orders = orders.order_by(F('completed_at').desc(nulls_last=True), '-created_at')
+    else:
+        orders = orders.order_by('-created_at')
+
+    page_obj = Paginator(orders, WORKSHOP_PAGE_SIZE).get_page(request.GET.get('page'))
 
     context = {
-        'active_orders': active_orders,
-        'completed_orders': completed_orders,
+        'page_obj': page_obj,
+        'orders': page_obj.object_list,
+        'page_range': page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1),
+        'tabs': tabs,
+        'current_tab': current_tab,
+        'query': query,
+        'stats': {
+            'pending': status_counts.get('pending', 0),
+            'in_progress': status_counts.get('in_progress', 0),
+            'ready': status_counts.get('ready', 0),
+            'delivered': status_counts.get('delivered', 0),
+        },
     }
     return render(request, 'workshop/dashboard.html', context)
+
+
+def _back_to_dashboard(request):
+    """Vuelve a la misma pestaña/página del panel desde donde se hizo la acción"""
+    referer = request.META.get('HTTP_REFERER')
+    if referer and url_has_allowed_host_and_scheme(referer, allowed_hosts={request.get_host()}) \
+            and reverse('workshop:workshop_dashboard') in referer:
+        return redirect(referer)
+    return redirect('workshop:workshop_dashboard')
 
 
 def create_intake(request):
@@ -109,17 +165,6 @@ def create_intake(request):
                     description=comment # Se guarda el comentario de la foto
                 )
             
-            # ==========================================
-            # GENERACIÓN DE PDF AUTOMÁTICA EN BACKGROUND
-            # ==========================================
-            try:
-                pdf_content = create_pdf_content(service_order, request)
-                if pdf_content:
-                    file_name = f"Ingreso_{service_order.license_plate}_{service_order.id}.pdf"
-                    service_order.intake_pdf.save(file_name, ContentFile(pdf_content))
-            except Exception as e:
-                print(f"Error pre-generando PDF: {e}")
-                
             messages.success(request, f"¡Vehículo {service_order.license_plate} ingresado con éxito!")
             return redirect('workshop:workshop_dashboard') 
         else:
@@ -130,9 +175,100 @@ def create_intake(request):
     return render(request, 'workshop/intake_form.html', {'form': form})
 
 
+# ==========================================
+# GENERACIÓN DEL PDF DE INGRESO
+# ==========================================
+# El PDF se genera al vuelo (no se guarda en Cloudinary: Cloudinary bloquea la
+# descarga de PDFs en cuentas gratuitas y eso provocaba el "Internal Server Error").
+# Para que sea rápido, todas las imágenes se reducen y se incrustan en base64.
+
+PDF_PHOTO_WIDTH = 500   # px: suficiente para imprimir a 150px de ancho
+PDF_PHOTO_TIMEOUT = 8   # s por foto, para nunca colgar el servidor
+
+_static_img_cache = {}
+
+
+def _jpeg_data_uri(img, max_width, quality=75):
+    """Reduce una imagen PIL y la devuelve como data URI JPEG."""
+    img = img.convert("RGB")
+    if img.width > max_width:
+        img = img.resize((max_width, int(img.height * max_width / img.width)), Image.LANCZOS)
+    buffer = io.BytesIO()
+    img.save(buffer, format="JPEG", quality=quality, optimize=True)
+    return f"data:image/jpeg;base64,{base64.b64encode(buffer.getvalue()).decode()}"
+
+
+def _load_static_image(path, max_width):
+    """Abre una imagen estática ya reducida (se cachea en memoria entre peticiones)."""
+    key = (path, max_width)
+    if key not in _static_img_cache:
+        img_path = finders.find(path)
+        if not img_path:
+            return None
+        with Image.open(img_path) as img:
+            img = img.convert("RGBA")
+            if img.width > max_width:
+                img = img.resize((max_width, int(img.height * max_width / img.width)), Image.LANCZOS)
+            _static_img_cache[key] = img.copy()
+    return _static_img_cache[key].copy()
+
+
+def _logo_data_uri():
+    if 'logo_uri' not in _static_img_cache:
+        logo = _load_static_image('img/logo.png', 480)
+        if logo is None:
+            return None
+        buffer = io.BytesIO()
+        logo.save(buffer, format="PNG", optimize=True)
+        _static_img_cache['logo_uri'] = f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode()}"
+    return _static_img_cache['logo_uri']
+
+
+def _damage_map_data_uri(points):
+    img = _load_static_image('img/esquema_moto.jpg', 1100)
+    if img is None:
+        return None
+    draw = ImageDraw.Draw(img)
+    width, height = img.size
+    scale = width / 1100
+    r, l, w = int(15 * scale) or 1, int(8 * scale) or 1, max(int(4 * scale), 2)
+    for point in points or []:
+        try:
+            px = int(float(point.get('x', 0)) * width)
+            py = int(float(point.get('y', 0)) * height)
+        except (TypeError, ValueError, AttributeError):
+            continue
+        draw.ellipse((px - r, py - r, px + r, py + r), outline="#dc2626", width=w)
+        draw.line((px - l, py - l, px + l, py + l), fill="black", width=w)
+        draw.line((px - l, py + l, px + l, py - l), fill="black", width=w)
+    return _jpeg_data_uri(img, 1100, quality=80)
+
+
+def _photo_data_uri(media):
+    """Descarga una miniatura de la foto (no el original de varios MB) y la incrusta."""
+    try:
+        name = media.media_file.name
+        if not name:
+            return None
+        if hasattr(media.media_file.storage, '_prepend_prefix'):
+            # Cloudinary: pedimos una versión ya reducida y en JPG (convierte HEIC/PNG/etc.)
+            import cloudinary
+            url = cloudinary.CloudinaryImage(name).build_url(
+                width=PDF_PHOTO_WIDTH, crop='limit', quality='auto:eco', fetch_format='jpg', secure=True
+            )
+            resp = requests.get(url, timeout=PDF_PHOTO_TIMEOUT)
+            resp.raise_for_status()
+            return f"data:image/jpeg;base64,{base64.b64encode(resp.content).decode()}"
+        with media.media_file.open('rb') as f:
+            with Image.open(f) as img:
+                return _jpeg_data_uri(img, PDF_PHOTO_WIDTH)
+    except Exception as e:
+        print(f"PDF: no se pudo cargar la foto {media.pk}: {e}")
+        return None
+
+
 def create_pdf_content(order, request):
     """Genera el contenido binario del PDF en memoria"""
-    photos = order.media_files.filter(is_video=False)
     chk = order.condition_checklist or {}
     
     # Preparamos el inventario físico para el PDF
@@ -155,61 +291,45 @@ def create_pdf_content(order, request):
         ('Medidor Aceite', chk.get('medidor-aceite', 'NA')), ('Tapa Radiador', chk.get('radiador', 'NA')),
     ]
 
-    damage_map_img_b64 = None
-    if order.damage_map_data:
-        img_path = finders.find('img/esquema_moto.jpg')
-        if img_path:
-            try:
-                with Image.open(img_path) as img:
-                    img = img.convert("RGBA")
-                    draw = ImageDraw.Draw(img)
-                    width, height = img.size
-                    
-                    for point in order.damage_map_data:
-                        px = int(float(point.get('x', 0)) * width)
-                        py = int(float(point.get('y', 0)) * height)
-                        
-                        r = 15 
-                        draw.ellipse((px - r, py - r, px + r, py + r), outline="#dc2626", width=4)
-                        
-                        l = 8 
-                        draw.line((px - l, py - l, px + l, py + l), fill="black", width=4)
-                        draw.line((px - l, py + l, px + l, py - l), fill="black", width=4)
-                    
-                    buffer = io.BytesIO()
-                    img.convert("RGB").save(buffer, format="JPEG")
-                    img_str = base64.b64encode(buffer.getvalue()).decode()
-                    damage_map_img_b64 = f"data:image/jpeg;base64,{img_str}"
-            except Exception as e:
-                print(f"Error procesando el mapa de daños: {e}")
+    try:
+        damage_map_img_b64 = _damage_map_data_uri(order.damage_map_data)
+    except Exception as e:
+        print(f"Error procesando el mapa de daños: {e}")
+        damage_map_img_b64 = None
 
-    # === NUEVO: Convertir Logo a Base64 para producción ===
-    logo_b64 = None
-    logo_path = finders.find('img/logo.png')
-    if logo_path:
-        try:
-            with open(logo_path, "rb") as image_file:
-                img_str = base64.b64encode(image_file.read()).decode('utf-8')
-                logo_b64 = f"data:image/png;base64,{img_str}"
-        except Exception as e:
-            print(f"Error cargando el logo en base64: {e}")
+    try:
+        logo_b64 = _logo_data_uri()
+    except Exception as e:
+        print(f"Error cargando el logo: {e}")
+        logo_b64 = None
+
+    # Fotos descargadas en paralelo (miniaturas) para no esperar una por una
+    media_list = list(order.media_files.filter(is_video=False))
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        uris = list(pool.map(_photo_data_uri, media_list))
+    photos = [{'src': uri, 'description': m.description} for m, uri in zip(media_list, uris) if uri]
+
+    # La firma sólo se incluye si es una imagen base64 válida
+    signature = order.client_signature_base64 or ''
+    if not signature.startswith('data:image/'):
+        signature = None
 
     context = {
         'order': order,
         'photos': photos,
-        'request': request,
         'exterior': exterior,
         'interior': interior,
         'accesorios': accesorios,
         'damage_map_img_b64': damage_map_img_b64, 
-        'logo_b64': logo_b64, # <- Añadido al contexto aquí
+        'logo_b64': logo_b64,
+        'signature_b64': signature,
     }
     
     template = get_template('workshop/intake_pdf.html')
     html_string = template.render(context)
     
     buffer_pdf = io.BytesIO()
-    pisa_status = pisa.CreatePDF(html_string, dest=buffer_pdf)
+    pisa_status = pisa.CreatePDF(html_string, dest=buffer_pdf, encoding='utf-8')
     
     if pisa_status.err:
         return None
@@ -217,32 +337,22 @@ def create_pdf_content(order, request):
 
 
 def generate_entry_pdf(request, order_id):
-    """Devuelve el PDF pre-generado al instante o lo crea al vuelo"""
+    """Genera y muestra el PDF de ingreso de la orden"""
     order = get_object_or_404(ServiceOrder, id=order_id)
-    
-    # Si el PDF ya está generado, devolver el archivo físico INMEDIATAMENTE
-    if order.intake_pdf:
-        response = HttpResponse(order.intake_pdf.read(), content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="Ingreso_{order.license_plate}.pdf"'
-        return response
-    
-    # Si por alguna razón es antiguo y no tiene PDF, lo generamos al vuelo
-    pdf_content = create_pdf_content(order, request)
-    if pdf_content:
-        file_name = f"Ingreso_{order.license_plate}_{order.id}.pdf"
-        
-        # 🛡️ PROTECCIÓN CONTRA EL LÍMITE DE 10MB DE CLOUDINARY
-        try:
-            order.intake_pdf.save(file_name, ContentFile(pdf_content), save=True)
-        except Exception as e:
-            # Si pesa más de 10MB, Cloudinary lo rechaza. Lo ignoramos y lo mostramos de todas formas.
-            print(f"Aviso Cloudinary: PDF supera límite de 10MB. No se guardó pero se visualizará: {e}")
-            
-        response = HttpResponse(pdf_content, content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="Ingreso_{order.license_plate}.pdf"'
-        return response
-        
-    return HttpResponse("Tuvimos un error al generar el PDF.")
+
+    try:
+        pdf_content = create_pdf_content(order, request)
+    except Exception as e:
+        print(f"Error generando PDF de la orden {order.id}: {e}")
+        pdf_content = None
+
+    if not pdf_content:
+        messages.error(request, f"No se pudo generar el PDF de la placa {order.license_plate}. Intenta de nuevo.")
+        return redirect('workshop:workshop_dashboard')
+
+    response = HttpResponse(pdf_content, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="Ingreso_{order.license_plate}_{order.id}.pdf"'
+    return response
 
 
 def change_status(request, order_id, new_status):
@@ -261,7 +371,7 @@ def change_status(request, order_id, new_status):
         order.save()
         messages.success(request, f"El estado de la placa {order.license_plate} cambió a: {order.get_status_display()}")
     
-    return redirect('workshop:workshop_dashboard')
+    return _back_to_dashboard(request)
 
 
 def service_checkout(request, order_id):
@@ -373,4 +483,4 @@ def delete_order(request, order_id):
         order.delete()
         messages.success(request, f"¡Seguridad: La orden de la placa {placa_eliminada} fue eliminada permanentemente del sistema!")
         
-    return redirect('workshop:workshop_dashboard')
+    return _back_to_dashboard(request)
