@@ -1,3 +1,4 @@
+from core.pagination import paginate
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import logout
 from django.shortcuts import redirect
@@ -68,9 +69,10 @@ class UserManagementView(
 
         context = super().get_context_data(**kwargs)
 
-        context['users_list'] = (
-            User.objects.all()
-            .order_by('-date_joined')
+        context['users_list'] = paginate(
+            self.request,
+            User.objects.all().order_by('-date_joined'),
+            per_page=20
         )
         context['roles'] = User.Role.choices
         context['users_json'] = [

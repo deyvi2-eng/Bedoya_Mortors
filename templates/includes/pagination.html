@@ -1,0 +1,41 @@
+{% comment %}
+Paginación reutilizable. Variables:
+  page_obj  -> resultado de core.pagination.paginate()
+  label     -> (opcional) nombre de los registros, ej: "clientes"
+  theme     -> (opcional) "wood" para el sistema de muebles
+Conserva los demás parámetros de la URL (búsqueda, filtros, pestañas).
+{% endcomment %}
+{% if page_obj.paginator.count %}
+<div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3">
+    <p class="text-xs font-bold {% if theme == 'wood' %}text-stone-500{% else %}text-gray-500{% endif %}">
+        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} {{ label|default:"registros" }}
+    </p>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="flex items-center gap-1.5 flex-wrap justify-center" aria-label="Paginación">
+        {% with p=page_obj.page_param|default:"page" %}
+        {% if page_obj.has_previous %}
+            <a href="?{% for k, vs in request.GET.lists %}{% if k != p %}{% for v in vs %}{{ k|urlencode }}={{ v|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}{{ p }}={{ page_obj.previous_page_number }}" class="h-10 px-3 rounded-xl bg-white border {% if theme == 'wood' %}border-stone-200 text-stone-700 hover:bg-stone-50{% else %}border-gray-200 text-gray-700 hover:bg-gray-50{% endif %} text-sm font-black flex items-center gap-1" aria-label="Página anterior"><i class="ph-bold ph-caret-left"></i><span class="hidden sm:inline">Anterior</span></a>
+        {% else %}
+            <span class="h-10 px-3 rounded-xl border {% if theme == 'wood' %}bg-stone-50 border-stone-100 text-stone-300{% else %}bg-gray-50 border-gray-100 text-gray-300{% endif %} text-sm font-black flex items-center gap-1"><i class="ph-bold ph-caret-left"></i><span class="hidden sm:inline">Anterior</span></span>
+        {% endif %}
+
+        {% for n in page_obj.elided_range %}
+            {% if n == page_obj.paginator.ELLIPSIS %}
+                <span class="h-10 w-7 flex items-center justify-center {% if theme == 'wood' %}text-stone-400{% else %}text-gray-400{% endif %} font-black">…</span>
+            {% elif n == page_obj.number %}
+                <span class="h-10 min-w-10 px-3 rounded-xl {% if theme == 'wood' %}bg-stone-900{% else %}bg-gray-900{% endif %} text-white text-sm font-black flex items-center justify-center" aria-current="page">{{ n }}</span>
+            {% else %}
+                <a href="?{% for k, vs in request.GET.lists %}{% if k != p %}{% for v in vs %}{{ k|urlencode }}={{ v|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}{{ p }}={{ n }}" class="h-10 min-w-10 px-3 rounded-xl bg-white border {% if theme == 'wood' %}border-stone-200 text-stone-700 hover:bg-stone-50{% else %}border-gray-200 text-gray-700 hover:bg-gray-50{% endif %} text-sm font-black flex items-center justify-center">{{ n }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?{% for k, vs in request.GET.lists %}{% if k != p %}{% for v in vs %}{{ k|urlencode }}={{ v|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}{{ p }}={{ page_obj.next_page_number }}" class="h-10 px-3 rounded-xl bg-white border {% if theme == 'wood' %}border-stone-200 text-stone-700 hover:bg-stone-50{% else %}border-gray-200 text-gray-700 hover:bg-gray-50{% endif %} text-sm font-black flex items-center gap-1" aria-label="Página siguiente"><span class="hidden sm:inline">Siguiente</span><i class="ph-bold ph-caret-right"></i></a>
+        {% else %}
+            <span class="h-10 px-3 rounded-xl border {% if theme == 'wood' %}bg-stone-50 border-stone-100 text-stone-300{% else %}bg-gray-50 border-gray-100 text-gray-300{% endif %} text-sm font-black flex items-center gap-1"><span class="hidden sm:inline">Siguiente</span><i class="ph-bold ph-caret-right"></i></span>
+        {% endif %}
+        {% endwith %}
+    </nav>
+    {% endif %}
+</div>
+{% endif %}

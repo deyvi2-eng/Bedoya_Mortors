@@ -6,6 +6,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from core.pagination import paginate
 from .models import Customer
 from .validators import ID_CEDULA_EC
 from sales.models import Sale, SaleDetail
@@ -15,7 +17,15 @@ class CustomerManagementView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['customers'] = Customer.objects.all().order_by('-created_at')
+        query = self.request.GET.get('q', '').strip()
+        customers = Customer.objects.all().order_by('-created_at')
+        if query:
+            customers = customers.filter(
+                Q(first_name__icontains=query) | Q(last_name__icontains=query) |
+                Q(cedula__icontains=query) | Q(phone__icontains=query) | Q(email__icontains=query)
+            )
+        context['customers'] = paginate(self.request, customers, per_page=20)
+        context['query'] = query
         return context
 
 class CustomerCreateAPI(APIView):

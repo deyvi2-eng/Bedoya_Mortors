@@ -30,6 +30,7 @@
         </a>
         {% endfor %}
     </div>
+    {% include 'includes/pagination.html' with page_obj=clients label="clientes" theme="wood" %}
     {% else %}
     <div class="card p-10 text-center">
         <i class="ph ph-users-three text-5xl text-stone-300"></i>

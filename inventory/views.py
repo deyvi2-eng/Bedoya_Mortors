@@ -1,3 +1,4 @@
+from core.pagination import paginate
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework.views import APIView
@@ -201,7 +202,7 @@ class StockMovementLogView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['movements'] = StockMovement.objects.all().select_related('product', 'user').order_by('-created_at')[:100]
+        context['movements'] = paginate(self.request, StockMovement.objects.all().select_related('product', 'user').order_by('-created_at'), per_page=50)
         return context
     
 # ==========================================
@@ -288,8 +289,8 @@ class InventorySettingsView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.all().order_by('-created_at')
-        context['suppliers'] = Supplier.objects.all().order_by('-created_at')
+        context['categories'] = paginate(self.request, Category.objects.all().order_by('-created_at'), per_page=15, page_param='cat_page')
+        context['suppliers'] = paginate(self.request, Supplier.objects.all().order_by('-created_at'), per_page=15, page_param='sup_page')
         return context
 
 class CategoryUpdateAPI(APIView):

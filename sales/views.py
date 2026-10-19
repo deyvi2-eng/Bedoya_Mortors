@@ -1,6 +1,7 @@
 from decimal import Decimal
 import uuid
 
+from core.pagination import paginate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.db.models import Q
@@ -38,6 +39,11 @@ class ProformaListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Sale.objects.filter(status='PROFORMA').order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['proformas'] = paginate(self.request, self.object_list, per_page=20)
+        return context
 
 class InvoicePDFView(LoginRequiredMixin, TemplateView):
     template_name = 'sales/invoice_pdf.html'

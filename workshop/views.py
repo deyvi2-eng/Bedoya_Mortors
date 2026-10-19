@@ -12,7 +12,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse
-from django.core.paginator import Paginator
+from core.pagination import paginate
 from django.db.models import Q, Count, F
 from django.http import HttpResponse
 from django.template.loader import get_template
@@ -73,12 +73,11 @@ def workshop_dashboard(request):
     else:
         orders = orders.order_by('-created_at')
 
-    page_obj = Paginator(orders, WORKSHOP_PAGE_SIZE).get_page(request.GET.get('page'))
+    page_obj = paginate(request, orders, per_page=WORKSHOP_PAGE_SIZE)
 
     context = {
         'page_obj': page_obj,
         'orders': page_obj.object_list,
-        'page_range': page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1),
         'tabs': tabs,
         'current_tab': current_tab,
         'query': query,

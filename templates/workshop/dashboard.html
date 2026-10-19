@@ -72,13 +72,6 @@
         </div>
     </div>
 
-    <!-- RESUMEN DE RESULTADOS -->
-    {% if page_obj.paginator.count %}
-    <p class="text-xs font-bold text-gray-500 px-1">
-        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} órdenes{% if query %} para “{{ query }}”{% endif %}
-    </p>
-    {% endif %}
-
     <!-- ÓRDENES -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {% for order in orders %}
@@ -185,34 +178,7 @@
         {% endfor %}
     </div>
 
-    <!-- PAGINACIÓN -->
-    {% if page_obj.paginator.num_pages > 1 %}
-    <nav class="flex items-center justify-center gap-1.5 flex-wrap pt-2" aria-label="Paginación">
-        {% with base="?tab="|add:current_tab %}
-        {% if page_obj.has_previous %}
-            <a href="{{ base }}{% if query %}&q={{ query|urlencode }}{% endif %}&page={{ page_obj.previous_page_number }}" class="h-10 px-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-black flex items-center gap-1"><i class="ph-bold ph-caret-left"></i><span class="hidden sm:inline">Anterior</span></a>
-        {% else %}
-            <span class="h-10 px-3 rounded-xl bg-gray-50 border border-gray-100 text-gray-300 text-sm font-black flex items-center gap-1"><i class="ph-bold ph-caret-left"></i><span class="hidden sm:inline">Anterior</span></span>
-        {% endif %}
-
-        {% for n in page_range %}
-            {% if n == page_obj.paginator.ELLIPSIS %}
-                <span class="h-10 w-8 flex items-center justify-center text-gray-400 font-black">…</span>
-            {% elif n == page_obj.number %}
-                <span class="h-10 min-w-10 px-3 rounded-xl bg-red-600 text-white text-sm font-black flex items-center justify-center shadow-md shadow-red-600/20">{{ n }}</span>
-            {% else %}
-                <a href="{{ base }}{% if query %}&q={{ query|urlencode }}{% endif %}&page={{ n }}" class="h-10 min-w-10 px-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-black flex items-center justify-center">{{ n }}</a>
-            {% endif %}
-        {% endfor %}
-
-        {% if page_obj.has_next %}
-            <a href="{{ base }}{% if query %}&q={{ query|urlencode }}{% endif %}&page={{ page_obj.next_page_number }}" class="h-10 px-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-black flex items-center gap-1"><span class="hidden sm:inline">Siguiente</span><i class="ph-bold ph-caret-right"></i></a>
-        {% else %}
-            <span class="h-10 px-3 rounded-xl bg-gray-50 border border-gray-100 text-gray-300 text-sm font-black flex items-center gap-1"><span class="hidden sm:inline">Siguiente</span><i class="ph-bold ph-caret-right"></i></span>
-        {% endif %}
-        {% endwith %}
-    </nav>
-    {% endif %}
+    {% include 'includes/pagination.html' with page_obj=page_obj label="órdenes" %}
 </div>
 
 <div id="deleteSecurityModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[9999] backdrop-blur-sm opacity-0 transition-opacity duration-300">

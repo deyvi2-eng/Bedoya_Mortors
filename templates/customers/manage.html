@@ -24,6 +24,15 @@
         </button>
     </div>
 
+    <form method="get" class="flex gap-2">
+        <div class="relative flex-1">
+            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input type="search" name="q" value="{{ query }}" placeholder="Buscar por nombre, cédula/RUC, teléfono o correo..." class="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+        </div>
+        <button type="submit" class="bg-gray-900 hover:bg-black text-white px-4 md:px-6 rounded-xl text-xs font-bold flex items-center gap-2"><i class="ph-bold ph-magnifying-glass text-base md:hidden"></i><span class="hidden md:inline">Buscar</span></button>
+        {% if query %}<a href="?" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 rounded-xl flex items-center" title="Limpiar búsqueda"><i class="ph-bold ph-x text-lg"></i></a>{% endif %}
+    </form>
+
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
         <div class="overflow-x-auto no-scrollbar">
             <table class="min-w-full divide-y divide-gray-100">
@@ -79,7 +88,7 @@
                     {% empty %}
                     <tr>
                         <td colspan="5" class="text-center py-12 text-gray-400 text-xs">
-                            <i class="ph ph-users text-4xl text-gray-200 mb-2 block"></i> No hay clientes registrados en el directorio.
+                            <i class="ph ph-users text-4xl text-gray-200 mb-2 block"></i> {% if query %}No se encontraron clientes para “{{ query }}”.{% else %}No hay clientes registrados en el directorio.{% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -87,6 +96,8 @@
             </table>
         </div>
     </div>
+
+    {% include 'includes/pagination.html' with page_obj=customers label="clientes" %}
 </div>
 
 <div id="modal-customer" class="fixed inset-0 z-[70] hidden bg-white md:bg-gray-900/60 md:backdrop-blur-sm overflow-y-auto w-full h-full flex items-center justify-center p-0 md:p-4">

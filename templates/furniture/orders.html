@@ -24,6 +24,7 @@
     <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {% for o in orders %}{% include 'furniture/_order_card.html' %}{% endfor %}
     </div>
+    {% include 'includes/pagination.html' with page_obj=orders label="hojas" theme="wood" %}
     {% else %}
     <div class="card p-10 text-center">
         <i class="ph ph-clipboard-text text-5xl text-stone-300"></i>

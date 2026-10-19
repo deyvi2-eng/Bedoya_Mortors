@@ -3,6 +3,7 @@ from datetime import datetime
 from functools import wraps
 from urllib.parse import quote as urlquote
 
+from core.pagination import paginate
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -131,7 +132,8 @@ def client_list(request):
     )
     if q:
         clients = clients.filter(Q(name__icontains=q) | Q(phone__icontains=q) | Q(id_number__icontains=q))
-    return render(request, 'furniture/clients.html', {'clients': clients[:300], 'q': q, 'nav': 'clients'})
+    clients = paginate(request, clients.order_by('name'), per_page=24)
+    return render(request, 'furniture/clients.html', {'clients': clients, 'q': q, 'nav': 'clients'})
 
 
 @furniture_required
@@ -227,7 +229,7 @@ def order_list(request):
 
     tabs = [('abiertas', 'En taller')] + [(s.value, s.label) for s in Order.Status] + [('todas', 'Todas')]
     return render(request, 'furniture/orders.html', {
-        'orders': orders[:200], 'status': status, 'q': q, 'tabs': tabs, 'nav': 'orders',
+        'orders': paginate(request, orders, per_page=24), 'status': status, 'q': q, 'tabs': tabs, 'nav': 'orders',
     })
 
 
@@ -481,7 +483,7 @@ def quote_list(request):
         quotes = quotes.filter(Q(client__name__icontains=q) | Q(client__phone__icontains=q) | Q(notes__icontains=q))
     tabs = [('', 'Todas')] + list(Quote.Status.choices)
     return render(request, 'furniture/quotes.html', {
-        'quotes': quotes[:200], 'status': status, 'q': q, 'tabs': tabs, 'nav': 'quotes',
+        'quotes': paginate(request, quotes, per_page=24), 'status': status, 'q': q, 'tabs': tabs, 'nav': 'quotes',
     })
 
 

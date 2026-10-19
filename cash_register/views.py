@@ -1,3 +1,4 @@
+from core.pagination import paginate
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework.views import APIView
@@ -40,7 +41,7 @@ class CashDashboardView(LoginRequiredMixin, TemplateView):
         if user.role != 'ADMIN':
             history = history.filter(user=user)
             
-        context['history'] = history.order_by('-closing_time')[:10]
+        context['history'] = paginate(self.request, history.order_by('-closing_time'), per_page=10)
         return context
 
 # ==========================================

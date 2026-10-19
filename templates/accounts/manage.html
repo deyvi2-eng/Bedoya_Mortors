@@ -104,6 +104,8 @@
             {% endfor %}
         </div>
     </div>
+
+    {% include 'includes/pagination.html' with page_obj=users_list label="usuarios" %}
 </div>
 
 {{ users_json|json_script:"users-data" }}

@@ -24,6 +24,7 @@
     <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {% for q in quotes %}{% include 'furniture/_quote_card.html' %}{% endfor %}
     </div>
+    {% include 'includes/pagination.html' with page_obj=quotes label="proformas" theme="wood" %}
     {% else %}
     <div class="card p-10 text-center">
         <i class="ph ph-receipt text-5xl text-stone-300"></i>
