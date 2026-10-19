@@ -100,7 +100,7 @@ class ExportSalesExcelView(LoginRequiredMixin, View):
             fecha_local = localtime(venta.created_at).strftime("%Y-%m-%d %H:%M")
             estado = "ANULADA" if venta.is_voided else venta.get_status_display()
             
-            cliente_str = f"{venta.customer.first_name} {venta.customer.last_name}\nCI: {venta.customer.cedula}" if venta.customer else "Consumidor Final\nCI: 9999999999999"
+            cliente_str = f"{venta.customer.first_name} {venta.customer.last_name}\n{venta.customer.id_label}: {venta.customer.cedula or '-'}" if venta.customer else "Consumidor Final\nCI: 9999999999999"
             vendedor_str = f"{venta.seller.get_full_name() if venta.seller else 'Administrador'}\n[{venta.get_payment_method_display()}]"
             
             # Solo sumamos al Gran Total si la factura NO está anulada

@@ -47,7 +47,7 @@
             <th>Placa:</th><td class="bold" style="font-size: 12px;">{{ order.license_plate|upper }}</td>
         </tr>
         <tr>
-            <th>C.I / RUC:</th><td>{{ order.customer.cedula|default:"No registrado" }}</td>
+            <th>{% if order.customer.cedula %}{{ order.customer.id_label }}:{% else %}C.I / RUC:{% endif %}</th><td>{{ order.customer.cedula|default:"No registrado" }}</td>
             <th>Marca/Modelo:</th><td>{{ order.brand|title }} / {{ order.model|title }}</td>
         </tr>
         <tr>
@@ -181,7 +181,7 @@
                 {% else %}<br><br><br>{% endif %}
                 <div style="border-top: 1px solid #111; width: 70%; margin: 0 auto; padding-top: 3px;">
                     <span class="bold">{{ order.customer.first_name }} {{ order.customer.last_name }}</span><br>
-                    <span style="font-size: 8px; color: #64748b;">C.I: {{ order.customer.cedula|default:"NA" }} - Acepta Condiciones</span>
+                    <span style="font-size: 8px; color: #64748b;">{% if order.customer.cedula %}{{ order.customer.id_label }}: {{ order.customer.cedula }}{% else %}C.I: NA{% endif %} - Acepta Condiciones</span>
                 </div>
             </td>
         </tr>

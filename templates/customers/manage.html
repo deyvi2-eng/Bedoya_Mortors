@@ -17,7 +17,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
             <h2 class="text-base font-bold text-gray-900 leading-none">Gestión de Clientes</h2>
-            <p class="text-xs text-gray-400 mt-1">Directorio de contactos para facturación. Cédula y correos son opcionales.</p>
+            <p class="text-xs text-gray-400 mt-1">Directorio de contactos para facturación. Documento de identidad y correo son opcionales.</p>
         </div>
         <button onclick="toggleModal('modal-customer')" class="w-full sm:w-auto bg-gray-900 hover:bg-black text-white font-bold py-3 px-5 rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
             <i class="ph-bold ph-user-plus text-base"></i> Registrar Cliente
@@ -41,7 +41,7 @@
                     <tr class="hover:bg-gray-50/50 transition-colors">
                         <td class="px-6 py-4">
                             <div class="font-bold text-gray-900 leading-tight">{{ c.first_name }} {{ c.last_name }}</div>
-                            <div class="text-[11px] text-brand-600 font-mono mt-1 font-semibold">C.I: {{ c.cedula|default:"Consumidor Final" }}</div>
+                            <div class="text-[11px] text-brand-600 font-mono mt-1 font-semibold">{% if c.cedula %}{{ c.id_label }}: {{ c.cedula }}{% else %}Consumidor Final{% endif %}</div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-1.5 text-xs text-gray-800 font-medium">
@@ -124,9 +124,17 @@
                 <div>
                     <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 mb-3 mt-2">Información Opcional</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Cédula de Identidad</label>
-                            <input type="text" id="c_cedula" maxlength="10" placeholder="Opcional" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-500 font-mono tracking-wider shadow-sm">
+                        <div class="md:col-span-2">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Documento de Identidad</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2" id="id_type_group">
+                                <button type="button" data-type="CEDULA_EC" class="id-type-btn px-2 py-2.5 rounded-xl border text-[11px] font-black transition-all">🇪🇨 Cédula EC</button>
+                                <button type="button" data-type="RUC_EC" class="id-type-btn px-2 py-2.5 rounded-xl border text-[11px] font-black transition-all">🇪🇨 RUC</button>
+                                <button type="button" data-type="CEDULA_VE" class="id-type-btn px-2 py-2.5 rounded-xl border text-[11px] font-black transition-all">🇻🇪 Cédula VE</button>
+                                <button type="button" data-type="CEDULA_CO" class="id-type-btn px-2 py-2.5 rounded-xl border text-[11px] font-black transition-all">🇨🇴 Cédula CO</button>
+                            </div>
+                            <input type="hidden" id="c_id_type" value="CEDULA_EC">
+                            <input type="text" id="c_cedula" maxlength="10" inputmode="numeric" autocomplete="off" placeholder="Opcional" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-500 font-mono tracking-wider shadow-sm">
+                            <p id="c_cedula_msg" class="text-[11px] font-semibold mt-1.5 text-gray-400"></p>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
@@ -198,16 +206,140 @@
 <script>
     const getCSRFToken = () => document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
     const toggleModal = (id) => document.getElementById(id).classList.toggle('hidden');
+    // Los modales se mueven al <body> para que no queden detrás del menú lateral
+    ['modal-customer', 'modal-customer-history'].forEach(id => document.body.appendChild(document.getElementById(id)));
+
+    // ==========================================
+    // DOCUMENTO DE IDENTIDAD (misma lógica que customers/validators.py)
+    // ==========================================
+    const ID_TYPES = {
+        CEDULA_EC: { maxlength: 10, inputmode: 'numeric', placeholder: 'Ej: 1712345678 (10 dígitos)' },
+        RUC_EC:    { maxlength: 13, inputmode: 'numeric', placeholder: 'Ej: 1712345678001 (13 dígitos)' },
+        CEDULA_VE: { maxlength: 13, inputmode: 'text',    placeholder: 'Ej: V-12345678 o E-84123456' },
+        CEDULA_CO: { maxlength: 13, inputmode: 'numeric', placeholder: 'Ej: 1.020.345.678 (6 a 10 dígitos)' },
+    };
+    const idTypeInput = document.getElementById('c_id_type');
+    const cedulaInput = document.getElementById('c_cedula');
+    const cedulaMsg = document.getElementById('c_cedula_msg');
+
+    const provinciaValida = (v) => { const p = parseInt(v.slice(0, 2), 10); return (p >= 1 && p <= 24) || p === 30; };
+
+    function cedulaEcError(v) {
+        if (!/^\d{10}$/.test(v)) return 'La cédula debe contener exactamente 10 dígitos numéricos.';
+        if (!provinciaValida(v)) return 'Código de provincia inválido.';
+        if (parseInt(v[2], 10) >= 6) return 'El tercer dígito es inválido para personas naturales.';
+        const coef = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+        let total = 0;
+        for (let i = 0; i < 9; i++) { let x = parseInt(v[i], 10) * coef[i]; total += x < 10 ? x : x - 9; }
+        const calc = (10 - (total % 10)) % 10;
+        if (calc !== parseInt(v[9], 10)) return 'La cédula ingresada no es válida matemáticamente.';
+        return null;
+    }
+
+    function validateDocument(type, value) {
+        let v = (value || '').trim();
+        if (!v) return { ok: true, empty: true };
+        if (type === 'CEDULA_EC') {
+            v = v.replace(/[\s-]/g, '');
+            const err = cedulaEcError(v);
+            return err ? { ok: false, msg: err } : { ok: true, normalized: v };
+        }
+        if (type === 'RUC_EC') {
+            v = v.replace(/[\s-]/g, '');
+            if (!/^\d{13}$/.test(v)) return { ok: false, msg: 'El RUC debe contener exactamente 13 dígitos numéricos.' };
+            if (!provinciaValida(v)) return { ok: false, msg: 'El RUC tiene un código de provincia inválido.' };
+            const d3 = parseInt(v[2], 10);
+            if (d3 <= 5) {
+                if (cedulaEcError(v.slice(0, 10))) return { ok: false, msg: 'Los primeros 10 dígitos del RUC no forman una cédula válida.' };
+                if (v.slice(10) === '000') return { ok: false, msg: 'El RUC debe terminar en el número de establecimiento (ej: 001).' };
+                return { ok: true, normalized: v, kind: 'Persona natural' };
+            }
+            if (d3 === 6) {
+                if (v.slice(9) === '0000') return { ok: false, msg: 'El RUC público debe terminar en el número de establecimiento (ej: 0001).' };
+                return { ok: true, normalized: v, kind: 'Entidad pública' };
+            }
+            if (d3 === 9) {
+                if (v.slice(10) === '000') return { ok: false, msg: 'El RUC debe terminar en el número de establecimiento (ej: 001).' };
+                return { ok: true, normalized: v, kind: 'Sociedad privada' };
+            }
+            return { ok: false, msg: 'El tercer dígito del RUC es inválido (debe ser 0-5, 6 o 9).' };
+        }
+        if (type === 'CEDULA_VE') {
+            let raw = v.replace(/[\s.\-]/g, '').toUpperCase();
+            if (/^\d/.test(raw)) raw = 'V' + raw;
+            const m = raw.match(/^([VE])(\d+)$/);
+            if (!m) return { ok: false, msg: 'Debe iniciar con V o E seguida de números (ej: V-12345678).' };
+            const num = m[2].replace(/^0+/, '');
+            if (num.length < 6 || num.length > 8) return { ok: false, msg: 'La cédula venezolana debe tener entre 6 y 8 dígitos.' };
+            return { ok: true, normalized: `${m[1]}-${num}`, kind: m[1] === 'V' ? 'Venezolano' : 'Extranjero residente' };
+        }
+        if (type === 'CEDULA_CO') {
+            const raw = v.replace(/[\s.,]/g, '');
+            if (!/^\d+$/.test(raw)) return { ok: false, msg: 'La cédula colombiana solo debe contener números.' };
+            if (raw.startsWith('0')) return { ok: false, msg: 'La cédula colombiana no puede iniciar con 0.' };
+            if (raw.length < 6 || raw.length > 10) return { ok: false, msg: 'La cédula colombiana debe tener entre 6 y 10 dígitos.' };
+            return { ok: true, normalized: raw };
+        }
+        return { ok: false, msg: 'Tipo de documento inválido.' };
+    }
+
+    function renderDocumentState() {
+        const res = validateDocument(idTypeInput.value, cedulaInput.value);
+        cedulaInput.classList.remove('border-red-400', 'bg-red-50', 'border-green-400', 'bg-green-50');
+        if (res.empty) {
+            cedulaMsg.className = 'text-[11px] font-semibold mt-1.5 text-gray-400';
+            cedulaMsg.textContent = 'Opcional. Déjalo vacío para Consumidor Final.';
+        } else if (res.ok) {
+            cedulaInput.classList.add('border-green-400', 'bg-green-50');
+            cedulaMsg.className = 'text-[11px] font-semibold mt-1.5 text-green-600';
+            cedulaMsg.textContent = `✓ Documento válido: ${res.normalized}${res.kind ? ' · ' + res.kind : ''}`;
+        } else {
+            cedulaInput.classList.add('border-red-400', 'bg-red-50');
+            cedulaMsg.className = 'text-[11px] font-semibold mt-1.5 text-red-600';
+            cedulaMsg.textContent = res.msg;
+        }
+    }
+
+    function selectIdType(type) {
+        idTypeInput.value = type;
+        const cfg = ID_TYPES[type];
+        cedulaInput.maxLength = cfg.maxlength;
+        cedulaInput.inputMode = cfg.inputmode;
+        cedulaInput.placeholder = cfg.placeholder;
+        document.querySelectorAll('.id-type-btn').forEach(btn => {
+            const active = btn.dataset.type === type;
+            btn.classList.toggle('bg-gray-900', active);
+            btn.classList.toggle('text-white', active);
+            btn.classList.toggle('border-gray-900', active);
+            btn.classList.toggle('bg-white', !active);
+            btn.classList.toggle('text-gray-600', !active);
+            btn.classList.toggle('border-gray-200', !active);
+        });
+        renderDocumentState();
+    }
+
+    document.querySelectorAll('.id-type-btn').forEach(btn => btn.addEventListener('click', () => {
+        selectIdType(btn.dataset.type);
+        cedulaInput.focus();
+    }));
+    cedulaInput.addEventListener('input', renderDocumentState);
+    selectIdType('CEDULA_EC');
 
     document.getElementById('btn-save-customer').addEventListener('click', function() {
         const form = document.getElementById('form-customer');
         if(!form.checkValidity()) return form.reportValidity();
+        const docCheck = validateDocument(idTypeInput.value, cedulaInput.value);
+        if (!docCheck.ok) {
+            cedulaInput.focus();
+            return Swal.fire('Documento inválido', docCheck.msg, 'warning');
+        }
 
         // Se capturan TODOS los campos creados en el HTML
         const payload = {
             first_name: document.getElementById('c_first').value,
             last_name: document.getElementById('c_last').value,
             phone: document.getElementById('c_phone').value,
+            id_type: document.getElementById('c_id_type').value,
             cedula: document.getElementById('c_cedula').value,
             email: document.getElementById('c_email').value,
             city: document.getElementById('c_city').value,
@@ -264,7 +396,7 @@
         const res = await fetch(`/customers/api/history/${id}/`);
         const data = await res.json();
         
-        document.getElementById('hist_ci').innerText = data.ci ? `C.I: ${data.ci}` : 'C.I: Consumidor Final';
+        document.getElementById('hist_ci').innerText = data.ci ? data.ci : 'Consumidor Final';
         document.getElementById('hist_name').innerText = data.customer;
         document.getElementById('hist_orders').innerText = data.total_orders;
         document.getElementById('hist_spent').innerText = `$${data.total_spent.toFixed(2)}`;

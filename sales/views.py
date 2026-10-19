@@ -92,13 +92,13 @@ class POSCustomerSearchAPI(APIView):
             return Response({"customers": []})
 
         customers = Customer.objects.filter(
-            Q(cedula__startswith=query) | 
+            Q(cedula__icontains=query) | 
             Q(first_name__icontains=query) | 
             Q(last_name__icontains=query),
             is_active=True
         )[:10]
 
-        results = [{"id": c.id, "cedula": c.cedula, "name": f"{c.first_name} {c.last_name}", "phone": getattr(c, 'phone', '')} for c in customers]
+        results = [{"id": c.id, "cedula": f"{c.id_label} {c.cedula}" if c.cedula else None, "name": f"{c.first_name} {c.last_name}", "phone": getattr(c, 'phone', '')} for c in customers]
         return Response({"customers": results}, status=status.HTTP_200_OK)
 
 class PendingDocumentsAPI(APIView):

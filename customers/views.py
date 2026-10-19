@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from .models import Customer
+from .validators import ID_CEDULA_EC
 from sales.models import Sale, SaleDetail
 
 class CustomerManagementView(LoginRequiredMixin, TemplateView):
@@ -24,13 +25,14 @@ class CustomerCreateAPI(APIView):
         try:
             data = request.data
             
-            # CRÍTICO: Si la cédula viene vacía, la convertimos en None para evitar el choque de unique=True
-            cedula_input = data.get('cedula', '').strip()
+            # CRÍTICO: Si la cédula viene vacía, la convertimos en None para evitar el choque de unicidad
+            cedula_input = (data.get('cedula') or '').strip()
             if not cedula_input:
                 cedula_input = None
 
-            # Crear instancia
+            # Crear instancia (clean() valida y normaliza el documento según su tipo)
             customer = Customer(
+                id_type=data.get('id_type') or ID_CEDULA_EC,
                 cedula=cedula_input,
                 first_name=data.get('first_name'),
                 last_name=data.get('last_name'),
@@ -48,7 +50,8 @@ class CustomerCreateAPI(APIView):
 
             return Response({
                 "message": "Cliente registrado exitosamente.",
-                "id": customer.id
+                "id": customer.id,
+                "cedula": customer.cedula
             }, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
@@ -56,7 +59,7 @@ class CustomerCreateAPI(APIView):
             return Response({"error": error_msg}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             if 'unique constraint' in str(e).lower() or 'unique' in str(e).lower():
-                return Response({"error": "Ya existe un cliente con esta cédula registrada."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Ya existe un cliente con este documento registrado."}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CustomerToggleAPI(APIView):
@@ -103,7 +106,7 @@ class CustomerHistoryAPI(APIView):
         
         return Response({
             "customer": f"{customer.first_name} {customer.last_name}",
-            "ci": customer.cedula,
+            "ci": f"{customer.id_label}: {customer.cedula}" if customer.cedula else None,
             "total_spent": sum(s['total'] for s in history if s['status'] == "PROCESADA"),
             "total_orders": len(history),
             "history": history

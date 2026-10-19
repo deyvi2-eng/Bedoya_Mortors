@@ -164,7 +164,7 @@
                                     {{ customer.first_name }} {{ customer.last_name }}
                                 </td>
                             </tr>
-                            <tr><td class="info-label">RUC / CI:</td><td class="font-bold">{{ customer.cedula }}</td></tr>
+                            <tr><td class="info-label">{{ customer.id_label|default:"RUC / CI" }}:</td><td class="font-bold">{{ customer.cedula|default:"9999999999999" }}</td></tr>
                             <tr><td class="info-label">Teléfono:</td><td>{{ customer.phone|default:"-" }}</td></tr>
                             <tr><td class="info-label">Dirección:</td><td>{{ customer.address|default:"-" }}</td></tr>
                         {% else %}
